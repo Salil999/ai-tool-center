@@ -4,7 +4,7 @@ import {
   addProjectDirectory,
   updateProjectDirectory,
   deleteProjectDirectory,
-} from '../api';
+} from '../../api-client';
 
 interface ProjectDir {
   id: string;

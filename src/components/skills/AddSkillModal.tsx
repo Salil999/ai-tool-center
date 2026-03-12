@@ -1,55 +1,32 @@
-import { useState, useEffect, useCallback } from 'react';
-import {
-  getSkillContent,
-  saveSkillContent,
-  lintSkillContent,
-} from '../api';
-import type { LintReport } from '../api';
+import { useState } from 'react';
+import { createSkill, lintContent } from '../../api-client';
+import type { LintReport } from '../../types';
 
-interface EditSkillModalProps {
-  skillId: string;
-  skillName: string;
+const DEFAULT_SKILL_TEMPLATE = `---
+name: my-skill
+description: Add a description of what this skill does and when to use it.
+---
+
+`;
+
+interface AddSkillModalProps {
   onClose: () => void;
   onSaved: () => void;
+  showToast?: (message: string, type?: string) => void;
 }
 
-export function EditSkillModal({
-  skillId,
-  skillName,
-  onClose,
-  onSaved,
-}: EditSkillModalProps) {
-  const [content, setContent] = useState('');
-  const [contentLoading, setContentLoading] = useState(false);
+export function AddSkillModal({ onClose, onSaved, showToast }: AddSkillModalProps) {
+  const [content, setContent] = useState(DEFAULT_SKILL_TEMPLATE);
+  const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
   const [lintReport, setLintReport] = useState<LintReport | null>(null);
-
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const loadContent = useCallback(async () => {
-    setContentLoading(true);
-    setError(null);
-    try {
-      const { content: c } = await getSkillContent(skillId);
-      setContent(c);
-      setLintReport(null);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setContentLoading(false);
-    }
-  }, [skillId]);
-
-  useEffect(() => {
-    loadContent();
-  }, [loadContent]);
 
   const handleValidate = async () => {
     setValidating(true);
     setError(null);
     try {
-      const report = await lintSkillContent(skillId, content);
+      const report = await lintContent(content);
       setLintReport(report);
     } catch (err) {
       setError((err as Error).message);
@@ -59,14 +36,13 @@ export function EditSkillModal({
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setError(null);
     try {
-      await saveSkillContent(skillId, content);
-      const report = await lintSkillContent(skillId, content);
-      setLintReport(report);
+      await createSkill({ content });
+      showToast?.('Skill added');
       onSaved();
       onClose();
     } catch (err) {
@@ -79,14 +55,14 @@ export function EditSkillModal({
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Edit Skill — {skillName}</h2>
+        <h2>Add Skill</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>
       </div>
-      <form className="modal-body" onSubmit={handleSave}>
+      <form className="modal-body" onSubmit={handleAdd}>
         <p className="skill-editor-desc">
-          Edit the SKILL.md content. Name and description are in the YAML frontmatter. See the{' '}
+          Create a new skill. Name and description go in the YAML frontmatter. See the{' '}
           <a
             href="https://agentskills.io/specification"
             target="_blank"
@@ -97,23 +73,19 @@ export function EditSkillModal({
           for format details.
         </p>
         <div className="raw-editor-wrap skill-editor-wrap">
-          {contentLoading ? (
-            <p className="import-loading">Loading…</p>
-          ) : (
-            <textarea
-              className="skill-editor-textarea"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              spellCheck={false}
-              placeholder="YAML frontmatter (name, description) followed by markdown body"
-            />
-          )}
+          <textarea
+            className="skill-editor-textarea"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            spellCheck={false}
+            placeholder="YAML frontmatter (name, description) followed by markdown body"
+          />
         </div>
         <button
           type="button"
           className="btn btn-sm"
           onClick={handleValidate}
-          disabled={validating || contentLoading}
+          disabled={validating}
         >
           {validating ? 'Validating…' : 'Validate'}
         </button>
@@ -158,7 +130,7 @@ export function EditSkillModal({
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? 'Adding…' : 'Add'}
           </button>
         </div>
       </form>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SkillCard } from './SkillCard';
-import type { Skill } from '../types';
+import type { Skill } from '../../types';
 
 interface SkillListProps {
   skills: (Skill & { id: string })[];

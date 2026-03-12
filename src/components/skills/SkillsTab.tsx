@@ -12,8 +12,8 @@ import {
   setSkillEnabled,
   syncSkillsTo,
   syncSkillsToProject,
-} from '../api';
-import type { Skill } from '../types';
+} from '../../api-client';
+import type { Skill } from '../../types';
 
 interface SkillsTabProps {
   showToast: (message: string, type?: string) => void;

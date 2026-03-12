@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { diffLines } from 'diff';
 import Fuse from 'fuse.js';
-import { getAuditLog, getAuditOptions, setAuditOptions, clearAuditLog } from '../api';
-import type { AuditEntry } from '../api';
+import { getAuditLog, getAuditOptions, setAuditOptions, clearAuditLog } from '../../api-client';
+import type { AuditEntryResponse } from '../../types';
 
 function ConfigDiff({ before, after }: { before: Record<string, unknown>; after: Record<string, unknown> }) {
   const beforeStr = JSON.stringify(before, null, 2);
@@ -130,7 +130,7 @@ function formatAction(action: string): string {
 }
 
 /** Build searchable text from an audit entry for fuzzy search */
-function entryToSearchable(entry: AuditEntry): string {
+function entryToSearchable(entry: AuditEntryResponse): string {
   const parts = [
     entry.action,
     formatAction(entry.action),
@@ -148,7 +148,7 @@ interface AuditModalProps {
 }
 
 export function AuditModal({ onClose }: AuditModalProps) {
-  const [entries, setEntries] = useState<AuditEntry[]>([]);
+  const [entries, setEntries] = useState<AuditEntryResponse[]>([]);
   const [maxEntries, setMaxEntries] = useState(100);
   const [maxEntriesInput, setMaxEntriesInput] = useState('100');
   const [loading, setLoading] = useState(true);

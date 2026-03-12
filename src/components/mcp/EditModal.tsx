@@ -7,7 +7,7 @@ import { indentUnit } from '@codemirror/language';
 import { indentWithTab } from '@codemirror/commands';
 import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView, keymap } from '@codemirror/view';
-import { getServer } from '../api';
+import { getServer } from '../../api-client';
 
 const DEFAULT_RAW = `{
   "name": "",

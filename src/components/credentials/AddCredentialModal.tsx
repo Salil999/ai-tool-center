@@ -1,34 +1,17 @@
-import { useState, useEffect } from 'react';
-import { getCredential, updateCredential } from '../api';
+import { useState } from 'react';
+import { createCredential } from '../../api-client';
 
-interface EditCredentialModalProps {
-  credentialId: string;
+interface AddCredentialModalProps {
   onClose: () => void;
   onSaved: () => void;
   showToast?: (message: string, type?: string) => void;
 }
 
-export function EditCredentialModal({
-  credentialId,
-  onClose,
-  onSaved,
-  showToast,
-}: EditCredentialModalProps) {
+export function AddCredentialModal({ onClose, onSaved, showToast }: AddCredentialModalProps) {
   const [name, setName] = useState('');
   const [value, setValue] = useState('');
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getCredential(credentialId)
-      .then((cred) => {
-        setName(cred.name);
-        setValue(cred.value);
-      })
-      .catch((err) => setError((err as Error).message))
-      .finally(() => setLoading(false));
-  }, [credentialId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,8 +23,8 @@ export function EditCredentialModal({
     setSaving(true);
     setError(null);
     try {
-      await updateCredential(credentialId, { name: trimmedName, value });
-      showToast?.('Credential updated');
+      await createCredential({ name: trimmedName, value });
+      showToast?.('Credential added');
       onSaved();
       onClose();
     } catch (err) {
@@ -51,35 +34,19 @@ export function EditCredentialModal({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="modal edit-modal">
-        <div className="modal-header">
-          <h2>Edit Credential</h2>
-          <button type="button" className="btn btn-sm" onClick={onClose}>
-            ×
-          </button>
-        </div>
-        <div className="modal-body">
-          <p>Loading…</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Edit Credential</h2>
+        <h2>Add API Credential</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>
       </div>
       <form className="modal-body" onSubmit={handleSubmit}>
         <div className="form-group">
-          <label htmlFor="edit-cred-name">Key name</label>
+          <label htmlFor="cred-name">Key name</label>
           <input
-            id="edit-cred-name"
+            id="cred-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -88,9 +55,9 @@ export function EditCredentialModal({
           />
         </div>
         <div className="form-group">
-          <label htmlFor="edit-cred-value">Key value</label>
+          <label htmlFor="cred-value">Key value</label>
           <input
-            id="edit-cred-value"
+            id="cred-value"
             type="password"
             value={value}
             onChange={(e) => setValue(e.target.value)}
@@ -104,7 +71,7 @@ export function EditCredentialModal({
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? 'Adding…' : 'Add'}
           </button>
         </div>
       </form>

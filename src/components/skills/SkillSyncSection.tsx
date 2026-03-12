@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getSkillSyncTargets } from '../api';
+import { getSkillSyncTargets } from '../../api-client';
 
 function fuzzyMatch(str: string, query: string): boolean {
   if (!query.trim()) return true;

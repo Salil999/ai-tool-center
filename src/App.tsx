@@ -1,20 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ServerList } from './components/ServerList';
-import { EditModal } from './components/EditModal';
-import { SyncSection } from './components/SyncSection';
-import { CustomSyncModal } from './components/CustomSyncModal';
-import { ImportModal } from './components/ImportModal';
-import { InfoModal } from './components/InfoModal';
-import { AuditModal } from './components/AuditModal';
-import { Toast } from './components/Toast';
-import { SkillsTab } from './components/SkillsTab';
-import { CredentialsTab } from './components/CredentialsTab';
-import { getServers, createServer, updateServer, deleteServer, setServerEnabled, reorderServers, syncTo, syncToCustom } from './api';
-import type { Server } from './types';
+import { useState, useCallback } from 'react';
+import { ServerList } from './components/mcp/ServerList';
+import { EditModal } from './components/mcp/EditModal';
+import { SyncSection } from './components/mcp/SyncSection';
+import { CustomSyncModal } from './components/mcp/CustomSyncModal';
+import { ImportModal } from './components/mcp/ImportModal';
+import { InfoModal } from './components/shared/InfoModal';
+import { AuditModal } from './components/shared/AuditModal';
+import { Toast } from './components/shared/Toast';
+import { SkillsTab } from './components/skills/SkillsTab';
+import { CredentialsTab } from './components/credentials/CredentialsTab';
+import { useMcpServers } from './hooks/useMcpServers';
+import { useOAuthCallback } from './hooks/useOAuthCallback';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'mcp' | 'skills' | 'credentials'>('mcp');
-  const [servers, setServers] = useState<Server[]>([]);
   const [editServerId, setEditServerId] = useState<string | null>(null);
   const [customSyncOpen, setCustomSyncOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -26,97 +25,80 @@ export default function App() {
     setToast({ message, type });
   }, []);
 
-  const loadServers = useCallback(async () => {
-    const list = await getServers();
-    setServers(list as Server[]);
-  }, []);
+  useOAuthCallback(showToast);
 
-  useEffect(() => {
-    loadServers();
-  }, [loadServers]);
+  const mcp = useMcpServers(showToast);
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const oauth = params.get('oauth');
-    if (oauth === 'success') {
-      const serverId = params.get('serverId');
-      showToast(serverId ? `Authorization complete for ${serverId}` : 'Authorization complete');
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (oauth === 'error') {
-      const message = params.get('message') || 'Authorization failed';
-      showToast(decodeURIComponent(message), 'error');
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, [showToast]);
+  const handleSave = useCallback(
+    async (id: string | null, payload: Record<string, unknown>) => {
+      try {
+        await mcp.handleSave(id, payload);
+      } catch (err) {
+        showToast((err as Error).message, 'error');
+        throw err;
+      }
+    },
+    [mcp, showToast]
+  );
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        await mcp.handleDelete(id);
+      } catch (err) {
+        showToast((err as Error).message, 'error');
+      }
+    },
+    [mcp, showToast]
+  );
+
+  const handleToggle = useCallback(
+    async (id: string, enabled: boolean) => {
+      try {
+        await mcp.handleToggle(id, enabled);
+      } catch (err) {
+        showToast((err as Error).message, 'error');
+      }
+    },
+    [mcp, showToast]
+  );
+
+  const handleReorder = useCallback(
+    async (order: string[]) => {
+      try {
+        await mcp.handleReorder(order);
+      } catch (err) {
+        showToast((err as Error).message, 'error');
+      }
+    },
+    [mcp, showToast]
+  );
+
+  const handleSync = useCallback(
+    async (target: string) => {
+      try {
+        await mcp.handleSync(target);
+      } catch (err) {
+        showToast((err as Error).message, 'error');
+      }
+    },
+    [mcp, showToast]
+  );
+
+  const handleCustomSync = useCallback(
+    async (path: string, configKey: string) => {
+      try {
+        await mcp.handleCustomSync(path, configKey);
+        setCustomSyncOpen(false);
+      } catch (err) {
+        showToast((err as Error).message, 'error');
+      }
+    },
+    [mcp, showToast]
+  );
 
   const handleEdit = (id: string | undefined) => setEditServerId(id ?? '');
   const handleCloseEdit = () => setEditServerId(null);
-
-  const handleSave = async (id: string | null, payload: Record<string, unknown>) => {
-    try {
-      if (id) {
-        await updateServer(id, payload);
-        showToast('Server updated');
-      } else {
-        await createServer(payload);
-        showToast('Server added');
-      }
-      await loadServers();
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-      throw err;
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteServer(id);
-      showToast('Server deleted');
-      await loadServers();
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
-  const handleToggle = async (id: string, enabled: boolean) => {
-    try {
-      await setServerEnabled(id, enabled);
-      showToast(enabled ? 'Server enabled' : 'Server disabled');
-      await loadServers();
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
-  const handleReorder = async (order: string[]) => {
-    try {
-      await reorderServers(order);
-      showToast('Order updated');
-      await loadServers();
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
-  const handleSync = async (target: string) => {
-    try {
-      const result = await syncTo(target);
-      showToast(`Synced to ${target} at ${result.path}`);
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
-  const handleCustomSync = async (path: string, configKey: string) => {
-    try {
-      const result = await syncToCustom(path, configKey);
-      showToast(`Synced to ${result.path}`);
-      setCustomSyncOpen(false);
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
   const handleAddServer = () => setEditServerId('new');
 
   return (
@@ -165,7 +147,7 @@ export default function App() {
               </div>
             </div>
             <ServerList
-              servers={servers}
+              servers={mcp.servers}
               onEdit={handleEdit}
               onDelete={handleDelete}
               onToggle={handleToggle}
@@ -254,7 +236,7 @@ export default function App() {
                     ? `No new servers (all already exist). Total: ${result.total}`
                     : `Imported ${result.imported} server(s). Total: ${result.total}`;
                 showToast(msg);
-                loadServers();
+                mcp.loadServers();
               }}
               onError={(msg) => showToast(msg, 'error')}
             />

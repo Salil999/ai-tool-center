@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ServerCard } from './ServerCard';
-import type { Server } from '../types';
+import type { Server } from '../../types';
 
 interface ServerListProps {
   servers: Server[];

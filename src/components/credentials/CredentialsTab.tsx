@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { CredentialList } from './CredentialList';
 import { AddCredentialModal } from './AddCredentialModal';
 import { EditCredentialModal } from './EditCredentialModal';
-import { getCredentials, deleteCredential, reorderCredentials } from '../api';
-import type { Credential } from '../api';
+import { getCredentials, deleteCredential, reorderCredentials } from '../../api-client';
+import type { Credential } from '../../types';
 
 interface CredentialsTabProps {
   showToast: (message: string, type?: string) => void;

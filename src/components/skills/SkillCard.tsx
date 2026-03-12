@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getSkillLint } from '../api';
-import type { Skill } from '../types';
-import type { LintReport } from '../api';
+import { getSkillLint } from '../../api-client';
+import type { Skill, LintReport } from '../../types';
 
 interface SkillCardProps {
   skill: Skill & { id: string };

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CredentialCard } from './CredentialCard';
-import type { Credential } from '../api';
+import type { Credential } from '../../types';
 
 interface CredentialListProps {
   credentials: Credential[];

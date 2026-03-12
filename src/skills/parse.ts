@@ -30,7 +30,7 @@ export function validateSkillDir(dirPath: string): boolean {
 /**
  * Parse SKILL.md file: extract YAML frontmatter and body.
  */
-export function parseSkillMd(filePath: string): ParsedSkill {
+function parseSkillMd(filePath: string): ParsedSkill {
   const resolved = path.resolve(filePath);
   if (!fs.existsSync(resolved)) {
     throw new Error(`SKILL.md not found: ${resolved}`);

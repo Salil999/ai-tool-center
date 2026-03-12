@@ -4,7 +4,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ServerCard } from './ServerCard';
 
-vi.mock('../api', () => ({
+vi.mock('../../api-client', () => ({
   getServerTools: vi.fn().mockResolvedValue({ tools: [{ name: 'tool1' }, { name: 'tool2' }] }),
 }));
 

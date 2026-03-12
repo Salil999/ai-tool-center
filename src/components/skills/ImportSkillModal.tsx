@@ -3,7 +3,7 @@ import {
   getSkillImportSources,
   importSkillsFromSource,
   importSkillsFromCustomPath,
-} from '../api';
+} from '../../api-client';
 
 /** Fuzzy match: query chars must appear in order in str (case-insensitive). */
 function fuzzyMatch(str: string, query: string): boolean {

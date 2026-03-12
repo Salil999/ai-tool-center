@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getServerTools } from '../api';
-import type { Server } from '../types';
+import { getServerTools } from '../../api-client';
+import type { Server } from '../../types';
 
 interface ServerCardProps {
   server: Server;

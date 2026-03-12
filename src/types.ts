@@ -80,3 +80,39 @@ export interface ProjectDirectory {
   path: string;
   name?: string;
 }
+
+/** Credential (API key) for API credentials tab */
+export interface Credential {
+  id: string;
+  name: string;
+  value: string;
+}
+
+/** Audit log entry as returned from API (config is JSON-serialized) */
+export interface AuditEntryResponse {
+  timestamp: string;
+  action: string;
+  configBefore: Record<string, unknown>;
+  configAfter: Record<string, unknown>;
+  details?: Record<string, unknown>;
+}
+
+/** Lint finding from skill lint API */
+export interface LintFinding {
+  field: string;
+  file: string;
+  fixable: boolean;
+  level: 'error' | 'warning' | 'info';
+  message: string;
+}
+
+/** Lint report from skill lint API */
+export interface LintReport {
+  files: number;
+  findings: LintFinding[];
+  errors: number;
+  warnings: number;
+  infos: number;
+  fixed: number;
+  generatedAt: string;
+}
