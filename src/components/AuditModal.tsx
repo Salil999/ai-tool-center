@@ -76,8 +76,10 @@ function ContentDiff({ before, after }: { before: string; after: string }) {
   );
 }
 
+const CREDENTIAL_ACTIONS = new Set(['credential_create', 'credential_update', 'credential_delete', 'credential_reorder']);
+
 function formatDetailsForBadge(details: Record<string, unknown>): string {
-  const skip = new Set(['contentBefore', 'contentAfter', 'contentPreview']);
+  const skip = new Set(['contentBefore', 'contentAfter', 'contentPreview', 'credentialValue', 'credentialId']);
   const parts: string[] = [];
   for (const [k, v] of Object.entries(details)) {
     if (skip.has(k)) continue;
@@ -117,6 +119,10 @@ const ACTION_LABELS: Record<string, string> = {
   project_directory_add: 'Project directory added',
   project_directory_update: 'Project directory updated',
   project_directory_remove: 'Project directory removed',
+  credential_create: 'Credential added',
+  credential_update: 'Credential updated',
+  credential_delete: 'Credential removed',
+  credential_reorder: 'Credentials reordered',
 };
 
 function formatAction(action: string): string {
@@ -355,6 +361,33 @@ export function AuditModal({ onClose }: AuditModalProps) {
                             before={entry.details.contentBefore}
                             after={entry.details.contentAfter}
                           />
+                        ) : CREDENTIAL_ACTIONS.has(entry.action) && entry.details ? (
+                          <div className="audit-credential-details">
+                            {entry.action === 'credential_reorder' ? (
+                              <>
+                                <h4>Credentials reordered</h4>
+                                <p className="audit-credential-order">
+                                  New order: {Array.isArray(entry.details.order)
+                                    ? entry.details.order.join(', ')
+                                    : '—'}
+                                </p>
+                              </>
+                            ) : (
+                              <>
+                                <h4>Credential change</h4>
+                                <dl className="audit-details-dl">
+                                  <dt>Key name</dt>
+                                  <dd>{String(entry.details.credentialName ?? entry.details.credentialId ?? '—')}</dd>
+                                  {typeof entry.details.credentialValue === 'string' && (
+                                    <>
+                                      <dt>Value</dt>
+                                      <dd><code className="audit-credential-value">{entry.details.credentialValue}</code></dd>
+                                    </>
+                                  )}
+                                </dl>
+                              </>
+                            )}
+                          </div>
                         ) : (
                           <ConfigDiff
                             before={entry.configBefore as Record<string, unknown>}

@@ -250,3 +250,43 @@ export async function updateProjectDirectory(id: string, payload: { path?: strin
 export async function deleteProjectDirectory(id: string) {
   await fetch(`${API}/project-directories/${id}`, { method: 'DELETE' });
 }
+
+// Credentials (API keys)
+export interface Credential {
+  id: string;
+  name: string;
+  value: string;
+}
+
+export async function getCredentials() {
+  return fetchJSON<Credential[]>(`${API}/credentials`);
+}
+
+export async function getCredential(id: string) {
+  return fetchJSON<Credential>(`${API}/credentials/${id}`);
+}
+
+export async function createCredential(payload: { name: string; value: string }) {
+  return fetchJSON<Credential>(`${API}/credentials`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateCredential(id: string, payload: { name?: string; value?: string }) {
+  return fetchJSON<Credential>(`${API}/credentials/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteCredential(id: string) {
+  await fetch(`${API}/credentials/${id}`, { method: 'DELETE' });
+}
+
+export async function reorderCredentials(order: string[]) {
+  return fetchJSON<{ order: string[] }>(`${API}/credentials/reorder`, {
+    method: 'PATCH',
+    body: JSON.stringify({ order }),
+  });
+}

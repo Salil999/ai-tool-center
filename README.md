@@ -10,6 +10,7 @@ A local web app to manage MCP (Model Context Protocol) server configurations and
 - **View terminal output** for stdio servers (start/stop and stream output)
 - **Sync** to Cursor, VS Code, Claude Code, OpenCode, ChatGPT, and more with one click
 - **Custom sync** to any config file path
+- **API Credentials** tab for storing API keys and secrets (masked with reveal toggle)
 
 ## Installation
 
@@ -76,6 +77,7 @@ Each release includes a `.tar.gz` archive containing the executable and `dist/` 
 ## Config
 
 - **Default config**: `~/.ai_tools_manager/mcp/config.json`
+- **API credentials**: `~/.ai_tools_manager/creds/creds.json`
 - **Override**: `--config <path>` or `MCP_MANAGER_CONFIG` env var
 
 On first run, if `~/.cursor/mcp.json` exists, it will be imported as the initial config.

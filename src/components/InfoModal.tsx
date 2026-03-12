@@ -1,21 +1,28 @@
 interface InfoModalProps {
   onClose: () => void;
-  activeTab: 'mcp' | 'skills';
+  activeTab: 'mcp' | 'skills' | 'credentials';
 }
 
 export function InfoModal({ onClose, activeTab }: InfoModalProps) {
+  const title =
+    activeTab === 'mcp'
+      ? 'MCP Servers — User Guide'
+      : activeTab === 'skills'
+        ? 'Skills — User Guide'
+        : 'API Credentials — User Guide';
+
   return (
     <div className="modal info-modal">
       <div className="modal-header">
-        <h2>
-          {activeTab === 'mcp' ? 'MCP Servers — User Guide' : 'Skills — User Guide'}
-        </h2>
+        <h2>{title}</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>
       </div>
       <div className="modal-body info-modal-body">
-        {activeTab === 'mcp' ? <MCPInfoContent /> : <SkillsInfoContent />}
+        {activeTab === 'mcp' && <MCPInfoContent />}
+        {activeTab === 'skills' && <SkillsInfoContent />}
+        {activeTab === 'credentials' && <CredentialsInfoContent />}
         <div className="modal-actions">
           <button type="button" className="btn btn-primary" onClick={onClose}>
             Close
@@ -298,6 +305,77 @@ function SkillsInfoContent() {
             Skills are stored in <code>~/.ai_tools_manager/skills/</code>. Each skill is a subdirectory
             containing its <code>SKILL.md</code> and any supporting files. Keep this directory private if
             your skills contain sensitive information.
+          </p>
+        </section>
+    </>
+  );
+}
+
+function CredentialsInfoContent() {
+  return (
+    <>
+        <section>
+          <h3>What are API Credentials?</h3>
+          <p>
+            <strong>API Credentials</strong> are key-value pairs for storing API keys, tokens, and other
+            secrets you use with AI tools and MCP servers. This tab lets you manage them in one place.
+            Values are masked by default—click the eye icon to reveal and copy them when needed.
+          </p>
+        </section>
+
+        <section>
+          <h3>Header Buttons</h3>
+          <dl className="info-dl">
+            <dt>Add Credential</dt>
+            <dd>
+              Creates a new API credential. You provide a <strong>key name</strong> (e.g. <code>OPENAI_API_KEY</code>)
+              and the <strong>key value</strong> (your secret). The value is stored securely and masked in the list.
+            </dd>
+          </dl>
+        </section>
+
+        <section>
+          <h3>Credential Cards</h3>
+          <p>Each credential appears as a card. You can:</p>
+          <dl className="info-dl">
+            <dt>Reveal / Hide</dt>
+            <dd>
+              Click the eye icon to reveal the value for copying. Click again to hide it. Values are
+              masked as dots (••••) by default for security.
+            </dd>
+            <dt>Copy</dt>
+            <dd>
+              When the value is revealed, a <strong>Copy</strong> button appears to copy it to your clipboard.
+              You can also click the revealed value to copy.
+            </dd>
+            <dt>Edit</dt>
+            <dd>
+              Opens the edit modal to change the key name or value.
+            </dd>
+            <dt>Delete</dt>
+            <dd>
+              Removes the credential after confirmation. This cannot be undone.
+            </dd>
+          </dl>
+        </section>
+
+        <section>
+          <h3>Data Storage &amp; Sync</h3>
+          <p>
+            Credentials are stored in <code>~/.ai_tools_manager/creds/creds.json</code>. The file is
+            read and written on every action, so changes sync immediately to disk. If you use cloud
+            sync (e.g. iCloud, Dropbox) for <code>~/.ai_tools_manager/</code>, your credentials will
+            sync across devices. <strong>Keep this directory private</strong>—never commit it to version
+            control or share it.
+          </p>
+        </section>
+
+        <section>
+          <h3>Security</h3>
+          <p>
+            API credentials are sensitive. The app runs locally and stores data only on your machine.
+            Ensure your user account has appropriate file permissions and avoid exposing the credentials
+            directory to untrusted processes or networks.
           </p>
         </section>
     </>
