@@ -49,6 +49,17 @@ body {
   font-weight: 600;
 }
 
+.github-link {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  transition: color 0.15s ease;
+}
+
+.github-link:hover {
+  color: var(--text);
+}
+
 .header-actions {
   display: flex;
   align-items: center;
