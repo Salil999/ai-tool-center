@@ -85,14 +85,15 @@ On first run, if `~/.cursor/mcp.json` exists, it will be imported as the initial
 | Target | Config Path |
 |--------|-------------|
 | Cursor | `~/.cursor/mcp.json` |
-| VS Code | `~/Library/Application Support/Code/User/mcp.json` (macOS) |
+| VS Code | macOS: `~/Library/Application Support/Code/User/mcp.json` · Windows: `%APPDATA%\Code\User\mcp.json` · Linux: `~/.config/Code/User/mcp.json` |
 | Claude Code | `~/.claude/mcp.json` |
+| Claude Desktop | macOS: `~/Library/Application Support/Claude/claude_desktop_config.json` · Windows: `%APPDATA%\Claude\claude_desktop_config.json` · Linux: `~/.config/Claude/claude_desktop_config.json` |
 | OpenCode | `~/.config/opencode/opencode.json` |
-| ChatGPT | `~/Library/Application Support/OpenAI/ChatGPT/mcp.json` (macOS) |
+| ChatGPT | macOS: `~/Library/Application Support/OpenAI/ChatGPT/mcp.json` · Windows: `%APPDATA%\OpenAI\ChatGPT\mcp.json` · Linux: `~/.config/openai/chatgpt/mcp.json` |
 | Codex | `~/.codex/config.toml` |
 | Gemini CLI | `~/.gemini/settings.json` |
-| Windsurf | `~/.codeium/windsurf/mcp_config.json` |
-| Antigravity | `~/.antigravity_tools/mcp_config.json` |
+| Windsurf | macOS/Linux: `~/.codeium/windsurf/mcp_config.json` · Windows: `%USERPROFILE%\.codeium\windsurf\mcp_config.json` |
+| Antigravity | macOS/Linux: `~/.antigravity_tools/mcp_config.json` · Windows: `%USERPROFILE%\.antigravity_tools\mcp_config.json` |
 
 ## TODOs
 

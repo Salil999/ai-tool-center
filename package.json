@@ -2,19 +2,20 @@
   "name": "ai-tools-manager",
   "version": "1.0.0",
   "description": "Manage MCP server configurations and sync to AI tools",
-  "main": "src/index.js",
+  "type": "module",
+  "main": "src/index.ts",
   "bin": {
-    "mcp-manager": "./src/cli.js"
+    "mcp-manager": "./src/cli.ts"
   },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "start": "bun ./src/cli.js",
-    "start:node": "node ./src/cli.js",
-    "dev": "concurrently \"vite\" \"bun ./src/cli.js --port 3847\"",
+    "start": "bun ./src/cli.ts",
+    "start:node": "tsx ./src/cli.ts",
+    "dev": "concurrently \"vite\" \"bun ./src/cli.ts --port 3847\"",
     "build": "vite build",
     "preview": "vite preview",
-    "compile": "bun run build && bun build --compile --minify ./src/cli.js --outfile ai-tools-manager"
+    "compile": "bun run build && bun build --compile --minify ./src/cli.ts --outfile ai-tools-manager"
   },
   "keywords": [
     "mcp",
@@ -41,12 +42,18 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.0",
     "jsdom": "^28.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "supertest": "^7.2.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
     "vite": "^6.0.3",
     "vitest": "^4.1.0"
   }
