@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/lint": "^6.9.5",
     "@iarna/toml": "^2.2.5",
     "@modelcontextprotocol/sdk": "^1.27.1",
@@ -37,6 +38,8 @@
     "cors": "^2.8.5",
     "diff": "^8.0.3",
     "express": "^4.21.0",
+    "fuse.js": "^7.1.0",
+    "gray-matter": "^4.0.3",
     "open": "^11.0.0"
   },
   "devDependencies": {

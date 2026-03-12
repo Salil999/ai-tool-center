@@ -10,6 +10,10 @@ import { createConfigRouter } from './api/config.js';
 import { createImportRouter } from './api/import.js';
 import { createOAuthRouter } from './api/oauth.js';
 import { createAuditRouter } from './api/audit.js';
+import { createSkillsRouter } from './api/skills.js';
+import { createSkillsSyncRouter } from './api/skills-sync.js';
+import { createSkillsImportRouter } from './api/skills-import.js';
+import { createProjectDirectoriesRouter } from './api/project-directories.js';
 import { AuditStore } from './audit/store.js';
 import type { AppConfig } from './types.js';
 
@@ -63,6 +67,10 @@ export function createApp(options: CreateAppOptions = {}) {
 
   app.use('/api/servers', createServersRouter(getConfig, saveConfigFn, baseUrl));
   app.use('/api/sync', createSyncRouter(getConfig, auditStore));
+  app.use('/api/skills/sync', createSkillsSyncRouter(getConfig, auditStore));
+  app.use('/api/skills/import', createSkillsImportRouter(getConfig, saveConfigFn));
+  app.use('/api/skills', createSkillsRouter(getConfig, saveConfigFn, auditStore));
+  app.use('/api/project-directories', createProjectDirectoriesRouter(getConfig, saveConfigFn));
   app.use('/api/config', createConfigRouter(getConfig, saveConfigFn));
   app.use('/api/import', createImportRouter(getConfig, saveConfigFn));
   app.use('/api/audit', createAuditRouter(auditStore, getConfig, saveConfigFn));

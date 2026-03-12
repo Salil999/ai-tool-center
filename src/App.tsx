@@ -7,10 +7,12 @@ import { ImportModal } from './components/ImportModal';
 import { InfoModal } from './components/InfoModal';
 import { AuditModal } from './components/AuditModal';
 import { Toast } from './components/Toast';
+import { SkillsTab } from './components/SkillsTab';
 import { getServers, createServer, updateServer, deleteServer, setServerEnabled, reorderServers, syncTo, syncToCustom } from './api';
 import type { Server } from './types';
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState<'mcp' | 'skills'>('mcp');
   const [servers, setServers] = useState<Server[]>([]);
   const [editServerId, setEditServerId] = useState<string | null>(null);
   const [customSyncOpen, setCustomSyncOpen] = useState(false);
@@ -120,30 +122,55 @@ export default function App() {
     <div className="app">
       <header className="header">
         <h1>AI Tools Manager</h1>
-        <div className="header-actions">
-          <SyncSection onSync={handleSync} onCustomSync={() => setCustomSyncOpen(true)} />
-          <button type="button" className="btn" onClick={() => setImportOpen(true)}>
-            Import
-          </button>
-        </div>
       </header>
 
       <main className="main">
-        <section className="servers-section">
-          <div className="servers-section-header">
-            <h2>MCP Servers</h2>
-            <button type="button" className="btn btn-primary" onClick={handleAddServer}>
-              Add Server
-            </button>
-          </div>
-          <ServerList
-            servers={servers}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onToggle={handleToggle}
-            onReorder={handleReorder}
-          />
-        </section>
+        <div className="tabs">
+          <button
+            type="button"
+            className={`tab ${activeTab === 'mcp' ? 'active' : ''}`}
+            onClick={() => setActiveTab('mcp')}
+          >
+            MCP Servers
+          </button>
+          <button
+            type="button"
+            className={`tab ${activeTab === 'skills' ? 'active' : ''}`}
+            onClick={() => setActiveTab('skills')}
+          >
+            Skills
+          </button>
+        </div>
+
+        {activeTab === 'mcp' && (
+          <section className="servers-section">
+            <div className="servers-section-header">
+              <h2>MCP Servers</h2>
+              <div className="header-actions">
+                <SyncSection onSync={handleSync} onCustomSync={() => setCustomSyncOpen(true)} />
+                <button type="button" className="btn" onClick={() => setImportOpen(true)}>
+                  Import
+                </button>
+                <button type="button" className="btn btn-primary" onClick={handleAddServer}>
+                  Add Server
+                </button>
+              </div>
+            </div>
+            <ServerList
+              servers={servers}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onToggle={handleToggle}
+              onReorder={handleReorder}
+            />
+          </section>
+        )}
+
+        {activeTab === 'skills' && (
+          <section className="servers-section">
+            <SkillsTab showToast={showToast} />
+          </section>
+        )}
       </main>
 
       <footer className="footer">
@@ -197,7 +224,7 @@ export default function App() {
       {infoOpen && (
         <div className="modal-overlay" onClick={() => setInfoOpen(false)}>
           <div onClick={(e) => e.stopPropagation()}>
-            <InfoModal onClose={() => setInfoOpen(false)} />
+            <InfoModal onClose={() => setInfoOpen(false)} activeTab={activeTab} />
           </div>
         </div>
       )}

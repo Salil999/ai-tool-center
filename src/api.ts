@@ -117,3 +117,136 @@ export async function setAuditOptions(maxEntries: number) {
 export async function clearAuditLog() {
   await fetch(`${API}/audit`, { method: 'DELETE' });
 }
+
+// Skills
+export async function getSkills() {
+  return fetchJSON<Array<Record<string, unknown>>>(`${API}/skills`);
+}
+
+export async function getSkill(id: string) {
+  return fetchJSON<Record<string, unknown>>(`${API}/skills/${id}`);
+}
+
+export async function createSkill(payload: Record<string, unknown>) {
+  return fetchJSON<Record<string, unknown>>(`${API}/skills`, { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function updateSkill(id: string, payload: Record<string, unknown>) {
+  return fetchJSON<Record<string, unknown>>(`${API}/skills/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export async function deleteSkill(id: string, deleteFiles = false) {
+  await fetch(`${API}/skills/${id}${deleteFiles ? '?deleteFiles=true' : ''}`, { method: 'DELETE' });
+}
+
+export async function reorderSkills(order: string[]) {
+  return fetchJSON<{ order: string[] }>(`${API}/skills/reorder`, {
+    method: 'PATCH',
+    body: JSON.stringify({ order }),
+  });
+}
+
+export async function setSkillEnabled(id: string, enabled: boolean) {
+  return fetchJSON<Record<string, unknown>>(`${API}/skills/${id}/enabled`, {
+    method: 'PATCH',
+    body: JSON.stringify({ enabled }),
+  });
+}
+
+export interface LintFinding {
+  field: string;
+  file: string;
+  fixable: boolean;
+  level: 'error' | 'warning' | 'info';
+  message: string;
+}
+
+export interface LintReport {
+  files: number;
+  findings: LintFinding[];
+  errors: number;
+  warnings: number;
+  infos: number;
+  fixed: number;
+  generatedAt: string;
+}
+
+export async function getSkillLint(id: string) {
+  return fetchJSON<LintReport>(`${API}/skills/${id}/lint`);
+}
+
+export async function getSkillContent(id: string) {
+  return fetchJSON<{ content: string }>(`${API}/skills/${id}/content`);
+}
+
+export async function saveSkillContent(id: string, content: string) {
+  return fetchJSON<{ success: boolean }>(`${API}/skills/${id}/content`, {
+    method: 'PUT',
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function lintSkillContent(id: string, content: string) {
+  return fetchJSON<LintReport>(`${API}/skills/${id}/lint-content`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  });
+}
+
+/** Lint SKILL.md content without an existing skill (e.g. when adding new). */
+export async function lintContent(content: string) {
+  return fetchJSON<LintReport>(`${API}/skills/validate-content`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function getSkillSyncTargets() {
+  return fetchJSON<{ providers: Array<{ id: string; name: string; path: string }>; projects: Array<{ id: string; name: string; path: string }> }>(`${API}/skills/sync/targets`);
+}
+
+export async function syncSkillsTo(target: string) {
+  return fetchJSON<{ path: string; success: boolean; syncedCount: number }>(`${API}/skills/sync/${target}`, { method: 'POST' });
+}
+
+export async function syncSkillsToProject(projectId: string) {
+  return fetchJSON<{ path: string; success: boolean; syncedCount: number }>(`${API}/skills/sync/project/${projectId}`, { method: 'POST' });
+}
+
+export async function getSkillImportSources() {
+  return fetchJSON<Array<{ id: string; name: string; path: string; exists: boolean; skillCount: number; error?: string }>>(`${API}/skills/import/sources`);
+}
+
+export async function importSkillsFromSource(sourceId: string) {
+  return fetchJSON<{ success: boolean; imported: number; total: number }>(`${API}/skills/import/${encodeURIComponent(sourceId)}`, { method: 'POST' });
+}
+
+export async function importSkillsFromCustomPath(dirPath: string) {
+  return fetchJSON<{ success: boolean; imported: number; total: number }>(`${API}/skills/import/custom`, {
+    method: 'POST',
+    body: JSON.stringify({ path: dirPath }),
+  });
+}
+
+// Project directories
+export async function getProjectDirectories() {
+  return fetchJSON<Array<Record<string, unknown>>>(`${API}/project-directories`);
+}
+
+export async function addProjectDirectory(payload: { path: string; name?: string }) {
+  return fetchJSON<Record<string, unknown>>(`${API}/project-directories`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateProjectDirectory(id: string, payload: { path?: string; name?: string }) {
+  return fetchJSON<Record<string, unknown>>(`${API}/project-directories/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteProjectDirectory(id: string) {
+  await fetch(`${API}/project-directories/${id}`, { method: 'DELETE' });
+}

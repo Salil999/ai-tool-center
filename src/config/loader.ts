@@ -2,12 +2,19 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import cursorProvider from '../providers/cursor.js';
+import { copySkillInto } from '../skills/sync.js';
 import type { AppConfig } from '../types.js';
+
+const OLD_SKILLS_DIR = path.join(os.homedir(), '.mcp-manager', 'skills');
+const NEW_SKILLS_DIR = path.join(os.homedir(), '.ai_tools_manager', 'skills');
 
 export const DEFAULT_CONFIG: AppConfig = {
   servers: {},
   customProviders: [],
   auditOptions: { maxEntries: 100 },
+  skills: {},
+  skillOrder: [],
+  projectDirectories: [],
 };
 
 function getDefaultConfigPath(): string {
@@ -63,15 +70,59 @@ export function loadConfig(configPath?: string): AppConfig {
   try {
     const data = fs.readFileSync(resolvedPath, 'utf8');
     const config = JSON.parse(data) as AppConfig;
-    return {
+    const merged: AppConfig = {
       ...DEFAULT_CONFIG,
       ...config,
       servers: config.servers || {},
       auditOptions: config.auditOptions ?? DEFAULT_CONFIG.auditOptions,
+      skills: config.skills || {},
+      skillOrder: config.skillOrder ?? [],
+      projectDirectories: config.projectDirectories ?? [],
     };
+    if (migrateSkillsFromMcpManager(merged)) {
+      saveConfig(resolvedPath, merged);
+    }
+    return merged;
   } catch (err) {
     throw new Error(`Failed to load config: ${(err as Error).message}`);
   }
+}
+
+/**
+ * Migrate skills from ~/.mcp-manager/skills/ to ~/.ai_tools_manager/skills/.
+ * Copies each skill dir and updates config paths.
+ * Returns true if any migration was performed.
+ */
+function migrateSkillsFromMcpManager(config: AppConfig): boolean {
+  const skills = config.skills;
+  if (!skills) return false;
+
+  let changed = false;
+  const oldDirNorm = path.resolve(OLD_SKILLS_DIR) + path.sep;
+
+  for (const [skillId, skill] of Object.entries(skills)) {
+    const skillPath = skill.path;
+    if (!skillPath || typeof skillPath !== 'string') continue;
+
+    const resolved = path.resolve(skillPath);
+    if (!resolved.startsWith(oldDirNorm)) continue;
+
+    const newPath = path.join(NEW_SKILLS_DIR, skillId);
+    try {
+      if (fs.existsSync(resolved)) {
+        fs.mkdirSync(path.dirname(newPath), { recursive: true });
+        copySkillInto(resolved, newPath);
+      } else {
+        fs.mkdirSync(newPath, { recursive: true });
+      }
+      skill.path = newPath;
+      changed = true;
+    } catch (err) {
+      console.warn(`Could not migrate skill ${skillId}:`, (err as Error).message);
+    }
+  }
+
+  return changed;
 }
 
 export function saveConfig(configPath: string, config: AppConfig): void {

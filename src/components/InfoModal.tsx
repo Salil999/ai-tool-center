@@ -1,25 +1,41 @@
 interface InfoModalProps {
   onClose: () => void;
+  activeTab: 'mcp' | 'skills';
 }
 
-export function InfoModal({ onClose }: InfoModalProps) {
+export function InfoModal({ onClose, activeTab }: InfoModalProps) {
   return (
     <div className="modal info-modal">
       <div className="modal-header">
-        <h2>AI Tools Manager — User Guide</h2>
+        <h2>
+          {activeTab === 'mcp' ? 'MCP Servers — User Guide' : 'Skills — User Guide'}
+        </h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>
       </div>
       <div className="modal-body info-modal-body">
+        {activeTab === 'mcp' ? <MCPInfoContent /> : <SkillsInfoContent />}
+        <div className="modal-actions">
+          <button type="button" className="btn btn-primary" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MCPInfoContent() {
+  return (
+    <>
         <section>
-          <h3>What is MCP Server Manager?</h3>
+          <h3>What are MCP Servers?</h3>
           <p>
-            AI Tools Manager is a central hub for configuring <strong>Model Context Protocol (MCP) servers</strong>.
-            MCP servers expose tools and resources that AI assistants (like Cursor, Claude, ChatGPT) can use—for
-            example, file access, database queries, or API integrations. This app lets you add, edit, and manage
-            MCP servers in one place, then <strong>sync</strong> your configuration to multiple AI tools so you
-            don&apos;t have to configure each one separately.
+            <strong>Model Context Protocol (MCP) servers</strong> expose tools and resources that AI assistants
+            (like Cursor, Claude, ChatGPT) can use—for example, file access, database queries, or API integrations.
+            AI Tools Manager lets you add, edit, and manage MCP servers in one place, then <strong>sync</strong> your
+            configuration to multiple AI tools so you don&apos;t have to configure each one separately.
           </p>
         </section>
 
@@ -163,13 +179,127 @@ export function InfoModal({ onClose }: InfoModalProps) {
             files private and do not share them.
           </p>
         </section>
+    </>
+  );
+}
 
-        <div className="modal-actions">
-          <button type="button" className="btn btn-primary" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+function SkillsInfoContent() {
+  return (
+    <>
+        <section>
+          <h3>What are Agent Skills?</h3>
+          <p>
+            <strong>Agent Skills</strong> are markdown files that teach AI assistants how to perform specific
+            tasks—for example, reviewing PRs using team standards, generating commit messages, querying
+            database schemas, or any specialized workflow. Each skill is a directory containing a{' '}
+            <code>SKILL.md</code> file with YAML frontmatter (name, description) and markdown instructions.
+            This app lets you manage skills in one place and <strong>sync</strong> them to Cursor, Claude,
+            Gemini CLI, and other tools, or to project directories.
+          </p>
+        </section>
+
+        <section>
+          <h3>Header Buttons</h3>
+          <dl className="info-dl">
+            <dt>Write</dt>
+            <dd>
+              A dropdown that copies your enabled skills to a target. Choose a <strong>Provider</strong> (Cursor,
+              Claude Code, Gemini CLI, GitHub Copilot, or Agents) to sync to that tool&apos;s skills directory.
+              Choose a <strong>Project</strong> to sync to <code>.agents/skills/</code> in that project. Add
+              project paths in the Project Directories section below.
+            </dd>
+            <dt>Import</dt>
+            <dd>
+              Opens a modal to import skills from provider directories (Cursor, Claude, Gemini CLI, etc.) or
+              project directories. Skills are copied into the central store at <code>~/.ai_tools_manager/skills/</code>.
+              Duplicate skills (same name) are skipped. You can also import from a custom directory path.
+            </dd>
+            <dt>Add Skill</dt>
+            <dd>
+              Creates a new skill. You provide the full <code>SKILL.md</code> content with YAML frontmatter and
+              markdown body. Use <strong>Validate</strong> to check the format before saving.
+            </dd>
+          </dl>
+        </section>
+
+        <section>
+          <h3>Skill Cards</h3>
+          <p>Each skill appears as a card. You can:</p>
+          <dl className="info-dl">
+            <dt>Expand / Collapse</dt>
+            <dd>
+              Click the row (or the chevron ▶/▼) to expand and see the <strong>validation report</strong>.
+              The app validates the skill&apos;s format when you expand. Click &quot;Show less&quot; to collapse.
+            </dd>
+            <dt>Enable / Disable</dt>
+            <dd>
+              Toggles whether the skill is active. Disabled skills are kept in the list but excluded when you
+              sync to providers or projects.
+            </dd>
+            <dt>Edit</dt>
+            <dd>
+              Opens the edit modal to change the skill&apos;s name, description, or content.
+            </dd>
+            <dt>Delete</dt>
+            <dd>
+              Removes the skill after confirmation. This cannot be undone.
+            </dd>
+          </dl>
+        </section>
+
+        <section>
+          <h3>SKILL.md Format</h3>
+          <p>
+            Every skill requires a <code>SKILL.md</code> file with YAML frontmatter and markdown body:
+          </p>
+          <ul>
+            <li><strong>name</strong> — Unique identifier (max 64 chars, lowercase letters/numbers/hyphens).</li>
+            <li><strong>description</strong> — Brief description of what the skill does and when to use it (max 1024 chars). The agent uses this to decide when to apply the skill.</li>
+            <li><strong>Body</strong> — Markdown instructions, examples, and workflows for the agent.</li>
+          </ul>
+          <p>
+            See the{' '}
+            <a href="https://agentskills.io/specification" target="_blank" rel="noopener noreferrer">
+              Agent Skills specification
+            </a>{' '}
+            for full format details.
+          </p>
+        </section>
+
+        <section>
+          <h3>Project Directories</h3>
+          <p>
+            Save project paths to quickly sync skills to <code>.agents/skills/</code> in each project. Add a
+            path (e.g. <code>~/my-project</code>) and optionally a display name. The <strong>Write</strong> dropdown
+            will list your saved projects so you can sync with one click.
+          </p>
+        </section>
+
+        <section>
+          <h3>Sync Targets</h3>
+          <p>
+            Write copies your enabled skills to the target directory. Supported providers:
+          </p>
+          <ul>
+            <li><strong>Cursor</strong> — <code>~/.cursor/skills/</code></li>
+            <li><strong>Claude Code</strong> — <code>~/.claude/skills/</code></li>
+            <li><strong>Gemini CLI</strong> — <code>~/.gemini/skills/</code></li>
+            <li><strong>GitHub Copilot</strong> — <code>~/.copilot/skills/</code></li>
+            <li><strong>Agents (cross-client)</strong> — <code>~/.agents/skills/</code></li>
+          </ul>
+          <p>
+            For projects, skills are written to <code>.agents/skills/</code> inside the project directory.
+          </p>
+        </section>
+
+        <section>
+          <h3>Data Storage</h3>
+          <p>
+            Skills are stored in <code>~/.ai_tools_manager/skills/</code>. Each skill is a subdirectory
+            containing its <code>SKILL.md</code> and any supporting files. Keep this directory private if
+            your skills contain sensitive information.
+          </p>
+        </section>
+    </>
   );
 }

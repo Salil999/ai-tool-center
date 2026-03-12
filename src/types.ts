@@ -33,6 +33,12 @@ export interface AppConfig {
   customProviders: CustomProvider[];
   /** Audit log options (max entries to retain) */
   auditOptions?: AuditOptions;
+  /** Skills (Agent Skills format - SKILL.md directories) */
+  skills: Record<string, Omit<Skill, 'id'>>;
+  /** Optional order of skill IDs for display and sync */
+  skillOrder?: string[];
+  /** Saved project directories for skill sync */
+  projectDirectories: ProjectDirectory[];
 }
 
 export interface CustomProvider {
@@ -56,4 +62,21 @@ export interface McpTool {
   name: string;
   description?: string;
   inputSchema?: Record<string, unknown>;
+}
+
+/** Skill definition (Agent Skills format - SKILL.md in directory) */
+export interface Skill {
+  id?: string;
+  path: string;
+  name: string;
+  /** From SKILL.md frontmatter; not stored in config */
+  description?: string;
+  enabled: boolean;
+}
+
+/** Saved project directory for skill sync */
+export interface ProjectDirectory {
+  id: string;
+  path: string;
+  name?: string;
 }

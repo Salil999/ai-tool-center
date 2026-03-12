@@ -136,6 +136,13 @@ body {
   background: var(--bg-hover);
 }
 
+.sync-dropdown-section-label {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
 
 .btn {
   padding: 0.5rem 1rem;
@@ -303,6 +310,71 @@ body {
   color: var(--danger, #ef4444);
 }
 
+.skill-lint-summary {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.skill-lint-pass {
+  color: var(--success);
+}
+
+.skill-lint-issues {
+  display: flex;
+  gap: 1rem;
+}
+
+.skill-lint-error-count {
+  color: var(--danger);
+}
+
+.skill-lint-warning-count {
+  color: #f59e0b;
+}
+
+.skill-lint-findings {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.skill-lint-finding {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: baseline;
+}
+
+.skill-lint-finding:last-child {
+  border-bottom: none;
+}
+
+.skill-lint-level {
+  font-weight: 600;
+  text-transform: uppercase;
+  min-width: 4.5rem;
+}
+
+.skill-lint-finding.skill-lint-error .skill-lint-level {
+  color: var(--danger);
+}
+
+.skill-lint-finding.skill-lint-warning .skill-lint-level {
+  color: #f59e0b;
+}
+
+.skill-lint-finding.skill-lint-info .skill-lint-level {
+  color: var(--text-muted);
+}
+
+.skill-lint-field {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
 .server-tools-oauth {
   display: flex;
   flex-direction: column;
@@ -417,7 +489,7 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(15, 15, 18, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -569,6 +641,54 @@ body {
   color: var(--danger);
 }
 
+.skill-editor-modal .raw-editor-wrap {
+  margin-bottom: 1rem;
+}
+
+.skill-editor-textarea {
+  display: block;
+  width: 100%;
+  min-height: 400px;
+  padding: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  resize: vertical;
+}
+
+.skill-editor-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.skill-editor-desc {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.skill-editor-desc a {
+  color: var(--accent);
+}
+
+.skill-editor-lint {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.skill-editor-lint-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .font-mono {
   font-family: var(--font-mono);
   font-size: 0.85rem;
@@ -718,6 +838,32 @@ body {
   color: var(--text-muted);
 }
 
+.form-group small {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.form-group-checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.form-error {
+  color: var(--danger);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.modal-desc {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0 0 1rem;
+}
+
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -801,6 +947,43 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.audit-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.audit-search-input {
+  flex: 1;
+  min-width: 160px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+.audit-search-input::placeholder {
+  color: var(--text-muted);
+}
+
+.audit-event-select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  min-width: 180px;
+}
+
+.audit-filter-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .audit-loading,
@@ -929,6 +1112,113 @@ body {
   .audit-config-diff {
     grid-template-columns: 1fr;
   }
+}
+
+.project-directories-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.project-directories-section h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.project-directories-desc {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.project-directories-add {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.project-dir-input {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  min-width: 180px;
+}
+
+.project-dir-name {
+  min-width: 120px;
+}
+
+.project-directories-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.project-dir-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.project-dir-display {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-dir-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.project-dir-edit-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.project-directories-empty {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
 }
 
 .hidden {
