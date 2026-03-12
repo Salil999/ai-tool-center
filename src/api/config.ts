@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import type { AppConfig } from '../types.js';
 
 type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig) => void;
+type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
 
 export function createConfigRouter(getConfig: GetConfig, saveConfig: SaveConfig) {
   const router = Router();
@@ -19,7 +19,7 @@ export function createConfigRouter(getConfig: GetConfig, saveConfig: SaveConfig)
     const providers = req.body;
     if (!Array.isArray(providers)) return res.status(400).json({ error: 'customProviders must be array' });
     config.customProviders = providers;
-    saveConfig(config);
+    saveConfig(config, { action: 'custom_providers_replace', details: { count: providers.length } });
     res.json(config.customProviders);
   });
 
@@ -35,7 +35,7 @@ export function createConfigRouter(getConfig: GetConfig, saveConfig: SaveConfig)
       configKey: configKey || 'mcpServers',
     };
     config.customProviders.push(provider);
-    saveConfig(config);
+    saveConfig(config, { action: 'custom_provider_add', details: { providerId: provider.id } });
     res.status(201).json(provider);
   });
 

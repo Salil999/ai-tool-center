@@ -7,6 +7,7 @@ import type { AppConfig } from '../types.js';
 export const DEFAULT_CONFIG: AppConfig = {
   servers: {},
   customProviders: [],
+  auditOptions: { maxEntries: 100 },
 };
 
 function getDefaultConfigPath(): string {
@@ -62,7 +63,12 @@ export function loadConfig(configPath?: string): AppConfig {
   try {
     const data = fs.readFileSync(resolvedPath, 'utf8');
     const config = JSON.parse(data) as AppConfig;
-    return { ...DEFAULT_CONFIG, ...config, servers: config.servers || {} };
+    return {
+      ...DEFAULT_CONFIG,
+      ...config,
+      servers: config.servers || {},
+      auditOptions: config.auditOptions ?? DEFAULT_CONFIG.auditOptions,
+    };
   } catch (err) {
     throw new Error(`Failed to load config: ${(err as Error).message}`);
   }

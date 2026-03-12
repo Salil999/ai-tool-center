@@ -90,3 +90,30 @@ export async function importFromCustomFile(filePath: string, configKey = 'mcpSer
     body: JSON.stringify({ path: filePath, configKey }),
   });
 }
+
+export interface AuditEntry {
+  timestamp: string;
+  action: string;
+  configBefore: Record<string, unknown>;
+  configAfter: Record<string, unknown>;
+  details?: Record<string, unknown>;
+}
+
+export async function getAuditLog() {
+  return fetchJSON<{ entries: AuditEntry[] }>(`${API}/audit`);
+}
+
+export async function getAuditOptions() {
+  return fetchJSON<{ maxEntries: number }>(`${API}/audit/options`);
+}
+
+export async function setAuditOptions(maxEntries: number) {
+  return fetchJSON<{ maxEntries: number }>(`${API}/audit/options`, {
+    method: 'PUT',
+    body: JSON.stringify({ maxEntries }),
+  });
+}
+
+export async function clearAuditLog() {
+  await fetch(`${API}/audit`, { method: 'DELETE' });
+}

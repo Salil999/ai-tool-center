@@ -2,10 +2,11 @@ import { Router, Request, Response } from 'express';
 import { PROVIDERS, exportToProvider, exportToCustom } from '../providers/index.js';
 import { isPathSafe, resolvePath, getOrderedServers } from '../providers/utils.js';
 import type { AppConfig } from '../types.js';
+import type { AuditStore } from '../audit/store.js';
 
 type GetConfig = () => AppConfig;
 
-export function createSyncRouter(getConfig: GetConfig) {
+export function createSyncRouter(getConfig: GetConfig, auditStore: AuditStore) {
   const router = Router();
 
   const BUILTIN_TARGETS = PROVIDERS.filter((p) => p.id !== 'claude_desktop').map((p) => ({
@@ -22,6 +23,7 @@ export function createSyncRouter(getConfig: GetConfig) {
     if (!isPathSafe(resolvePath(customPath))) return res.status(400).json({ error: 'Path is not allowed' });
     try {
       const result = exportToCustom(servers, customPath, configKey);
+      auditStore.record('sync_to_custom', config, config, { path: result.path, configKey });
       res.json(result);
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });
@@ -51,8 +53,14 @@ export function createSyncRouter(getConfig: GetConfig) {
         const provider = (config.customProviders || []).find((p) => p.id === providerId);
         if (!provider) return res.status(404).json({ error: 'Custom provider not found' });
         result = exportToCustom(servers, provider.path, provider.configKey);
+        auditStore.record('sync_to_custom', config, config, {
+          providerId,
+          path: result.path,
+          configKey: provider.configKey,
+        });
       } else {
         result = exportToProvider(target, servers);
+        auditStore.record('sync_to_provider', config, config, { target, path: result.path });
       }
       res.json(result);
     } catch (err) {

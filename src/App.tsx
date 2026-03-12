@@ -5,6 +5,7 @@ import { SyncSection } from './components/SyncSection';
 import { CustomSyncModal } from './components/CustomSyncModal';
 import { ImportModal } from './components/ImportModal';
 import { InfoModal } from './components/InfoModal';
+import { AuditModal } from './components/AuditModal';
 import { Toast } from './components/Toast';
 import { getServers, createServer, updateServer, deleteServer, setServerEnabled, reorderServers, syncTo, syncToCustom } from './api';
 import type { Server } from './types';
@@ -15,6 +16,7 @@ export default function App() {
   const [customSyncOpen, setCustomSyncOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [auditOpen, setAuditOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: string } | null>(null);
 
   const showToast = useCallback((message: string, type = 'success') => {
@@ -148,6 +150,13 @@ export default function App() {
         <button
           type="button"
           className="btn btn-sm"
+          onClick={() => setAuditOpen(true)}
+        >
+          Audit Log
+        </button>
+        <button
+          type="button"
+          className="btn btn-sm"
           onClick={() => setInfoOpen(true)}
         >
           Information
@@ -173,6 +182,14 @@ export default function App() {
               onClose={() => setCustomSyncOpen(false)}
               onSync={handleCustomSync}
             />
+          </div>
+        </div>
+      )}
+
+      {auditOpen && (
+        <div className="modal-overlay" onClick={() => setAuditOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <AuditModal onClose={() => setAuditOpen(false)} />
           </div>
         </div>
       )}
