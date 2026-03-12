@@ -3,7 +3,7 @@ import { fetchToolsFromServer, OAuthRequiredError } from '../mcp/tools.js';
 import type { AppConfig } from '../types.js';
 
 type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig) => void;
+type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
 
 export function createServersRouter(
   getConfig: GetConfig,
@@ -12,7 +12,7 @@ export function createServersRouter(
 ) {
   const router = Router();
 
-  router.get('/', (req: Request, res: Response) => {
+  router.get('/', (_req: Request, res: Response) => {
     const config = getConfig();
     const servers = config.servers || {};
     const order = config.serverOrder || Object.keys(servers);
@@ -25,7 +25,7 @@ export function createServersRouter(
 
   router.get('/:id/tools', async (req: Request, res: Response) => {
     const config = getConfig();
-    const serverId = req.params.id;
+    const serverId = String(req.params.id ?? '');
     const server = config.servers?.[serverId];
     if (!server) return res.status(404).json({ error: 'Server not found' });
     try {
@@ -41,9 +41,10 @@ export function createServersRouter(
 
   router.get('/:id', (req: Request, res: Response) => {
     const config = getConfig();
-    const server = config.servers?.[req.params.id];
+    const serverId = String(req.params.id ?? '');
+    const server = config.servers?.[serverId];
     if (!server) return res.status(404).json({ error: 'Server not found' });
-    res.json({ id: req.params.id, ...server });
+    res.json({ id: serverId, ...server });
   });
 
   router.post('/', (req: Request, res: Response) => {
@@ -73,15 +74,16 @@ export function createServersRouter(
     } else if (!config.serverOrder.includes(finalId)) {
       config.serverOrder.push(finalId);
     }
-    saveConfig(config);
+    saveConfig(config, { action: 'server_create', details: { serverId: finalId } });
     res.status(201).json({ id: finalId, ...server });
   });
 
   router.put('/:id', (req: Request, res: Response) => {
     const config = getConfig();
-    if (!config.servers?.[req.params.id]) return res.status(404).json({ error: 'Server not found' });
+    const serverId = String(req.params.id ?? '');
+    if (!config.servers?.[serverId]) return res.status(404).json({ error: 'Server not found' });
     const body = (req.body || {}) as Record<string, unknown>;
-    const server = config.servers[req.params.id];
+    const server = config.servers[serverId];
     if (body.name !== undefined) server.name = body.name as string;
     if (body.enabled !== undefined) server.enabled = body.enabled as boolean;
     if (body.type !== undefined) server.type = body.type as 'stdio' | 'http' | 'sse';
@@ -90,18 +92,19 @@ export function createServersRouter(
     if (body.env !== undefined) server.env = typeof body.env === 'object' ? (body.env as Record<string, string>) : {};
     if (body.url !== undefined) server.url = body.url as string;
     if (body.headers !== undefined) server.headers = body.headers && typeof body.headers === 'object' ? (body.headers as Record<string, string>) : undefined;
-    saveConfig(config);
-    res.json({ id: req.params.id, ...server });
+    saveConfig(config, { action: 'server_update', details: { serverId } });
+    res.json({ id: serverId, ...server });
   });
 
   router.delete('/:id', (req: Request, res: Response) => {
     const config = getConfig();
-    if (!config.servers?.[req.params.id]) return res.status(404).json({ error: 'Server not found' });
-    delete config.servers[req.params.id];
+    const serverId = String(req.params.id ?? '');
+    if (!config.servers?.[serverId]) return res.status(404).json({ error: 'Server not found' });
+    delete config.servers[serverId];
     if (config.serverOrder) {
-      config.serverOrder = config.serverOrder.filter((id) => id !== req.params.id);
+      config.serverOrder = config.serverOrder.filter((id) => id !== serverId);
     }
-    saveConfig(config);
+    saveConfig(config, { action: 'server_delete', details: { serverId } });
     res.status(204).send();
   });
 
@@ -113,18 +116,19 @@ export function createServersRouter(
     const validOrder = order.filter((id) => servers[id]);
     const extraIds = Object.keys(servers).filter((id) => !validOrder.includes(id));
     config.serverOrder = [...validOrder, ...extraIds];
-    saveConfig(config);
+    saveConfig(config, { action: 'server_reorder', details: { order: config.serverOrder } });
     res.json({ order: config.serverOrder });
   });
 
   router.patch('/:id/enabled', (req: Request, res: Response) => {
     const config = getConfig();
-    if (!config.servers?.[req.params.id]) return res.status(404).json({ error: 'Server not found' });
+    const serverId = String(req.params.id ?? '');
+    if (!config.servers?.[serverId]) return res.status(404).json({ error: 'Server not found' });
     const enabled = (req.body as { enabled?: boolean })?.enabled;
     if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled must be boolean' });
-    config.servers[req.params.id].enabled = enabled;
-    saveConfig(config);
-    res.json({ id: req.params.id, enabled });
+    config.servers[serverId].enabled = enabled;
+    saveConfig(config, { action: 'server_enable_toggle', details: { serverId, enabled } });
+    res.json({ id: serverId, enabled });
   });
 
   return router;

@@ -68,5 +68,39 @@ describe('api/sync', () => {
       expect(res.status).toBe(400);
       expect(res.body.error).toContain('not allowed');
     });
+
+    it('records sync in audit log when using createApp', async () => {
+      const fs = await import('fs');
+      const os = await import('os');
+      const { createApp } = await import('../index.js');
+      const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sync-audit-'));
+      try {
+        const cfgPath = path.join(tmp, 'config.json');
+        fs.writeFileSync(cfgPath, JSON.stringify({
+          servers: { a: { name: 'A', enabled: true, type: 'stdio', command: 'node', args: [] } },
+          customProviders: [],
+        }), 'utf8');
+        const fullApp = createApp({ configPath: cfgPath, auditDir: tmp });
+        const customPath = path.join(process.cwd(), 'tmp-test-sync-audit.json');
+        const syncRes = await request(fullApp)
+          .post('/api/sync/custom')
+          .send({ path: customPath, configKey: 'mcpServers' });
+        expect(syncRes.status).toBe(200);
+        const auditRes = await request(fullApp).get('/api/audit');
+        expect(auditRes.status).toBe(200);
+        expect(auditRes.body.entries).toHaveLength(1);
+        expect(auditRes.body.entries[0].action).toBe('sync_to_custom');
+        expect(auditRes.body.entries[0].details?.path).toBe(customPath);
+      } finally {
+        try {
+          fs.rmSync(tmp, { recursive: true });
+          if (fs.existsSync(path.join(process.cwd(), 'tmp-test-sync-audit.json'))) {
+            fs.unlinkSync(path.join(process.cwd(), 'tmp-test-sync-audit.json'));
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    });
   });
 });

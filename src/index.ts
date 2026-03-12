@@ -9,14 +9,25 @@ import { createSyncRouter } from './api/sync.js';
 import { createConfigRouter } from './api/config.js';
 import { createImportRouter } from './api/import.js';
 import { createOAuthRouter } from './api/oauth.js';
+import { createAuditRouter } from './api/audit.js';
+import { AuditStore } from './audit/store.js';
 import type { AppConfig } from './types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export interface SaveConfigOptions {
+  action: string;
+  details?: Record<string, unknown>;
+}
+
+export type SaveConfig = (cfg: AppConfig, options?: SaveConfigOptions) => void;
 
 export interface CreateAppOptions {
   configPath?: string;
   baseUrl?: string;
   port?: number;
+  /** Directory for audit log file. Defaults to ~/.ai_tools_manager */
+  auditDir?: string;
 }
 
 export function createApp(options: CreateAppOptions = {}) {
@@ -24,14 +35,26 @@ export function createApp(options: CreateAppOptions = {}) {
   const baseUrl = options.baseUrl || `http://localhost:${options.port || 3847}`;
   let config = loadConfig(configPath);
 
+  const auditStore = new AuditStore(
+    config.auditOptions?.maxEntries ?? 100,
+    options.auditDir
+  );
+
   const getConfig = (): AppConfig => {
     config = loadConfig(configPath);
     return config;
   };
 
-  const saveConfigFn = (cfg: AppConfig) => {
+  const saveConfigFn: SaveConfig = (cfg: AppConfig, opts?: SaveConfigOptions) => {
+    const configBefore = getConfig();
     config = cfg;
     saveConfig(configPath, cfg);
+    auditStore.record(
+      opts?.action ?? 'config_change',
+      configBefore,
+      cfg,
+      opts?.details
+    );
   };
 
   const app = express();
@@ -39,9 +62,10 @@ export function createApp(options: CreateAppOptions = {}) {
   app.use(express.json());
 
   app.use('/api/servers', createServersRouter(getConfig, saveConfigFn, baseUrl));
-  app.use('/api/sync', createSyncRouter(getConfig));
+  app.use('/api/sync', createSyncRouter(getConfig, auditStore));
   app.use('/api/config', createConfigRouter(getConfig, saveConfigFn));
   app.use('/api/import', createImportRouter(getConfig, saveConfigFn));
+  app.use('/api/audit', createAuditRouter(auditStore, getConfig, saveConfigFn));
   app.use('/oauth', createOAuthRouter(baseUrl));
 
   app.use('/api', (_req, res) => {

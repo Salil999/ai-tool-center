@@ -8,7 +8,7 @@ import {
 import type { AppConfig } from '../types.js';
 
 type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig) => void;
+type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
 
 export function createImportRouter(getConfig: GetConfig, saveConfigFn: SaveConfig) {
   const router = Router();
@@ -28,7 +28,7 @@ export function createImportRouter(getConfig: GetConfig, saveConfigFn: SaveConfi
       config.serverOrder = config.serverOrder || Object.keys(existing);
       const newIds = Object.keys(merged).filter((id) => !existing[id]);
       config.serverOrder = [...config.serverOrder, ...newIds];
-      saveConfigFn(config);
+      saveConfigFn(config, { action: 'import_custom', details: { imported: added, total: Object.keys(merged).length } });
       res.json({
         success: true,
         imported: added,
@@ -61,7 +61,7 @@ export function createImportRouter(getConfig: GetConfig, saveConfigFn: SaveConfi
       config.serverOrder = config.serverOrder || Object.keys(existing);
       const newIds = Object.keys(merged).filter((id) => !existing[id]);
       config.serverOrder = [...config.serverOrder, ...newIds];
-      saveConfigFn(config);
+      saveConfigFn(config, { action: 'import_source', details: { sourceId, imported: added, total: Object.keys(merged).length } });
       res.json({
         success: true,
         imported: added,
