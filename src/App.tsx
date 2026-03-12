@@ -6,7 +6,7 @@ import { CustomSyncModal } from './components/CustomSyncModal';
 import { ImportModal } from './components/ImportModal';
 import { InfoModal } from './components/InfoModal';
 import { Toast } from './components/Toast';
-import { getServers, createServer, updateServer, deleteServer, setServerEnabled, syncTo, syncToCustom } from './api';
+import { getServers, createServer, updateServer, deleteServer, setServerEnabled, reorderServers, syncTo, syncToCustom } from './api';
 import type { Server } from './types';
 
 export default function App() {
@@ -83,6 +83,16 @@ export default function App() {
     }
   };
 
+  const handleReorder = async (order: string[]) => {
+    try {
+      await reorderServers(order);
+      showToast('Order updated');
+      await loadServers();
+    } catch (err) {
+      showToast((err as Error).message, 'error');
+    }
+  };
+
   const handleSync = async (target: string) => {
     try {
       const result = await syncTo(target);
@@ -129,6 +139,7 @@ export default function App() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onToggle={handleToggle}
+            onReorder={handleReorder}
           />
         </section>
       </main>

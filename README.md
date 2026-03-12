@@ -95,48 +95,6 @@ On first run, if `~/.cursor/mcp.json` exists, it will be imported as the initial
 | Windsurf | macOS/Linux: `~/.codeium/windsurf/mcp_config.json` · Windows: `%USERPROFILE%\.codeium\windsurf\mcp_config.json` |
 | Antigravity | macOS/Linux: `~/.antigravity_tools/mcp_config.json` · Windows: `%USERPROFILE%\.antigravity_tools\mcp_config.json` |
 
-## TODOs
-
-### Server Management
-
-- [ ] Server groups / tags — Group servers (e.g. "dev", "prod", "personal") and sync only selected groups to specific tools
-- [ ] Reorder servers — Drag-and-drop ordering so you can control the order in synced configs
-- [ ] Duplicate server — Copy an existing server as a starting point for a new one
-- [ ] Bulk actions — Enable/disable, delete, or sync multiple servers at once
-- [ ] Search/filter — Filter the server list by name, type, or enabled status
-
-### Sync & Export
-
-- [ ] Sync all targets — One-click sync to all configured tools instead of one at a time
-- [ ] Sync presets — Save presets like "Cursor + Claude" or "VS Code only" and sync with one click
-- [ ] Export/backup — Export config as JSON and restore from backup
-- [ ] Sync history — Log when and where you synced, with optional rollback
-- [ ] Auto-sync — Watch config changes and sync automatically when files change
-
-### Server Discovery & Validation
-
-- [ ] Health check — Ping stdio/HTTP servers to show which are reachable
-- [ ] MCP server registry — Browse and add popular servers (e.g. from MCP registry) with one click
-- [ ] Tool descriptions — Show tool descriptions/schemas in the expanded card, not just names
-- [ ] Resources view — List MCP resources (prompts, etc.) in addition to tools
-
-### UX & Workflow
-
-- [ ] Terminal output for stdio — Start/stop stdio servers and stream their output
-- [ ] OAuth flow in UI — Start OAuth from the server card instead of only when expanding
-- [ ] Keyboard shortcuts — Shortcuts for Add, Import, Sync, etc.
-- [ ] Dark/light theme — Theme toggle
-- [ ] Config file picker — File picker for custom import/sync paths instead of typing paths
-- [ ] Recent sync targets — Quick access to recently used sync targets
-
-### Advanced
-
-- [ ] Environment profiles — Switch between profiles (e.g. work vs personal) with different server sets
-- [ ] Diff view — Compare your config with a target tool's config before syncing
-- [ ] Server templates — Predefined templates for common servers (Playwright, filesystem, etc.)
-- [ ] CLI sync — `mcp-manager sync cursor` from the terminal
-- [ ] Notifications — Optional desktop notifications when sync completes or fails
-
 ## License
 
 GPL-3.0

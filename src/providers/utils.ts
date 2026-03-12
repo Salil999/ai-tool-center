@@ -1,9 +1,26 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import type { Server } from '../types.js';
+import type { AppConfig, Server } from '../types.js';
 
 export const HOME = os.homedir();
+
+/**
+ * Return servers as a record with keys in display/sync order.
+ * Uses serverOrder when present; otherwise preserves existing key order.
+ */
+export function getOrderedServers(config: AppConfig): Record<string, Omit<Server, 'id'>> {
+  const servers = config.servers || {};
+  const order = config.serverOrder || Object.keys(servers);
+  const orderedIds = order.filter((id) => servers[id]);
+  const extraIds = Object.keys(servers).filter((id) => !orderedIds.includes(id));
+  const ids = [...orderedIds, ...extraIds];
+  const result: Record<string, Omit<Server, 'id'>> = {};
+  for (const id of ids) {
+    result[id] = servers[id];
+  }
+  return result;
+}
 
 export function isPathSafe(targetPath: string): boolean {
   const resolved = path.resolve(targetPath);

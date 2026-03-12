@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { PROVIDERS, exportToProvider, exportToCustom } from '../providers/index.js';
-import { isPathSafe, resolvePath } from '../providers/utils.js';
+import { isPathSafe, resolvePath, getOrderedServers } from '../providers/utils.js';
 import type { AppConfig } from '../types.js';
 
 type GetConfig = () => AppConfig;
@@ -16,7 +16,7 @@ export function createSyncRouter(getConfig: GetConfig) {
 
   router.post('/custom', (req: Request, res: Response) => {
     const config = getConfig();
-    const servers = config.servers || {};
+    const servers = getOrderedServers(config);
     const { path: customPath, configKey = 'mcpServers' } = (req.body || {}) as { path?: string; configKey?: string };
     if (!customPath) return res.status(400).json({ error: 'path is required' });
     if (!isPathSafe(resolvePath(customPath))) return res.status(400).json({ error: 'Path is not allowed' });
@@ -41,7 +41,7 @@ export function createSyncRouter(getConfig: GetConfig) {
 
   router.post('/:target', (req: Request, res: Response) => {
     const config = getConfig();
-    const servers = config.servers || {};
+    const servers = getOrderedServers(config);
     const target = req.params.target;
 
     try {

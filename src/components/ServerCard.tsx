@@ -4,12 +4,35 @@ import type { Server } from '../types';
 
 interface ServerCardProps {
   server: Server;
+  isDragging?: boolean;
+  isDropTarget?: boolean;
   onEdit: (id: string | undefined) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string, enabled: boolean) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  onDragStart?: () => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDragLeave?: () => void;
+  onDrop?: (e: React.DragEvent) => void;
+  onDragEnd?: () => void;
 }
 
-export function ServerCard({ server, onEdit, onDelete, onToggle }: ServerCardProps) {
+export function ServerCard({
+  server,
+  isDragging,
+  isDropTarget,
+  onEdit,
+  onDelete,
+  onToggle,
+  onMoveUp,
+  onMoveDown,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
+}: ServerCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [tools, setTools] = useState<Array<{ name: string }>>([]);
   const [toolsLoading, setToolsLoading] = useState(false);
@@ -63,8 +86,22 @@ export function ServerCard({ server, onEdit, onDelete, onToggle }: ServerCardPro
     }
   };
 
+  const handleDragStart = (e: React.DragEvent) => {
+    if (onDragStart) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', server.id!);
+      onDragStart();
+    }
+  };
+
   return (
-    <div className={`server-card ${expanded ? 'expanded' : ''}`} data-id={server.id}>
+    <div
+      className={`server-card ${expanded ? 'expanded' : ''} ${isDragging ? 'dragging' : ''} ${isDropTarget ? 'drop-target' : ''}`}
+      data-id={server.id}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
       <div className="server-card-header">
         <button
           type="button"
@@ -72,6 +109,20 @@ export function ServerCard({ server, onEdit, onDelete, onToggle }: ServerCardPro
           onClick={() => setExpanded((e) => !e)}
           aria-expanded={expanded}
         >
+          {onDragStart && (
+            <span
+              className="server-card-drag-handle"
+              draggable
+              onDragStart={handleDragStart}
+              onDragEnd={onDragEnd}
+              title="Drag to reorder"
+              aria-label="Drag to reorder"
+              role="button"
+              tabIndex={0}
+            >
+              ⋮⋮
+            </span>
+          )}
           <span className="server-card-chevron" aria-hidden>
             {expanded ? '▼' : '▶'}
           </span>
@@ -88,6 +139,30 @@ export function ServerCard({ server, onEdit, onDelete, onToggle }: ServerCardPro
           </div>
         </button>
         <div className="server-actions">
+        {(onMoveUp || onMoveDown) && (
+          <div className="server-reorder">
+            <button
+              type="button"
+              className="btn btn-sm btn-icon"
+              onClick={onMoveUp}
+              disabled={!onMoveUp}
+              title="Move up"
+              aria-label="Move up"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-icon"
+              onClick={onMoveDown}
+              disabled={!onMoveDown}
+              title="Move down"
+              aria-label="Move down"
+            >
+              ↓
+            </button>
+          </div>
+        )}
         <button
           type="button"
           className="btn btn-sm"

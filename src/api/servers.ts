@@ -15,7 +15,11 @@ export function createServersRouter(
   router.get('/', (req: Request, res: Response) => {
     const config = getConfig();
     const servers = config.servers || {};
-    const list = Object.entries(servers).map(([id, s]) => ({ id, ...s }));
+    const order = config.serverOrder || Object.keys(servers);
+    const orderedIds = order.filter((id) => servers[id]);
+    const extraIds = Object.keys(servers).filter((id) => !orderedIds.includes(id));
+    const ids = [...orderedIds, ...extraIds];
+    const list = ids.map((id) => ({ id, ...servers[id] }));
     res.json(list);
   });
 
@@ -64,6 +68,11 @@ export function createServersRouter(
     };
     config.servers = config.servers || {};
     config.servers[finalId] = server;
+    if (!config.serverOrder) {
+      config.serverOrder = Object.keys(config.servers);
+    } else if (!config.serverOrder.includes(finalId)) {
+      config.serverOrder.push(finalId);
+    }
     saveConfig(config);
     res.status(201).json({ id: finalId, ...server });
   });
@@ -89,8 +98,23 @@ export function createServersRouter(
     const config = getConfig();
     if (!config.servers?.[req.params.id]) return res.status(404).json({ error: 'Server not found' });
     delete config.servers[req.params.id];
+    if (config.serverOrder) {
+      config.serverOrder = config.serverOrder.filter((id) => id !== req.params.id);
+    }
     saveConfig(config);
     res.status(204).send();
+  });
+
+  router.patch('/reorder', (req: Request, res: Response) => {
+    const config = getConfig();
+    const order = (req.body as { order?: string[] })?.order;
+    if (!Array.isArray(order)) return res.status(400).json({ error: 'order must be an array of server IDs' });
+    const servers = config.servers || {};
+    const validOrder = order.filter((id) => servers[id]);
+    const extraIds = Object.keys(servers).filter((id) => !validOrder.includes(id));
+    config.serverOrder = [...validOrder, ...extraIds];
+    saveConfig(config);
+    res.json({ order: config.serverOrder });
   });
 
   router.patch('/:id/enabled', (req: Request, res: Response) => {

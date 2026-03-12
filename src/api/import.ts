@@ -25,6 +25,9 @@ export function createImportRouter(getConfig: GetConfig, saveConfigFn: SaveConfi
       const merged = mergeServers(existing, imported);
       const added = Object.keys(merged).length - Object.keys(existing).length;
       config.servers = merged;
+      config.serverOrder = config.serverOrder || Object.keys(existing);
+      const newIds = Object.keys(merged).filter((id) => !existing[id]);
+      config.serverOrder = [...config.serverOrder, ...newIds];
       saveConfigFn(config);
       res.json({
         success: true,
@@ -55,6 +58,9 @@ export function createImportRouter(getConfig: GetConfig, saveConfigFn: SaveConfi
       const merged = mergeServers(existing, imported);
       const added = Object.keys(merged).length - Object.keys(existing).length;
       config.servers = merged;
+      config.serverOrder = config.serverOrder || Object.keys(existing);
+      const newIds = Object.keys(merged).filter((id) => !existing[id]);
+      config.serverOrder = [...config.serverOrder, ...newIds];
       saveConfigFn(config);
       res.json({
         success: true,

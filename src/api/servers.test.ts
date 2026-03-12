@@ -119,6 +119,26 @@ describe('api/servers', () => {
     });
   });
 
+  describe('PATCH /reorder', () => {
+    it('reorders servers', async () => {
+      await request(app).post('/api/servers').send({ name: 'A', command: 'node' });
+      await request(app).post('/api/servers').send({ name: 'B', command: 'node' });
+      await request(app).post('/api/servers').send({ name: 'C', command: 'node' });
+      const res = await request(app).patch('/api/servers/reorder').send({
+        order: ['c', 'a', 'b'],
+      });
+      expect(res.status).toBe(200);
+      expect(res.body.order).toEqual(['c', 'a', 'b']);
+      const list = await request(app).get('/api/servers');
+      expect(list.body.map((s: { id: string }) => s.id)).toEqual(['c', 'a', 'b']);
+    });
+
+    it('returns 400 for invalid order', async () => {
+      const res = await request(app).patch('/api/servers/reorder').send({ order: 'not-array' });
+      expect(res.status).toBe(400);
+    });
+  });
+
   describe('PATCH /:id/enabled', () => {
     it('toggles enabled', async () => {
       await request(app).post('/api/servers').send({ name: 'A', command: 'node' });

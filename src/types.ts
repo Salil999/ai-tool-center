@@ -14,6 +14,8 @@ export interface Server {
 /** App config file structure */
 export interface AppConfig {
   servers: Record<string, Omit<Server, 'id'>>;
+  /** Optional order of server IDs for display and sync. When absent, uses insertion order. */
+  serverOrder?: string[];
   customProviders: CustomProvider[];
 }
 

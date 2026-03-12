@@ -6,7 +6,12 @@ export async function fetchJSON<T = Record<string, unknown>>(url: string, opts: 
     headers: { 'Content-Type': 'application/json', ...opts.headers },
   });
   const data = res.status === 204 ? {} : await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { error?: string }).error || res.statusText);
+  if (!res.ok) {
+    const msg = (data as { error?: string }).error || res.statusText;
+    throw new Error(res.status === 404 && msg === 'Not Found'
+      ? 'API not found. Make sure the AI Tools Manager server is running (e.g. npm run dev or npm run start).'
+      : msg);
+  }
   return data as T;
 }
 
@@ -37,13 +42,23 @@ export async function setServerEnabled(id: string, enabled: boolean) {
   });
 }
 
+export async function reorderServers(order: string[]) {
+  return fetchJSON<{ order: string[] }>(`${API}/servers/reorder`, {
+    method: 'PATCH',
+    body: JSON.stringify({ order }),
+  });
+}
+
 export async function getServerTools(id: string) {
   const res = await fetch(`${API}/servers/${id}/tools`, {
     headers: { 'Content-Type': 'application/json' },
   });
   const data = res.status === 204 ? {} : await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error((data as { message?: string; error?: string }).message || (data as { error?: string }).error || res.statusText);
+    const msg = (data as { message?: string; error?: string }).message || (data as { error?: string }).error || res.statusText;
+    const err = new Error(res.status === 404 && msg === 'Not Found'
+      ? 'API not found. Make sure the AI Tools Manager server is running.'
+      : msg);
     (err as Error & { code?: string }).code = (data as { error?: string }).error;
     throw err;
   }

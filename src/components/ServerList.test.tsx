@@ -10,6 +10,7 @@ describe('ServerList', () => {
     onEdit: vi.fn(),
     onDelete: vi.fn(),
     onToggle: vi.fn(),
+    onReorder: vi.fn(),
   };
 
   it('shows empty state when no servers', () => {

@@ -44,6 +44,10 @@ export function createApp(options: CreateAppOptions = {}) {
   app.use('/api/import', createImportRouter(getConfig, saveConfigFn));
   app.use('/oauth', createOAuthRouter(baseUrl));
 
+  app.use('/api', (_req, res) => {
+    res.status(404).json({ error: 'API route not found' });
+  });
+
   const distDir = path.join(__dirname, '..', 'dist');
   const publicDir = path.join(__dirname, '..', 'public');
   const cwdDist = path.join(process.cwd(), 'dist');
