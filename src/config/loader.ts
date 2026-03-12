@@ -1,12 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import cursorProvider from '../providers/cursor.js';
-import { copySkillInto } from '../skills/sync.js';
+import { importFromProvider, getProviderPath } from '../providers/index.js';
+import { syncSkillsFromDisk } from '../skills/sync.js';
 import type { AppConfig } from '../types.js';
 
-const OLD_SKILLS_DIR = path.join(os.homedir(), '.mcp-manager', 'skills');
-const NEW_SKILLS_DIR = path.join(os.homedir(), '.ai_tools_manager', 'skills');
+/** MCP config and OAuth storage: ~/.ai_tools_manager/mcp/ */
+const MCP_DIR = path.join(os.homedir(), '.ai_tools_manager', 'mcp');
 
 export const DEFAULT_CONFIG: AppConfig = {
   servers: {},
@@ -18,15 +18,14 @@ export const DEFAULT_CONFIG: AppConfig = {
 };
 
 function getDefaultConfigPath(): string {
-  const homeDir = path.join(os.homedir(), '.mcp-manager');
-  const homeConfig = path.join(homeDir, 'config.json');
+  const homeConfig = path.join(MCP_DIR, 'config.json');
   try {
-    if (!fs.existsSync(homeDir)) {
-      fs.mkdirSync(homeDir, { recursive: true });
+    if (!fs.existsSync(MCP_DIR)) {
+      fs.mkdirSync(MCP_DIR, { recursive: true });
     }
     return homeConfig;
   } catch {
-    const cwdDir = path.join(process.cwd(), '.mcp-manager');
+    const cwdDir = path.join(process.cwd(), '.ai_tools_manager', 'mcp');
     try {
       if (!fs.existsSync(cwdDir)) {
         fs.mkdirSync(cwdDir, { recursive: true });
@@ -57,12 +56,14 @@ export function loadConfig(configPath?: string): AppConfig {
   if (!fs.existsSync(resolvedPath)) {
     const config: AppConfig = { ...DEFAULT_CONFIG };
     try {
-      if (fs.existsSync(cursorProvider.getPath())) {
-        config.servers = cursorProvider.importConfig();
+      const cursorPath = getProviderPath('cursor');
+      if (cursorPath && fs.existsSync(cursorPath)) {
+        config.servers = importFromProvider('cursor');
       }
     } catch (err) {
       console.warn('Could not import from Cursor mcp.json:', (err as Error).message);
     }
+    syncSkillsFromDisk(config);
     saveConfig(resolvedPath, config);
     return config;
   }
@@ -79,50 +80,13 @@ export function loadConfig(configPath?: string): AppConfig {
       skillOrder: config.skillOrder ?? [],
       projectDirectories: config.projectDirectories ?? [],
     };
-    if (migrateSkillsFromMcpManager(merged)) {
+    if (syncSkillsFromDisk(merged)) {
       saveConfig(resolvedPath, merged);
     }
     return merged;
   } catch (err) {
     throw new Error(`Failed to load config: ${(err as Error).message}`);
   }
-}
-
-/**
- * Migrate skills from ~/.mcp-manager/skills/ to ~/.ai_tools_manager/skills/.
- * Copies each skill dir and updates config paths.
- * Returns true if any migration was performed.
- */
-function migrateSkillsFromMcpManager(config: AppConfig): boolean {
-  const skills = config.skills;
-  if (!skills) return false;
-
-  let changed = false;
-  const oldDirNorm = path.resolve(OLD_SKILLS_DIR) + path.sep;
-
-  for (const [skillId, skill] of Object.entries(skills)) {
-    const skillPath = skill.path;
-    if (!skillPath || typeof skillPath !== 'string') continue;
-
-    const resolved = path.resolve(skillPath);
-    if (!resolved.startsWith(oldDirNorm)) continue;
-
-    const newPath = path.join(NEW_SKILLS_DIR, skillId);
-    try {
-      if (fs.existsSync(resolved)) {
-        fs.mkdirSync(path.dirname(newPath), { recursive: true });
-        copySkillInto(resolved, newPath);
-      } else {
-        fs.mkdirSync(newPath, { recursive: true });
-      }
-      skill.path = newPath;
-      changed = true;
-    } catch (err) {
-      console.warn(`Could not migrate skill ${skillId}:`, (err as Error).message);
-    }
-  }
-
-  return changed;
 }
 
 export function saveConfig(configPath: string, config: AppConfig): void {

@@ -1,18 +1,15 @@
 import path from 'path';
 import fs from 'fs';
-import os from 'os';
 import { Router, Request, Response } from 'express';
 import { isPathSafe, resolvePath } from '../providers/utils.js';
 import { parseSkillDir, parseSkillContent, validateSkillDir } from '../skills/parse.js';
 import { lintSkill, lintSkillContent } from '../skills/lint.js';
-import { getOrderedSkills, copySkillInto } from '../skills/sync.js';
+import { getOrderedSkills, copySkillInto, isDuplicateSkill, getManagedSkillsDir } from '../skills/sync.js';
 import type { AppConfig, Skill } from '../types.js';
 import type { AuditStore } from '../audit/store.js';
 
 type GetConfig = () => AppConfig;
 type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
-
-const MANAGED_SKILLS_DIR = path.join(os.homedir(), '.ai_tools_manager', 'skills');
 
 function toSkillId(name: string): string {
   return (name || 'skill').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'skill';
@@ -152,6 +149,9 @@ export function createSkillsRouter(getConfig: GetConfig, saveConfig: SaveConfig,
       } catch (err) {
         return res.status(400).json({ error: (err as Error).message });
       }
+      if (isDuplicateSkill(skillName, config.skills || {})) {
+        return res.status(400).json({ error: `Skill "${skillName}" already exists` });
+      }
       const id = toSkillId(skillName);
       const existing = Object.keys(config.skills || {});
       finalId = id;
@@ -159,7 +159,7 @@ export function createSkillsRouter(getConfig: GetConfig, saveConfig: SaveConfig,
       while (existing.includes(finalId)) {
         finalId = `${id}-${n++}`;
       }
-      const centralPath = path.join(MANAGED_SKILLS_DIR, finalId);
+      const centralPath = path.join(getManagedSkillsDir(), finalId);
       copySkillInto(resolved, centralPath);
       skillPath = centralPath;
     } else if (contentArg && typeof contentArg === 'string' && contentArg.trim()) {
@@ -170,6 +170,9 @@ export function createSkillsRouter(getConfig: GetConfig, saveConfig: SaveConfig,
       } catch (err) {
         return res.status(400).json({ error: 'Invalid SKILL.md content: ' + (err as Error).message });
       }
+      if (isDuplicateSkill(skillName, config.skills || {})) {
+        return res.status(400).json({ error: `Skill "${skillName}" already exists` });
+      }
       const id = toSkillId(skillName);
       const existing = Object.keys(config.skills || {});
       finalId = id;
@@ -177,7 +180,7 @@ export function createSkillsRouter(getConfig: GetConfig, saveConfig: SaveConfig,
       while (existing.includes(finalId)) {
         finalId = `${id}-${n++}`;
       }
-      skillPath = path.join(MANAGED_SKILLS_DIR, finalId);
+      skillPath = path.join(getManagedSkillsDir(), finalId);
       if (fs.existsSync(skillPath)) {
         return res.status(400).json({ error: `Skill already exists at ${skillPath}` });
       }

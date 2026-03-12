@@ -47,4 +47,5 @@ Body content here.
       expect(Array.isArray(res.body.findings)).toBe(true);
     });
   });
+
 });

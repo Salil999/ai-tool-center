@@ -75,7 +75,7 @@ Each release includes a `.tar.gz` archive containing the executable and `dist/` 
 
 ## Config
 
-- **Default config**: `~/.mcp-manager/config.json`
+- **Default config**: `~/.ai_tools_manager/mcp/config.json`
 - **Override**: `--config <path>` or `MCP_MANAGER_CONFIG` env var
 
 On first run, if `~/.cursor/mcp.json` exists, it will be imported as the initial config.

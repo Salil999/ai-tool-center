@@ -1,8 +1,97 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { isPathSafe, resolvePath } from '../providers/utils.js';
 import { SKILL_PROVIDERS, getSkillProviderPath } from './providers.js';
+import { parseSkillDir, validateSkillDir } from './parse.js';
 import type { AppConfig, Skill } from '../types.js';
+
+function getManagedSkillsDir(): string {
+  return process.env.AI_TOOLS_MANAGER_SKILLS_DIR || path.join(os.homedir(), '.ai_tools_manager', 'skills');
+}
+
+export { getManagedSkillsDir };
+
+/**
+ * List skill directory paths within the managed skills directory.
+ */
+function listManagedSkillDirs(): string[] {
+  const dir = getManagedSkillsDir();
+  if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
+    return [];
+  }
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  const skillDirs: string[] = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const subPath = path.join(dir, entry.name);
+    if (validateSkillDir(subPath)) {
+      skillDirs.push(subPath);
+    }
+  }
+  return skillDirs;
+}
+
+/**
+ * Sync config.skills with ~/.ai_tools_manager/skills/ directory.
+ * - Adds skills from disk that aren't in config
+ * - Removes config entries for skills no longer on disk
+ * - Preserves enabled state and order from config for existing skills
+ * Returns true if config was changed.
+ */
+export function syncSkillsFromDisk(config: AppConfig): boolean {
+  const skillDirs = listManagedSkillDirs();
+  const fromDisk: Record<string, Omit<Skill, 'id'>> = {};
+  for (const dirPath of skillDirs) {
+    const skillId = path.basename(dirPath);
+    try {
+      const parsed = parseSkillDir(dirPath);
+      const existing = config.skills?.[skillId];
+      fromDisk[skillId] = {
+        path: dirPath,
+        name: parsed.metadata.name || skillId,
+        enabled: existing?.enabled ?? true,
+      };
+    } catch {
+      // Skip invalid skills
+    }
+  }
+
+  const prevSkills = config.skills || {};
+  const prevOrder = config.skillOrder || Object.keys(prevSkills);
+  const prevIds = new Set(Object.keys(prevSkills));
+  const diskIds = new Set(Object.keys(fromDisk));
+
+  // Check if anything changed
+  const added = diskIds.size > prevIds.size || [...diskIds].some((id) => !prevIds.has(id));
+  const removed = prevIds.size > diskIds.size || [...prevIds].some((id) => !diskIds.has(id));
+  if (!added && !removed && Object.keys(fromDisk).length === Object.keys(prevSkills).length) {
+    return false;
+  }
+
+  config.skillOrder = prevOrder.filter((id) => diskIds.has(id));
+  const newIds = [...diskIds].filter((id) => !config.skillOrder!.includes(id));
+  config.skillOrder = [...config.skillOrder!, ...newIds];
+  config.skills = fromDisk;
+  return true;
+}
+
+function toSkillId(name: string): string {
+  return (name || 'skill').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'skill';
+}
+
+/**
+ * Check if a skill with the same name (normalized) already exists.
+ * Similar to isDuplicate for MCP servers.
+ */
+export function isDuplicateSkill(skillName: string, existing: Record<string, Omit<Skill, 'id'>>): boolean {
+  const normalized = toSkillId(skillName);
+  if (!normalized) return false;
+  for (const skill of Object.values(existing)) {
+    if (toSkillId(skill.name) === normalized) return true;
+  }
+  return false;
+}
 
 /**
  * Return skills as a record with keys in display/sync order.

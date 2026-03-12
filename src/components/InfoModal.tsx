@@ -174,8 +174,8 @@ function MCPInfoContent() {
         <section>
           <h3>Data Storage</h3>
           <p>
-            Your server configuration is stored in <code>~/.mcp-manager/config.json</code>. OAuth tokens for
-            HTTP servers are stored separately in <code>~/.mcp-manager/oauth-{'{serverId}'}.json</code>. Keep these
+            Your server configuration is stored in <code>~/.ai_tools_manager/mcp/config.json</code>. OAuth tokens for
+            HTTP servers are stored separately in <code>~/.ai_tools_manager/mcp/oauth-{'{serverId}'}.json</code>. Keep these
             files private and do not share them.
           </p>
         </section>

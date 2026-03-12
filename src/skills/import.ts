@@ -1,9 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 import { SKILL_PROVIDERS } from './providers.js';
 import { parseSkillDir, validateSkillDir } from './parse.js';
-import { copySkillInto } from './sync.js';
+import { copySkillInto, isDuplicateSkill, getManagedSkillsDir } from './sync.js';
 import { isPathSafe } from '../providers/utils.js';
 import type { AppConfig, Skill } from '../types.js';
 
@@ -15,8 +14,6 @@ export interface SkillImportSource {
   skillCount: number;
   error?: string;
 }
-
-const MANAGED_SKILLS_DIR = path.join(os.homedir(), '.ai_tools_manager', 'skills');
 
 function toSkillId(name: string): string {
   return (name || 'skill').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'skill';
@@ -130,6 +127,7 @@ export function importFromSkillSource(
     try {
       const parsed = parseSkillDir(skillDir);
       const skillName = parsed.metadata.name || path.basename(skillDir);
+      if (isDuplicateSkill(skillName, existing)) continue;
       const id = toSkillId(skillName);
 
       let finalId = id;
@@ -139,7 +137,7 @@ export function importFromSkillSource(
         finalId = `${id}-${n++}`;
       }
 
-      const centralPath = path.join(MANAGED_SKILLS_DIR, finalId);
+      const centralPath = path.join(getManagedSkillsDir(), finalId);
       copySkillInto(skillDir, centralPath);
 
       const skill: Omit<Skill, 'id'> = {

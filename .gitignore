@@ -7,6 +7,6 @@ mcp-manager
 mcp-manager.exe
 ai-tools-manager
 ai-tools-manager.exe
-.mcp-manager/
+.ai_tools_manager/
 *.log
 .DS_Store

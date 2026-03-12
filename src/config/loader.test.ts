@@ -10,9 +10,12 @@ describe('config/loader', () => {
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-loader-test-'));
     configPath = path.join(tmpDir, 'config.json');
+    // Use empty skills dir so sync doesn't pick up user's real skills
+    process.env.AI_TOOLS_MANAGER_SKILLS_DIR = path.join(tmpDir, 'skills');
   });
 
   afterEach(() => {
+    delete process.env.AI_TOOLS_MANAGER_SKILLS_DIR;
     try {
       fs.rmSync(tmpDir, { recursive: true });
     } catch {
@@ -38,14 +41,15 @@ describe('config/loader', () => {
 
   describe('loadConfig', () => {
     it('creates default config when file does not exist', () => {
-      const cursorPath = path.join(os.homedir(), '.cursor', 'mcp.json');
-      const cursorExists = fs.existsSync(cursorPath);
       const config = loadConfig(configPath);
-      expect(config).toMatchObject(DEFAULT_CONFIG);
       expect(config.servers).toBeDefined();
-      if (!cursorExists) {
-        expect(config.servers).toEqual({});
-      }
+      expect(config.skills).toBeDefined();
+      expect(config.skillOrder).toBeDefined();
+      expect(config.customProviders).toBeDefined();
+      expect(config.auditOptions?.maxEntries).toBeGreaterThanOrEqual(1);
+      // Sync with empty skills dir yields empty skills/skillOrder
+      expect(config.skills).toEqual({});
+      expect(config.skillOrder).toEqual([]);
     });
 
     it('loads existing config', () => {
@@ -84,5 +88,17 @@ describe('config/loader', () => {
         else delete process.env.MCP_MANAGER_CONFIG;
       }
     });
+
+    it('default path is under .ai_tools_manager/mcp/', () => {
+      const orig = process.env.MCP_MANAGER_CONFIG;
+      delete process.env.MCP_MANAGER_CONFIG;
+      try {
+        const defaultPath = getConfigPath();
+        expect(defaultPath).toMatch(/[\\/]\.ai_tools_manager[\\/]mcp[\\/]config\.json$/);
+      } finally {
+        if (orig !== undefined) process.env.MCP_MANAGER_CONFIG = orig;
+      }
+    });
   });
+
 });
