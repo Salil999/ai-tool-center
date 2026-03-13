@@ -1,8 +1,11 @@
-import path from 'path';
 import { Router, Request, Response } from 'express';
 import { resolvePath } from '../providers/utils.js';
 import { SKILL_PROVIDERS } from '../skills/providers.js';
-import { discoverSkillSources, importFromSkillSource } from '../skills/import.js';
+import {
+  discoverSkillSources,
+  importFromSkillSource,
+  resolveProjectSourcePath,
+} from '../skills/import.js';
 import type { AppConfig } from '../types.js';
 
 type GetConfig = () => AppConfig;
@@ -25,15 +28,13 @@ export function createSkillsImportRouter(getConfig: GetConfig, saveConfig: SaveC
     const config = getConfig();
     const sourceId = String(req.params.source ?? '');
 
-    if (sourceId.startsWith('project-')) {
-      const projectId = sourceId.slice('project-'.length);
-      const project = (config.projectDirectories || []).find((pd) => pd.id === projectId);
-      if (!project) {
-        return res.status(404).json({ error: 'Project directory not found' });
-      }
-      const sourcePath = path.join(project.path, '.agents', 'skills');
+    const projectSourcePath = resolveProjectSourcePath(
+      sourceId,
+      config.projectDirectories || []
+    );
+    if (projectSourcePath) {
       try {
-        const result = importFromSkillSource(sourceId, sourcePath, config);
+        const result = importFromSkillSource(sourceId, projectSourcePath, config);
         saveConfig(config, {
           action: 'skill_import_source',
           details: { sourceId, imported: result.imported, total: result.total, skillIds: result.skillIds },

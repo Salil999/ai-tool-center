@@ -17,7 +17,6 @@ interface AddAgentsModalProps {
 
 export function AddAgentsModal({ onClose, onSaved }: AddAgentsModalProps) {
   const [projectPath, setProjectPath] = useState('');
-  const [name, setName] = useState('');
   const [content, setContent] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -33,7 +32,7 @@ export function AddAgentsModal({ onClose, onSaved }: AddAgentsModalProps) {
     setSaving(true);
     setError(null);
     try {
-      await createAgentRule(pathTrimmed, name.trim() || undefined, content);
+      await createAgentRule(pathTrimmed, undefined, content);
       onSaved();
       onClose();
     } catch (err) {
@@ -70,18 +69,6 @@ export function AddAgentsModal({ onClose, onSaved }: AddAgentsModalProps) {
             value={projectPath}
             onChange={(e) => setProjectPath(e.target.value)}
             placeholder="~/my-project or /path/to/project"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="add-agents-name">Name (optional)</label>
-          <input
-            id="add-agents-name"
-            type="text"
-            className="form-input"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Display name for this AGENTS.md"
           />
         </div>
 

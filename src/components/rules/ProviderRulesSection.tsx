@@ -19,6 +19,8 @@ interface ProviderRulesSectionProps {
   onSync?: (providerId: string) => void | Promise<void>;
   /** When this changes, rules are reloaded (e.g. after import) */
   refreshTrigger?: number;
+  /** When true, show Sync for Copilot (used when syncing to a project) */
+  showSyncForCopilot?: boolean;
 }
 
 export function ProviderRulesSection({
@@ -26,6 +28,7 @@ export function ProviderRulesSection({
   providerName,
   onSync,
   refreshTrigger,
+  showSyncForCopilot = false,
 }: ProviderRulesSectionProps) {
   const { showToast } = useToast();
   const [rules, setRules] = useState<ProviderRule[]>([]);
@@ -44,9 +47,13 @@ export function ProviderRulesSection({
   }, [loadRules, refreshTrigger]);
 
   const handleDelete = async (id: string) => {
-    await deleteProviderRule(providerId, id);
-    showToast('Rule removed');
-    loadRules();
+    try {
+      await deleteProviderRule(providerId, id);
+      showToast('Rule removed');
+      loadRules();
+    } catch (err) {
+      showToast((err as Error).message, 'error');
+    }
   };
 
   const handleReorder = async (order: string[]) => {
@@ -93,12 +100,36 @@ export function ProviderRulesSection({
               </a>
               .
             </>
+          ) : providerId === 'windsurf' ? (
+            <>
+              Rules in <code>.windsurf/rules</code>. Global: <code>~/.codeium/windsurf/rules</code>. See{' '}
+              <a href="https://docs.windsurf.com" target="_blank" rel="noopener noreferrer">
+                Windsurf docs
+              </a>
+              .
+            </>
+          ) : providerId === 'continue' ? (
+            <>
+              Rules in <code>.continue/rules</code>. Global: <code>~/.continue/rules</code>. See{' '}
+              <a href="https://docs.continue.dev/customize/deep-dives/rules" target="_blank" rel="noopener noreferrer">
+                Continue docs
+              </a>
+              .
+            </>
+          ) : providerId === 'copilot' ? (
+            <>
+              Repository instructions in <code>.github/copilot-instructions.md</code>. Sync to project only. See{' '}
+              <a href="https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot" target="_blank" rel="noopener noreferrer">
+                GitHub Copilot docs
+              </a>
+              .
+            </>
           ) : (
             <>Custom rules configuration. Synced to your specified path.</>
           )}
         </p>
         <div className="provider-rules-header-actions">
-          {onSync && (
+          {onSync && (providerId !== 'copilot' || showSyncForCopilot) && (
             <button
               type="button"
               className="btn btn-sm"

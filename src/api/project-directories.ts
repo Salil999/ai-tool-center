@@ -83,5 +83,18 @@ export function createProjectDirectoriesRouter(getConfig: GetConfig, saveConfig:
     res.status(204).send();
   });
 
+  router.patch('/reorder', (req: Request, res: Response) => {
+    const config = getConfig();
+    const order = (req.body as { order?: string[] })?.order;
+    if (!Array.isArray(order)) return res.status(400).json({ error: 'order must be an array of project IDs' });
+    const list = config.projectDirectories || [];
+    const byId = new Map(list.map((pd) => [pd.id, pd]));
+    const reordered = order.filter((id) => byId.has(id)).map((id) => byId.get(id)!);
+    const extra = list.filter((pd) => !order.includes(pd.id));
+    config.projectDirectories = [...reordered, ...extra];
+    saveConfig(config, { action: 'project_directory_reorder', details: { order: config.projectDirectories.map((p) => p.id) } });
+    res.json({ order: config.projectDirectories.map((p) => p.id) });
+  });
+
   return router;
 }

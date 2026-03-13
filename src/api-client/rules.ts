@@ -120,20 +120,32 @@ export async function syncRulesToProject(
   });
 }
 
+export interface RuleImportSource {
+  id: string;
+  name: string;
+  path: string;
+  exists: boolean;
+  hasContent: boolean;
+  error?: string;
+}
+
+export interface ProjectRuleSource {
+  id: string;
+  name: string;
+  path: string;
+  sources: RuleImportSource[];
+}
+
+export interface RuleImportSourcesResponse {
+  providers: RuleImportSource[];
+  projects: ProjectRuleSource[];
+}
+
 export async function getRuleImportSources() {
-  return fetchJSON<
-    Array<{ id: string; name: string; path: string; exists: boolean; hasContent: boolean; error?: string }>
-  >(apiUrl('/rules/import/sources'));
+  return fetchJSON<RuleImportSourcesResponse>(apiUrl('/rules/import/sources'));
 }
 
-export async function importRulesFromSource(sourceId: string, targetAgentId: string) {
-  return fetchJSON<{ success: boolean }>(apiUrl(`/rules/import/${encodeURIComponent(sourceId)}`), {
-    method: 'POST',
-    body: JSON.stringify({ targetAgentId }),
-  });
-}
-
-/** Import from Cursor or Augment into that provider's Rules section. No AGENTS.md needed. */
+/** Import from Cursor, Augment, Windsurf, or Continue into that provider's Rules section. */
 export async function importRulesFromProvider(sourceId: string) {
   return fetchJSON<{ success: boolean; importedCount?: number }>(
     apiUrl(`/rules/import/${encodeURIComponent(sourceId)}/provider`),
@@ -141,9 +153,25 @@ export async function importRulesFromProvider(sourceId: string) {
   );
 }
 
-export async function importRulesFromCustomPath(filePath: string, targetAgentId: string) {
-  return fetchJSON<{ success: boolean }>(apiUrl('/rules/import/custom'), {
+export interface AgentImportSourcesResponse {
+  projects: ProjectRuleSource[];
+  agents: RuleImportSource[];
+}
+
+export async function getAgentImportSources() {
+  return fetchJSON<AgentImportSourcesResponse>(apiUrl('/rules/agents/import/sources'));
+}
+
+export async function importAgentsFromSource(sourceId: string, targetAgentId?: string) {
+  return fetchJSON<{ success: boolean }>(apiUrl(`/rules/agents/import/${encodeURIComponent(sourceId)}`), {
     method: 'POST',
-    body: JSON.stringify({ path: filePath, targetAgentId }),
+    body: JSON.stringify(targetAgentId ? { targetAgentId } : {}),
+  });
+}
+
+export async function importAgentsFromCustomPath(filePath: string, targetAgentId?: string) {
+  return fetchJSON<{ success: boolean }>(apiUrl('/rules/agents/import/custom'), {
+    method: 'POST',
+    body: JSON.stringify(targetAgentId ? { path: filePath, targetAgentId } : { path: filePath }),
   });
 }

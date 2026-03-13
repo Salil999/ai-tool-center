@@ -337,8 +337,8 @@ function RulesInfoContent() {
           <dl className="info-dl">
             <dt>Import</dt>
             <dd>
-              Opens a modal to import rules from provider directories (Cursor, Augment) or project paths (AGENTS.md,
-              CLAUDE.md). Imported content is merged into your AGENTS.md entries (managed in the AGENTS.md tab).
+              Opens a modal to import rules from provider directories (Cursor, Augment, Windsurf, Continue) or project
+              rules paths. AGENTS.md is managed separately on the AGENTS.md tab.
             </dd>
           </dl>
         </section>
@@ -407,7 +407,7 @@ function AgentsInfoContent() {
             </dd>
             <dt>Import</dt>
             <dd>
-              Import rules from provider directories or project paths into an AGENTS.md entry. Content is stored in{' '}
+              Import AGENTS.md from project files or custom paths. Content is stored in{' '}
               <code>~/.ai_tools_manager/agents/</code>.
             </dd>
             <dt>Add AGENTS.md</dt>

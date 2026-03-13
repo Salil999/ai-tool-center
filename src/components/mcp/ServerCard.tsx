@@ -9,8 +9,6 @@ interface ServerCardProps {
   onEdit: (id: string | undefined) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string, enabled: boolean) => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
   onDragStart?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: () => void;
@@ -25,8 +23,6 @@ export function ServerCard({
   onEdit,
   onDelete,
   onToggle,
-  onMoveUp,
-  onMoveDown,
   onDragStart,
   onDragOver,
   onDragLeave,
@@ -141,30 +137,6 @@ export function ServerCard({
           </div>
         </button>
         <div className="server-actions">
-        {(onMoveUp || onMoveDown) && (
-          <div className="server-reorder">
-            <button
-              type="button"
-              className="btn btn-sm btn-icon"
-              onClick={onMoveUp}
-              disabled={!onMoveUp}
-              title="Move up"
-              aria-label="Move up"
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-icon"
-              onClick={onMoveDown}
-              disabled={!onMoveDown}
-              title="Move down"
-              aria-label="Move down"
-            >
-              ↓
-            </button>
-          </div>
-        )}
         <button
           type="button"
           className="btn btn-sm"

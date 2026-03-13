@@ -27,6 +27,9 @@ export function createRulesRouter(
     const builtIn = [
       { id: 'cursor', name: 'Cursor Rules' },
       { id: 'augment', name: 'Augment Rules' },
+      { id: 'windsurf', name: 'Windsurf Rules' },
+      { id: 'continue', name: 'Continue Rules' },
+      { id: 'copilot', name: 'GitHub Copilot Rules' },
     ];
     const custom = (config.customRuleConfigs || []).map((c) => ({
       id: `custom-${c.id}`,
@@ -38,7 +41,7 @@ export function createRulesRouter(
   router.get('/providers/:providerId/rules', (req: Request, res: Response) => {
     const config = getConfig();
     const providerId = String(req.params.providerId ?? '');
-    const isBuiltIn = ['cursor', 'augment'].includes(providerId);
+    const isBuiltIn = ['cursor', 'augment', 'windsurf', 'continue', 'copilot'].includes(providerId);
     const isCustom = providerId.startsWith('custom-') && (config.customRuleConfigs || []).some((c) => `custom-${c.id}` === providerId);
     if (!isBuiltIn && !isCustom) {
       return res.status(400).json({ error: `Unknown provider: ${providerId}` });
@@ -87,11 +90,12 @@ export function createRulesRouter(
     const config = getConfig();
     const providerId = String(req.params.providerId ?? '');
     const { name, content } = (req.body || {}) as { name?: string; content?: string };
-    if (!name?.trim()) {
+    const effectiveName = (name ?? (providerId === 'copilot' ? 'copilot-instructions' : '')).trim();
+    if (!effectiveName && providerId !== 'copilot') {
       return res.status(400).json({ error: 'name is required' });
     }
     try {
-      const rule = createProviderRule(providerId, (name ?? 'AGENTS').trim(), (content ?? '').trim(), config);
+      const rule = createProviderRule(providerId, effectiveName || 'copilot-instructions', (content ?? '').trim(), config);
       const order = config.providerRuleOrder?.[providerId] ?? [];
       if (!order.includes(rule.id)) {
         config.providerRuleOrder = config.providerRuleOrder ?? {};

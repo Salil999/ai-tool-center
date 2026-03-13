@@ -18,6 +18,8 @@ const STANDALONE_RULE_TARGETS: RuleSyncTarget[] = [
   { id: 'opencode', name: 'OpenCode (AGENTS.md)', path: path.join(HOME, '.config', 'opencode', 'AGENTS.md'), type: 'file' },
   { id: 'claude', name: 'Claude Code (AGENTS.md)', path: path.join(HOME, '.claude', 'AGENTS.md'), type: 'file' },
   { id: 'gemini-cli', name: 'Gemini CLI (AGENTS.md)', path: path.join(HOME, '.gemini', 'AGENTS.md'), type: 'file' },
+  { id: 'windsurf', name: 'Windsurf Rules', path: path.join(HOME, '.codeium', 'windsurf', 'rules'), type: 'directory' },
+  { id: 'continue', name: 'Continue Rules', path: path.join(HOME, '.continue', 'rules'), type: 'directory' },
 ];
 
 /** Rule sync targets: from providers with getRulesPath + standalone */

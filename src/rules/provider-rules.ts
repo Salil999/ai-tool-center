@@ -9,10 +9,10 @@ function getRulesBase(): string {
 }
 
 /** Providers that support multiple rule files (directory of .md/.mdc) */
-export const MULTI_FILE_RULE_PROVIDERS = ['cursor', 'augment'] as const;
+export const MULTI_FILE_RULE_PROVIDERS = ['cursor', 'augment', 'windsurf', 'continue'] as const;
 
-/** Single-file providers (one AGENTS.md) - none; AGENTS.md providers are in the AGENTS.md tab */
-export const SINGLE_FILE_RULE_PROVIDERS = [] as const;
+/** Single-file providers (e.g. copilot-instructions.md) - sync to project only */
+export const SINGLE_FILE_RULE_PROVIDERS = ['copilot'] as const;
 
 /** All provider rule types */
 export const ALL_RULE_PROVIDERS = [...MULTI_FILE_RULE_PROVIDERS, ...SINGLE_FILE_RULE_PROVIDERS] as const;
@@ -28,6 +28,8 @@ function getProviderRulesDir(providerId: string): string {
   }
   return path.join(base, providerId);
 }
+
+const COPILOT_RULE_ID = 'copilot-instructions';
 
 function getRuleExtension(providerId: string, config?: AppConfig): '.md' | '.mdc' {
   if (providerId.startsWith('custom-')) {
@@ -52,6 +54,20 @@ const OPENCODE_RULE_ID = 'AGENTS';
  * List rule files for a provider from disk.
  */
 export function listProviderRules(providerId: string, config?: AppConfig): ProviderRule[] {
+  if (providerId === 'copilot') {
+    const dir = getProviderRulesDir(providerId);
+    const ext = '.md';
+    const filePath = path.join(dir, `${COPILOT_RULE_ID}${ext}`);
+    if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+      return [];
+    }
+    return [{
+      id: COPILOT_RULE_ID,
+      name: 'copilot-instructions.md',
+      path: filePath,
+      extension: ext,
+    }];
+  }
   if (SINGLE_FILE_RULE_PROVIDERS.includes(providerId as SingleFileRuleProviderId)) {
     const dir = getProviderRulesDir(providerId);
     const ext = '.md';
@@ -199,6 +215,17 @@ export function createProviderRule(
 ): ProviderRule {
   const dir = getProviderRulesDir(providerId);
   const ext = getRuleExtension(providerId, config);
+  if (providerId === 'copilot') {
+    const filePath = path.join(dir, `${COPILOT_RULE_ID}${ext}`);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(filePath, content, 'utf8');
+    return {
+      id: COPILOT_RULE_ID,
+      name: 'copilot-instructions.md',
+      path: filePath,
+      extension: ext,
+    };
+  }
   if (SINGLE_FILE_RULE_PROVIDERS.includes(providerId as SingleFileRuleProviderId)) {
     const filePath = path.join(dir, `${OPENCODE_RULE_ID}${ext}`);
     fs.mkdirSync(dir, { recursive: true });
@@ -210,7 +237,7 @@ export function createProviderRule(
       extension: ext,
     };
   }
-  if (!MULTI_FILE_RULE_PROVIDERS.includes(providerId as MultiFileRuleProviderId) && !providerId.startsWith('custom-')) {
+  if (!MULTI_FILE_RULE_PROVIDERS.includes(providerId as MultiFileRuleProviderId) && !providerId.startsWith('custom-') && providerId !== 'copilot') {
     throw new Error(`Provider ${providerId} does not support multiple rule files`);
   }
   const id = toFileId(name);
@@ -239,6 +266,14 @@ export function createProviderRule(
  * Delete a rule file.
  */
 export function deleteProviderRule(providerId: string, ruleId: string, config?: AppConfig): void {
+  if (providerId === 'copilot') {
+    const dir = getProviderRulesDir(providerId);
+    const filePath = path.join(dir, `${COPILOT_RULE_ID}.md`);
+    if (isPathSafe(filePath) && fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      fs.unlinkSync(filePath);
+    }
+    return;
+  }
   if (SINGLE_FILE_RULE_PROVIDERS.includes(providerId as SingleFileRuleProviderId)) {
     return;
   }
@@ -266,6 +301,19 @@ export function syncProviderRulesToTarget(
   targetPath: string,
   config: AppConfig
 ): { path: string; syncedCount: number } {
+  if (providerId === 'copilot') {
+    const srcPath = path.join(getProviderRulesDir(providerId), `${COPILOT_RULE_ID}.md`);
+    const destPath = targetPath.endsWith('.md') ? targetPath : path.join(targetPath, 'copilot-instructions.md');
+    if (!isPathSafe(destPath)) {
+      throw new Error('Target path is not allowed');
+    }
+    if (fs.existsSync(srcPath)) {
+      fs.mkdirSync(path.dirname(destPath), { recursive: true });
+      fs.copyFileSync(srcPath, destPath);
+      return { path: destPath, syncedCount: 1 };
+    }
+    return { path: destPath, syncedCount: 0 };
+  }
   if (SINGLE_FILE_RULE_PROVIDERS.includes(providerId as SingleFileRuleProviderId)) {
     const srcPath = path.join(getProviderRulesDir(providerId), `${OPENCODE_RULE_ID}.md`);
     const destPath = targetPath.endsWith('.md') ? targetPath : path.join(targetPath, 'AGENTS.md');

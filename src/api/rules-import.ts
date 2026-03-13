@@ -1,12 +1,16 @@
 import { Router, Request, Response } from 'express';
-import { resolvePath } from '../providers/utils.js';
-import { discoverRuleSources, importFromRuleSource, importFromCustomPath, importFromProviderToRules } from '../rules/import.js';
+import {
+  discoverRuleSources,
+  importFromProviderToRules,
+  importFromProjectSourceToProvider,
+  resolveProjectRuleSource,
+} from '../rules/import.js';
 import type { AppConfig } from '../types.js';
 
 type GetConfig = () => AppConfig;
 type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
 
-const PROVIDER_RULES_IMPORT_IDS = ['cursor', 'augment'];
+const PROVIDER_RULES_IMPORT_IDS = ['cursor', 'augment', 'windsurf', 'continue'];
 
 export function createRulesImportRouter(getConfig: GetConfig, saveConfig: SaveConfig) {
   const router = Router();
@@ -21,10 +25,28 @@ export function createRulesImportRouter(getConfig: GetConfig, saveConfig: SaveCo
     }
   });
 
-  /** Import from provider (cursor, augment) into that provider's Rules section. No AGENTS.md needed. */
+  /** Import from provider (cursor, augment, etc.) or project provider path into Rules section. */
   router.post('/:source/provider', (req: Request, res: Response) => {
     const config = getConfig();
     const sourceId = String(req.params.source ?? '');
+
+    const projectResolved = resolveProjectRuleSource(sourceId, config.projectDirectories || []);
+    if (projectResolved?.importToProvider && projectResolved.providerId) {
+      try {
+        const result = importFromProjectSourceToProvider(
+          projectResolved.path,
+          projectResolved.providerId,
+          config
+        );
+        saveConfig(config, {
+          action: 'rule_import_project_provider',
+          details: { sourceId, importedCount: result.importedCount },
+        });
+        return res.json({ success: true, importedCount: result.importedCount });
+      } catch (err) {
+        return res.status(400).json({ error: (err as Error).message });
+      }
+    }
 
     if (!PROVIDER_RULES_IMPORT_IDS.includes(sourceId)) {
       return res.status(400).json({ error: `Import to provider rules only supports: ${PROVIDER_RULES_IMPORT_IDS.join(', ')}` });
@@ -38,62 +60,7 @@ export function createRulesImportRouter(getConfig: GetConfig, saveConfig: SaveCo
       });
       res.json({ success: true, importedCount: result.importedCount });
     } catch (err) {
-      res.status(400).json({ error: (err as Error).message });
-    }
-  });
-
-  router.post('/:source', (req: Request, res: Response) => {
-    const config = getConfig();
-    const sourceId = String(req.params.source ?? '');
-    const targetAgentId = String(req.body?.targetAgentId ?? req.query.targetAgentId ?? '');
-
-    if (!targetAgentId) {
-      return res.status(400).json({ error: 'targetAgentId is required' });
-    }
-
-    const targetAgent = (config.agentRules || []).find((a) => a.id === targetAgentId);
-    if (!targetAgent) {
-      return res.status(404).json({ error: 'Target agent rule not found' });
-    }
-
-    try {
-      importFromRuleSource(sourceId, targetAgentId, config);
-      saveConfig(config, {
-        action: 'rule_import_source',
-        details: { sourceId, targetAgentId },
-      });
-      res.json({ success: true });
-    } catch (err) {
-      res.status(400).json({ error: (err as Error).message });
-    }
-  });
-
-  router.post('/custom', (req: Request, res: Response) => {
-    const config = getConfig();
-    const { path: filePath, targetAgentId } = (req.body || {}) as { path?: string; targetAgentId?: string };
-
-    if (!filePath || typeof filePath !== 'string' || !filePath.trim()) {
-      return res.status(400).json({ error: 'path is required' });
-    }
-    if (!targetAgentId) {
-      return res.status(400).json({ error: 'targetAgentId is required' });
-    }
-
-    const targetAgent = (config.agentRules || []).find((a) => a.id === targetAgentId);
-    if (!targetAgent) {
-      return res.status(404).json({ error: 'Target agent rule not found' });
-    }
-
-    const resolved = resolvePath(filePath.trim());
-    try {
-      importFromCustomPath(resolved, targetAgentId);
-      saveConfig(config, {
-        action: 'rule_import_custom',
-        details: { path: resolved, targetAgentId },
-      });
-      res.json({ success: true });
-    } catch (err) {
-      res.status(400).json({ error: (err as Error).message });
+      return res.status(400).json({ error: (err as Error).message });
     }
   });
 

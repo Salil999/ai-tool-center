@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RuleSyncSection } from '../rules/RuleSyncSection';
-import { ImportRuleModal } from '../rules/ImportRuleModal';
+import { ImportAgentsModal } from './ImportAgentsModal';
 import { RuleEditorModal } from '../rules/RuleEditorModal';
 import { AddAgentsModal } from '../rules/AddAgentsModal';
-import { syncRulesTo, syncRulesToProject, getAgentRules, deleteAgentRule } from '../../api-client';
+import { syncRulesToProject, getAgentRules, deleteAgentRule } from '../../api-client';
 import { useToast } from '@/contexts/ToastContext';
 import { Modal } from '@/components/shared/Modal';
 import { SyncConfirmModal } from '@/components/shared/SyncConfirmModal';
@@ -35,32 +34,22 @@ export function AgentsTab() {
     if (importModalOpen || addModalOpen) loadAgentRules();
   }, [importModalOpen, addModalOpen, loadAgentRules]);
 
-  const handleSyncToProvider = async (target: string, sourceAgentId?: string) => {
-    try {
-      const result = await syncRulesTo(target, sourceAgentId);
-      const count = result.syncedCount;
-      showToast(
-        count !== undefined
-          ? `Synced ${count} rule(s) to ${target}`
-          : `Rules synced to ${target}`
-      );
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
   const handleSyncToProject = async (
     agentId: string,
     options?: { providerId?: string; sourceAgentId?: string }
   ) => {
     try {
       const result = await syncRulesToProject(agentId, options);
-      const count = result.syncedCount;
-      showToast(
-        count !== undefined
-          ? `Synced ${count} rule(s) to project`
-          : 'Rules synced to project'
-      );
+      if (options?.providerId) {
+        const count = result.syncedCount;
+        showToast(
+          count !== undefined
+            ? `Synced ${count} rule(s) to project`
+            : 'Rules synced to project'
+        );
+      } else {
+        showToast('AGENTS.md synced to project');
+      }
     } catch (err) {
       showToast((err as Error).message, 'error');
     }
@@ -94,16 +83,6 @@ export function AgentsTab() {
       <div className="servers-section-header">
         <h2>AGENTS.md</h2>
         <div className="header-actions">
-          <RuleSyncSection
-            agentRules={agentRules}
-            onSyncToProvider={(target, sourceAgentId) =>
-              requestSync(() => handleSyncToProvider(target, sourceAgentId))
-            }
-            onSyncToProject={(agentId, options) =>
-              requestSync(() => handleSyncToProject(agentId, options))
-            }
-            showAgentsTargets={true}
-          />
           <button type="button" className="btn" onClick={() => setImportModalOpen(true)}>
             Import
           </button>
@@ -169,11 +148,11 @@ export function AgentsTab() {
       )}
 
       {importModalOpen && (
-        <Modal isOpen onClose={() => setImportModalOpen(false)} aria-labelledby="import-rule-modal-title">
-          <ImportRuleModal
+        <Modal isOpen onClose={() => setImportModalOpen(false)} aria-labelledby="import-agents-modal-title">
+          <ImportAgentsModal
             onClose={() => setImportModalOpen(false)}
             onImport={() => {
-              showToast('Rules imported');
+              showToast('AGENTS.md imported');
               loadAgentRules();
             }}
             onError={(msg) => showToast(msg, 'error')}

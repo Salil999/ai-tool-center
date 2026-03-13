@@ -15,16 +15,62 @@ export interface RuleImportSource {
   error?: string;
 }
 
+/** Rules-only: Cursor, Augment, Windsurf, Continue, Copilot. AGENTS.md is separate. */
+export const PROJECT_RULE_SUBDIRS = [
+  { key: 'cursor', subdir: '.cursor/rules', label: 'Cursor', importToProvider: true },
+  { key: 'augment', subdir: '.augment/rules', label: 'Augment', importToProvider: true },
+  { key: 'windsurf', subdir: '.windsurf/rules', label: 'Windsurf', importToProvider: true },
+  { key: 'continue', subdir: '.continue/rules', label: 'Continue', importToProvider: true },
+  { key: 'copilot', subdir: '.github/copilot-instructions.md', label: 'GitHub Copilot', importToProvider: true },
+] as const;
+
+/** AGENTS.md-only sources (project AGENTS.md, .claude/rules). */
+export const PROJECT_AGENT_SUBDIRS = [
+  { key: 'agents', subdir: 'AGENTS.md', label: 'AGENTS.md' },
+  { key: 'claude', subdir: '.claude/rules', label: 'Claude Code (.claude/rules)' },
+] as const;
+
+export interface ProjectRuleSource {
+  id: string;
+  name: string;
+  path: string;
+  sources: RuleImportSource[];
+}
+
 /**
- * Read rules content from a file path.
+ * Resolve path to an AGENTS.md or CLAUDE.md file.
+ * If the path is a directory, looks for AGENTS.md or CLAUDE.md inside it.
  */
-function readRulesFromFile(filePath: string): string {
+function resolveRulesFilePath(filePath: string): string | null {
   const resolved = path.resolve(filePath);
   if (!isPathSafe(resolved) || !fs.existsSync(resolved)) {
-    return '';
+    return null;
   }
   const stat = fs.statSync(resolved);
-  if (!stat.isFile()) return '';
+  if (stat.isFile()) {
+    return resolved;
+  }
+  if (stat.isDirectory()) {
+    const agentsPath = path.join(resolved, 'AGENTS.md');
+    const claudePath = path.join(resolved, 'CLAUDE.md');
+    if (fs.existsSync(agentsPath) && fs.statSync(agentsPath).isFile()) {
+      return agentsPath;
+    }
+    if (fs.existsSync(claudePath) && fs.statSync(claudePath).isFile()) {
+      return claudePath;
+    }
+    return null;
+  }
+  return null;
+}
+
+/**
+ * Read rules content from a file path.
+ * Accepts either a file path or a directory path (looks for AGENTS.md or CLAUDE.md).
+ */
+function readRulesFromFile(filePath: string): string {
+  const resolved = resolveRulesFilePath(filePath);
+  if (!resolved) return '';
   return fs.readFileSync(resolved, 'utf8');
 }
 
@@ -58,13 +104,22 @@ function readRulesFromDirectory(dirPath: string): string {
   return parts.join('\n\n---\n\n');
 }
 
+export interface RuleImportSourcesResponse {
+  providers: RuleImportSource[];
+  projects: ProjectRuleSource[];
+}
+
+/** Provider IDs that are rules-only (not AGENTS.md). */
+const RULES_ONLY_PROVIDER_IDS = ['cursor', 'augment', 'windsurf', 'continue'];
+
 /**
- * Discover rule import sources: provider paths + project paths.
+ * Discover rule import sources: rules-only providers and project rules. AGENTS.md is separate.
  */
-export function discoverRuleSources(config: AppConfig): RuleImportSource[] {
-  const result: RuleImportSource[] = [];
+export function discoverRuleSources(config: AppConfig): RuleImportSourcesResponse {
+  const providers: RuleImportSource[] = [];
 
   for (const provider of RULES_PROVIDERS) {
+    if (!RULES_ONLY_PROVIDER_IDS.includes(provider.id)) continue;
     let exists = false;
     let hasContent = false;
     let error: string | null = null;
@@ -85,7 +140,7 @@ export function discoverRuleSources(config: AppConfig): RuleImportSource[] {
       error = (err as Error).message;
     }
 
-    result.push({
+    providers.push({
       id: provider.id,
       name: provider.name,
       path: provider.path,
@@ -94,6 +149,152 @@ export function discoverRuleSources(config: AppConfig): RuleImportSource[] {
       error: error || undefined,
     });
   }
+
+  const projects: ProjectRuleSource[] = [];
+
+  for (const project of config.projectDirectories || []) {
+    const projectPath = path.resolve(project.path);
+    const sources: RuleImportSource[] = [];
+
+    for (const { key, subdir, label } of PROJECT_RULE_SUBDIRS) {
+      const isFile = subdir.endsWith('.md');
+      const fullPath = path.join(projectPath, ...subdir.split('/'));
+      let exists = false;
+      let hasContent = false;
+      let error: string | null = null;
+
+      try {
+        if (fs.existsSync(fullPath)) {
+          const stat = fs.statSync(fullPath);
+          if (isFile && stat.isFile()) {
+            exists = true;
+            hasContent = fs.readFileSync(fullPath, 'utf8').trim().length > 0;
+          } else if (!isFile && stat.isDirectory()) {
+            exists = true;
+            const content = readRulesFromDirectory(fullPath);
+            hasContent = content.trim().length > 0;
+          }
+        }
+      } catch (err) {
+        error = (err as Error).message;
+      }
+
+      sources.push({
+        id: `project-${project.id}__${key}`,
+        name: label,
+        path: fullPath,
+        exists,
+        hasContent,
+        error: error || undefined,
+      });
+    }
+
+    projects.push({
+      id: project.id,
+      name: project.name || project.path,
+      path: projectPath,
+      sources,
+    });
+  }
+
+  return { providers, projects };
+}
+
+/**
+ * Resolve project rule source ID to full path and metadata.
+ */
+export function resolveProjectRuleSource(
+  sourceId: string,
+  projectDirectories: Array<{ id: string; path: string }>
+): { path: string; importToProvider: boolean; providerId?: string } | null {
+  const match = sourceId.match(/^project-(.+)__(cursor|augment|windsurf|continue|copilot)$/);
+  if (!match) return null;
+  const [, projectId, key] = match;
+  const project = projectDirectories.find((pd) => pd.id === projectId);
+  if (!project) return null;
+  const entry = PROJECT_RULE_SUBDIRS.find((e) => e.key === key);
+  if (!entry) return null;
+  const fullPath = path.join(path.resolve(project.path), ...entry.subdir.split('/'));
+  if (entry.importToProvider) {
+    const providerId = key === 'copilot' ? 'copilot' : key;
+    return { path: fullPath, importToProvider: true, providerId };
+  }
+  return { path: fullPath, importToProvider: false };
+}
+
+export interface AgentImportSourcesResponse {
+  projects: ProjectRuleSource[];
+  agents: RuleImportSource[];
+}
+
+/** Resolve project agent source (AGENTS.md, .claude/rules) to path. */
+export function resolveProjectAgentSource(
+  sourceId: string,
+  projectDirectories: Array<{ id: string; path: string }>
+): { path: string; key: 'agents' | 'claude' } | null {
+  const match = sourceId.match(/^project-(.+)__(agents|claude)$/);
+  if (!match) return null;
+  const [, projectId, key] = match;
+  const project = projectDirectories.find((pd) => pd.id === projectId);
+  if (!project) return null;
+  const entry = PROJECT_AGENT_SUBDIRS.find((e) => e.key === key);
+  if (!entry) return null;
+  const fullPath = path.join(path.resolve(project.path), ...entry.subdir.split('/'));
+  return { path: fullPath, key: key as 'agents' | 'claude' };
+}
+
+/**
+ * Discover AGENTS.md import sources: project AGENTS.md/.claude/rules + agent entries.
+ */
+export function discoverAgentSources(config: AppConfig): AgentImportSourcesResponse {
+  const projects: ProjectRuleSource[] = [];
+
+  for (const project of config.projectDirectories || []) {
+    const projectPath = path.resolve(project.path);
+    const sources: RuleImportSource[] = [];
+
+    for (const { key, subdir, label } of PROJECT_AGENT_SUBDIRS) {
+      const isFile = subdir.endsWith('.md');
+      const fullPath = path.join(projectPath, ...subdir.split('/'));
+      let exists = false;
+      let hasContent = false;
+      let error: string | null = null;
+
+      try {
+        if (fs.existsSync(fullPath)) {
+          const stat = fs.statSync(fullPath);
+          if (isFile && stat.isFile()) {
+            exists = true;
+            hasContent = fs.readFileSync(fullPath, 'utf8').trim().length > 0;
+          } else if (!isFile && stat.isDirectory()) {
+            exists = true;
+            const content = readRulesFromDirectory(fullPath);
+            hasContent = content.trim().length > 0;
+          }
+        }
+      } catch (err) {
+        error = (err as Error).message;
+      }
+
+      sources.push({
+        id: `project-${project.id}__${key}`,
+        name: label,
+        path: fullPath,
+        exists,
+        hasContent,
+        error: error || undefined,
+      });
+    }
+
+    projects.push({
+      id: project.id,
+      name: project.name || project.path,
+      path: projectPath,
+      sources,
+    });
+  }
+
+  const agents: RuleImportSource[] = [];
 
   for (const agent of config.agentRules || []) {
     const agentsPath = path.join(agent.projectPath, 'AGENTS.md');
@@ -122,7 +323,7 @@ export function discoverRuleSources(config: AppConfig): RuleImportSource[] {
       error = (err as Error).message;
     }
 
-    result.push({
+    agents.push({
       id: `agent-${agent.id}`,
       name: agent.name || agent.projectPath,
       path: sourcePath,
@@ -132,7 +333,41 @@ export function discoverRuleSources(config: AppConfig): RuleImportSource[] {
     });
   }
 
-  return result;
+  return { projects, agents };
+}
+
+/**
+ * Import rules from a project's AGENTS.md or .claude/rules into a target agent's AGENTS.md.
+ */
+export function importFromProjectSourceToAgent(
+  sourcePath: string,
+  targetAgentId: string,
+  key: 'agents' | 'claude'
+): { success: boolean } {
+  const resolved = path.resolve(sourcePath);
+  if (!isPathSafe(resolved)) {
+    throw new Error('Path is not allowed');
+  }
+
+  let content: string;
+  if (key === 'agents') {
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
+      throw new Error(`File not found: ${resolved}`);
+    }
+    content = fs.readFileSync(resolved, 'utf8');
+  } else {
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) {
+      throw new Error(`Directory not found: ${resolved}`);
+    }
+    content = readRulesFromDirectory(resolved);
+  }
+
+  if (!content.trim()) {
+    throw new Error('Source has no content');
+  }
+
+  writeAgentsForAgent(targetAgentId, content);
+  return { success: true };
 }
 
 /**
@@ -179,16 +414,87 @@ export function importFromRuleSource(
 }
 
 /**
+ * Get project directory from a custom path (file or directory containing AGENTS.md/CLAUDE.md).
+ */
+export function getProjectPathFromCustomPath(filePath: string): string | null {
+  const resolved = resolveRulesFilePath(filePath);
+  return resolved ? path.dirname(resolved) : null;
+}
+
+/**
  * Import rules from a custom file path into a target agent's AGENTS.md.
+ * Accepts a file path (AGENTS.md or CLAUDE.md) or a directory path (looks for AGENTS.md or CLAUDE.md inside).
  */
 export function importFromCustomPath(filePath: string, targetAgentId: string): { success: boolean } {
-  const content = readRulesFromFile(filePath);
+  const resolved = resolveRulesFilePath(filePath);
+  if (!resolved) {
+    throw new Error(
+      'No AGENTS.md or CLAUDE.md found at that path. Enter a file path (e.g. ~/my-project/AGENTS.md) or a directory that contains AGENTS.md or CLAUDE.md.'
+    );
+  }
+  const content = fs.readFileSync(resolved, 'utf8');
+  if (!content.trim()) {
+    throw new Error(`File is empty: ${resolved}`);
+  }
   writeAgentsForAgent(targetAgentId, content);
   return { success: true };
 }
 
-/** Provider IDs that support importing into the app's Rules section (multi-file providers). */
-const PROVIDER_RULES_IMPORT_IDS = ['cursor', 'augment'] as const;
+/** Provider IDs that support importing into the app's Rules section. */
+const PROVIDER_RULES_IMPORT_IDS = ['cursor', 'augment', 'windsurf', 'continue'] as const;
+
+/**
+ * Import rules from a project's provider directory (e.g. project/.cursor/rules) into the app's Rules section.
+ */
+export function importFromProjectSourceToProvider(
+  sourcePath: string,
+  providerId: string,
+  config: AppConfig
+): { success: boolean; importedCount: number } {
+  const rulesBase = process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(os.homedir(), '.ai_tools_manager', 'rules');
+  const destDir = path.join(rulesBase, providerId);
+  const ext = providerId === 'cursor' ? '.mdc' : '.md';
+  const srcResolved = path.resolve(sourcePath);
+
+  if (!isPathSafe(srcResolved) || !isPathSafe(destDir)) {
+    throw new Error('Path is not allowed');
+  }
+
+  fs.mkdirSync(destDir, { recursive: true });
+  let importedCount = 0;
+
+  if (providerId === 'copilot') {
+    const destPath = path.join(destDir, 'copilot-instructions.md');
+    if (fs.existsSync(srcResolved) && fs.statSync(srcResolved).isFile()) {
+      const content = fs.readFileSync(srcResolved, 'utf8');
+      fs.writeFileSync(destPath, content, 'utf8');
+      importedCount = 1;
+    }
+    return { success: true, importedCount };
+  }
+
+  if (!fs.existsSync(srcResolved) || !fs.statSync(srcResolved).isDirectory()) {
+    throw new Error(`Source directory not found: ${srcResolved}`);
+  }
+
+  const entries = fs.readdirSync(srcResolved, { withFileTypes: true });
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    if (!entry.name.endsWith(ext)) continue;
+    const base = path.basename(entry.name, ext);
+    if (!base) continue;
+
+    const srcPath = path.join(srcResolved, entry.name);
+    const destPath = path.join(destDir, entry.name);
+    if (!isPathSafe(srcPath) || !isPathSafe(destPath)) continue;
+
+    const content = fs.readFileSync(srcPath, 'utf8');
+    fs.writeFileSync(destPath, content, 'utf8');
+    importedCount++;
+  }
+
+  return { success: true, importedCount };
+}
 
 /**
  * Import rules from a provider's directory (e.g. ~/.cursor/rules) into the app's Rules section

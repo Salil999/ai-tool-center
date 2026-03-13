@@ -15,6 +15,21 @@ export interface SkillImportSource {
   error?: string;
 }
 
+/** Provider-specific skill subdirs within a project (GitHub Copilot, Cursor, Claude, cross-client). */
+export const PROJECT_SKILL_SUBDIRS = [
+  { key: 'github', subdir: '.github/skills', label: 'GitHub Copilot' },
+  { key: 'cursor', subdir: '.cursor/skills', label: 'Cursor' },
+  { key: 'claude', subdir: '.claude/skills', label: 'Claude Code' },
+  { key: 'agents', subdir: '.agents/skills', label: 'Agents (cross-client)' },
+] as const;
+
+export interface ProjectSkillSource {
+  id: string;
+  name: string;
+  path: string;
+  sources: SkillImportSource[];
+}
+
 function toSkillId(name: string): string {
   return (name || 'skill').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'skill';
 }
@@ -41,9 +56,15 @@ function listSkillDirs(parentPath: string): string[] {
 
 /**
  * Discover skill import sources: provider directories + project directories.
+ * Projects are returned with nested sources for each provider-specific subdir.
  */
-export function discoverSkillSources(config: AppConfig): SkillImportSource[] {
-  const result: SkillImportSource[] = [];
+export interface SkillImportSourcesResponse {
+  providers: SkillImportSource[];
+  projects: ProjectSkillSource[];
+}
+
+export function discoverSkillSources(config: AppConfig): SkillImportSourcesResponse {
+  const providers: SkillImportSource[] = [];
 
   for (const provider of SKILL_PROVIDERS) {
     let exists = false;
@@ -60,7 +81,7 @@ export function discoverSkillSources(config: AppConfig): SkillImportSource[] {
       error = (err as Error).message;
     }
 
-    result.push({
+    providers.push({
       id: provider.id,
       name: provider.name,
       path: provider.path,
@@ -70,36 +91,69 @@ export function discoverSkillSources(config: AppConfig): SkillImportSource[] {
     });
   }
 
-  for (const project of config.projectDirectories || []) {
-    const skillsPath = path.join(project.path, '.agents', 'skills');
-    let exists = false;
-    let skillCount = 0;
-    let error: string | null = null;
+  const projects: ProjectSkillSource[] = [];
 
-    try {
-      if (fs.existsSync(skillsPath)) {
-        exists = true;
-        skillCount = listSkillDirs(skillsPath).length;
+  for (const project of config.projectDirectories || []) {
+    const projectPath = path.resolve(project.path);
+    const sources: SkillImportSource[] = [];
+
+    for (const { key, subdir, label } of PROJECT_SKILL_SUBDIRS) {
+      const skillsPath = path.join(projectPath, ...subdir.split('/'));
+      let exists = false;
+      let skillCount = 0;
+      let error: string | null = null;
+
+      try {
+        if (fs.existsSync(skillsPath) && fs.statSync(skillsPath).isDirectory()) {
+          exists = true;
+          skillCount = listSkillDirs(skillsPath).length;
+        }
+      } catch (err) {
+        error = (err as Error).message;
       }
-    } catch (err) {
-      error = (err as Error).message;
+
+      const sourceId = `project-${project.id}__${key}`;
+      sources.push({
+        id: sourceId,
+        name: label,
+        path: skillsPath,
+        exists,
+        skillCount,
+        error: error || undefined,
+      });
     }
 
-    result.push({
-      id: `project-${project.id}`,
+    projects.push({
+      id: project.id,
       name: project.name || project.path,
-      path: skillsPath,
-      exists,
-      skillCount,
-      error: error || undefined,
+      path: projectPath,
+      sources,
     });
   }
 
-  return result;
+  return { providers, projects };
 }
 
 /**
- * Get skills from a source path (provider dir or project .agents/skills).
+ * Resolve a project subdir source ID (project-{id}__{key}) to the full path.
+ * Returns null if invalid.
+ */
+export function resolveProjectSourcePath(
+  sourceId: string,
+  projectDirectories: Array<{ id: string; path: string }>
+): string | null {
+  const match = sourceId.match(/^project-(.+)__(github|cursor|claude|agents)$/);
+  if (!match) return null;
+  const [, projectId, key] = match;
+  const project = projectDirectories.find((pd) => pd.id === projectId);
+  if (!project) return null;
+  const entry = PROJECT_SKILL_SUBDIRS.find((e) => e.key === key);
+  if (!entry) return null;
+  return path.join(path.resolve(project.path), ...entry.subdir.split('/'));
+}
+
+/**
+ * Get skills from a source path (provider dir or project subdir).
  */
 function getSkillsFromPath(sourcePath: string): string[] {
   const resolved = path.resolve(sourcePath);

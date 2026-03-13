@@ -1,7 +1,8 @@
 import { fetchJSON, apiUrl } from './fetch';
+import type { ProjectDirectory } from '@/types';
 
 export async function getProjectDirectories() {
-  return fetchJSON<Array<Record<string, unknown>>>(apiUrl('/project-directories'));
+  return fetchJSON<ProjectDirectory[]>(apiUrl('/project-directories'));
 }
 
 export async function addProjectDirectory(payload: { path: string; name?: string }) {
@@ -20,4 +21,11 @@ export async function updateProjectDirectory(id: string, payload: { path?: strin
 
 export async function deleteProjectDirectory(id: string) {
   await fetch(apiUrl(`/project-directories/${id}`), { method: 'DELETE' });
+}
+
+export async function reorderProjectDirectories(order: string[]) {
+  return fetchJSON<{ order: string[] }>(apiUrl('/project-directories/reorder'), {
+    method: 'PATCH',
+    body: JSON.stringify({ order }),
+  });
 }

@@ -71,8 +71,29 @@ export async function syncSkillsToProject(projectId: string) {
   return fetchJSON<{ path: string; success: boolean; syncedCount: number }>(apiUrl(`/skills/sync/project/${projectId}`), { method: 'POST' });
 }
 
+export interface SkillImportSource {
+  id: string;
+  name: string;
+  path: string;
+  exists: boolean;
+  skillCount: number;
+  error?: string;
+}
+
+export interface ProjectSkillSource {
+  id: string;
+  name: string;
+  path: string;
+  sources: SkillImportSource[];
+}
+
+export interface SkillImportSourcesResponse {
+  providers: SkillImportSource[];
+  projects: ProjectSkillSource[];
+}
+
 export async function getSkillImportSources() {
-  return fetchJSON<Array<{ id: string; name: string; path: string; exists: boolean; skillCount: number; error?: string }>>(apiUrl('/skills/import/sources'));
+  return fetchJSON<SkillImportSourcesResponse>(apiUrl('/skills/import/sources'));
 }
 
 export async function importSkillsFromSource(sourceId: string) {

@@ -27,11 +27,19 @@ export function createRulesSyncRouter(getConfig: GetConfig, auditStore: AuditSto
         path: c.path,
       })),
     ];
-    const projects = (config.agentRules || []).map((ar) => ({
+    const agentProjects = (config.agentRules || []).map((ar) => ({
       id: ar.id,
       name: ar.name || ar.projectPath,
       path: ar.projectPath,
     }));
+    const dirProjects = (config.projectDirectories || []).map((pd) => ({
+      id: pd.id,
+      name: pd.name || pd.path,
+      path: pd.path,
+    }));
+    const agentPaths = new Set(agentProjects.map((p) => p.path));
+    const extraFromDirs = dirProjects.filter((p) => !agentPaths.has(p.path));
+    const projects = [...agentProjects, ...extraFromDirs];
     res.json({ providers, projects });
   });
 
@@ -57,7 +65,7 @@ export function createRulesSyncRouter(getConfig: GetConfig, auditStore: AuditSto
         targetPath = targetInfo.path;
       }
 
-      if (target === 'cursor' || target === 'augment' || target.startsWith('custom-')) {
+      if (target === 'cursor' || target === 'augment' || target === 'windsurf' || target === 'continue' || target.startsWith('custom-')) {
         const result = syncProviderRulesToTarget(target, targetPath, config);
         auditStore.record('rule_sync_to_provider', config, config, {
           target,
@@ -78,7 +86,7 @@ export function createRulesSyncRouter(getConfig: GetConfig, auditStore: AuditSto
           return res.status(404).json({ error: 'Agent rule not found' });
         }
         const result = syncAgentsFromAgentToProvider(sourceAgentId, target);
-        auditStore.record('rule_sync_to_provider', config, config, {
+        auditStore.record('agent_sync_to_provider', config, config, {
           target,
           sourceAgentId,
           path: result.path,
@@ -95,21 +103,33 @@ export function createRulesSyncRouter(getConfig: GetConfig, auditStore: AuditSto
   router.post('/project/:agentId', (req: Request, res: Response) => {
     const config = getConfig();
     const targetAgentId = String(req.params.agentId ?? '');
+    let targetPath: string;
     const targetAgent = (config.agentRules || []).find((a) => a.id === targetAgentId);
-    if (!targetAgent) return res.status(404).json({ error: 'Agent rule not found' });
+    const targetProject = (config.projectDirectories || []).find((pd) => pd.id === targetAgentId);
+    if (targetAgent) {
+      targetPath = targetAgent.projectPath;
+    } else if (targetProject) {
+      targetPath = targetProject.path;
+    } else {
+      return res.status(404).json({ error: 'Project not found' });
+    }
 
     const providerId = String(req.query.providerId ?? '').toLowerCase();
     const sourceAgentId = String(req.query.sourceAgentId ?? req.body?.sourceAgentId ?? '');
 
     try {
-      if (providerId === 'cursor' || providerId === 'augment') {
-        const targetPath =
+      if (['cursor', 'augment', 'windsurf', 'continue', 'copilot'].includes(providerId)) {
+        const rulesTargetPath =
           providerId === 'cursor'
-            ? path.join(targetAgent.projectPath, '.cursor', 'rules')
+            ? path.join(targetPath, '.cursor', 'rules')
             : providerId === 'augment'
-              ? path.join(targetAgent.projectPath, '.augment', 'rules')
-              : path.join(targetAgent.projectPath, 'AGENTS.md');
-        const result = syncProviderRulesToTarget(providerId, targetPath, config);
+              ? path.join(targetPath, '.augment', 'rules')
+              : providerId === 'windsurf'
+                ? path.join(targetPath, '.windsurf', 'rules')
+                : providerId === 'continue'
+                  ? path.join(targetPath, '.continue', 'rules')
+                  : path.join(targetPath, '.github', 'copilot-instructions.md');
+        const result = syncProviderRulesToTarget(providerId, rulesTargetPath, config);
         auditStore.record('rule_sync_to_project', config, config, {
           targetAgentId,
           providerId,
@@ -126,8 +146,8 @@ export function createRulesSyncRouter(getConfig: GetConfig, auditStore: AuditSto
       if (!sourceAgent) {
         return res.status(404).json({ error: 'Source agent rule not found' });
       }
-      const result = copyAgentsBetweenAgents(sourceAgentId, targetAgent.projectPath);
-      auditStore.record('rule_sync_to_project', config, config, {
+      const result = copyAgentsBetweenAgents(sourceAgentId, targetPath);
+      auditStore.record('agent_sync_to_project', config, config, {
         targetAgentId,
         sourceAgentId,
         path: result.path,

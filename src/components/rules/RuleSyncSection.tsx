@@ -197,6 +197,27 @@ export function RuleSyncSection({
                   >
                     → Augment rules
                   </button>
+                  <button
+                    type="button"
+                    className="sync-dropdown-item sync-dropdown-sub"
+                    onClick={() => handleSelectProject(id, { providerId: 'windsurf' })}
+                  >
+                    → Windsurf rules
+                  </button>
+                  <button
+                    type="button"
+                    className="sync-dropdown-item sync-dropdown-sub"
+                    onClick={() => handleSelectProject(id, { providerId: 'continue' })}
+                  >
+                    → Continue rules
+                  </button>
+                  <button
+                    type="button"
+                    className="sync-dropdown-item sync-dropdown-sub"
+                    onClick={() => handleSelectProject(id, { providerId: 'copilot' })}
+                  >
+                    → Copilot rules
+                  </button>
                 </div>
               ))}
             </>

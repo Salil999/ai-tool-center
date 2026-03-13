@@ -30,14 +30,6 @@ export function ServerList({
 
   const ids = servers.map((s) => s.id!);
 
-  const handleMove = (index: number, direction: 'up' | 'down') => {
-    const newOrder = [...ids];
-    const target = direction === 'up' ? index - 1 : index + 1;
-    if (target < 0 || target >= newOrder.length) return;
-    [newOrder[index], newOrder[target]] = [newOrder[target], newOrder[index]];
-    onReorder(newOrder);
-  };
-
   const handleDragStart = (id: string) => {
     setDraggedId(id);
   };
@@ -71,7 +63,7 @@ export function ServerList({
 
   return (
     <div className="server-list">
-      {servers.map((server, index) => (
+      {servers.map((server) => (
         <ServerCard
           key={server.id!}
           server={server}
@@ -80,8 +72,6 @@ export function ServerList({
           onEdit={onEdit}
           onDelete={onDelete}
           onToggle={onToggle}
-          onMoveUp={index > 0 ? () => handleMove(index, 'up') : undefined}
-          onMoveDown={index < servers.length - 1 ? () => handleMove(index, 'down') : undefined}
           onDragStart={() => handleDragStart(server.id!)}
           onDragOver={(e) => handleDragOver(e, server.id!)}
           onDragLeave={handleDragLeave}

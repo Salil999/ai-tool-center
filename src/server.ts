@@ -17,6 +17,7 @@ import { createSkillsRegistryRouter } from './api/skills-registry.js';
 import { createRulesRouter } from './api/rules.js';
 import { createRulesSyncRouter } from './api/rules-sync.js';
 import { createRulesImportRouter } from './api/rules-import.js';
+import { createAgentsImportRouter } from './api/agents-import.js';
 import { createAgentsRouter } from './api/agents.js';
 import { createCustomRuleConfigsRouter } from './api/custom-rule-configs.js';
 import { createProjectDirectoriesRouter } from './api/project-directories.js';
@@ -81,6 +82,7 @@ export function createApp(options: CreateAppOptions = {}) {
   app.use('/api/skills', createSkillsRouter(getConfig, saveConfigFn, auditStore));
   app.use('/api/rules/sync', createRulesSyncRouter(getConfig, auditStore));
   app.use('/api/rules/import', createRulesImportRouter(getConfig, saveConfigFn));
+  app.use('/api/rules/agents/import', createAgentsImportRouter(getConfig, saveConfigFn));
   app.use('/api/rules/agents', createAgentsRouter(getConfig, saveConfigFn));
   app.use('/api/rules/custom-configs', createCustomRuleConfigsRouter(getConfig, saveConfigFn));
   app.use('/api/rules', createRulesRouter(getConfig, saveConfigFn, auditStore));

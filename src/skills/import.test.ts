@@ -42,16 +42,16 @@ ${content || `# ${name}\n\nInstructions.`}`;
   describe('discoverSkillSources', () => {
     it('returns provider sources', () => {
       const config = { ...baseConfig };
-      const sources = discoverSkillSources(config);
-      expect(sources.length).toBeGreaterThan(0);
-      expect(sources[0]).toHaveProperty('id');
-      expect(sources[0]).toHaveProperty('name');
-      expect(sources[0]).toHaveProperty('path');
-      expect(sources[0]).toHaveProperty('exists');
-      expect(sources[0]).toHaveProperty('skillCount');
+      const { providers } = discoverSkillSources(config);
+      expect(providers.length).toBeGreaterThan(0);
+      expect(providers[0]).toHaveProperty('id');
+      expect(providers[0]).toHaveProperty('name');
+      expect(providers[0]).toHaveProperty('path');
+      expect(providers[0]).toHaveProperty('exists');
+      expect(providers[0]).toHaveProperty('skillCount');
     });
 
-    it('includes project directories from config', () => {
+    it('includes project directories with provider subdirs', () => {
       const projectPath = path.join(tmpDir, 'my-project');
       fs.mkdirSync(path.join(projectPath, '.agents', 'skills'), { recursive: true });
       createSkillDir(path.join(projectPath, '.agents', 'skills'), 'proj-skill');
@@ -60,11 +60,16 @@ ${content || `# ${name}\n\nInstructions.`}`;
         ...baseConfig,
         projectDirectories: [{ id: 'p1', path: projectPath, name: 'My Project' }],
       };
-      const sources = discoverSkillSources(config);
-      const projectSource = sources.find((s) => s.id === 'project-p1');
-      expect(projectSource).toBeDefined();
-      expect(projectSource?.exists).toBe(true);
-      expect(projectSource?.skillCount).toBe(1);
+      const { projects } = discoverSkillSources(config);
+      expect(projects).toHaveLength(1);
+      expect(projects[0].id).toBe('p1');
+      expect(projects[0].name).toBe('My Project');
+      expect(projects[0].sources).toHaveLength(4);
+
+      const agentsSource = projects[0].sources.find((s) => s.id === 'project-p1__agents');
+      expect(agentsSource).toBeDefined();
+      expect(agentsSource?.exists).toBe(true);
+      expect(agentsSource?.skillCount).toBe(1);
     });
   });
 
