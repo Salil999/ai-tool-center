@@ -24,6 +24,7 @@ export function SkillsTab({ showToast }: SkillsTabProps) {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [editSkillId, setEditSkillId] = useState<string | null>(null);
+  const [lintRefreshKey, setLintRefreshKey] = useState(0);
 
   const loadSkills = useCallback(async () => {
     const list = await getSkills();
@@ -85,6 +86,7 @@ export function SkillsTab({ showToast }: SkillsTabProps) {
       </div>
       <SkillList
         skills={skills}
+        lintRefreshKey={lintRefreshKey}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onToggle={handleToggle}
@@ -132,6 +134,7 @@ export function SkillsTab({ showToast }: SkillsTabProps) {
               onClose={() => setEditSkillId(null)}
               onSaved={() => {
                 showToast('Skill updated');
+                setLintRefreshKey((k) => k + 1);
                 loadSkills();
               }}
             />

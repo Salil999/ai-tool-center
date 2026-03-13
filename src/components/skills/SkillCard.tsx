@@ -4,6 +4,7 @@ import type { Skill, LintReport } from '../../types';
 
 interface SkillCardProps {
   skill: Skill & { id: string };
+  lintRefreshKey?: number;
   isDragging?: boolean;
   isDropTarget?: boolean;
   onEdit: (id: string | undefined) => void;
@@ -20,6 +21,7 @@ interface SkillCardProps {
 
 export function SkillCard({
   skill,
+  lintRefreshKey = 0,
   isDragging,
   isDropTarget,
   onEdit,
@@ -53,7 +55,7 @@ export function SkillCard({
   useEffect(() => {
     if (!expanded) return;
     fetchLint();
-  }, [expanded, fetchLint]);
+  }, [expanded, fetchLint, lintRefreshKey]);
 
   const handleAction = async (action: 'edit' | 'delete' | 'toggle') => {
     switch (action) {
@@ -111,17 +113,16 @@ export function SkillCard({
               ⋮⋮
             </span>
           )}
-          <div className="server-info">
-            <span className="server-name">{skill.name || skill.id}</span>
+          <div className="server-info skill-card-info">
+            <div className="skill-name-row">
+              <span className="server-name">{skill.name || skill.id}</span>
+              <span className={`server-status ${skill.enabled ? 'enabled' : 'disabled'}`}>
+                {skill.enabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
             {truncated && (
               <span className="server-meta">{truncated}</span>
             )}
-            <span className="server-meta" title={skill.path}>
-              {skill.path}
-            </span>
-            <span className={`server-status ${skill.enabled ? 'enabled' : 'disabled'}`}>
-              {skill.enabled ? 'Enabled' : 'Disabled'}
-            </span>
           </div>
           <span className="server-card-chevron" aria-hidden>
             {expanded ? '▼' : '▶'}

@@ -126,15 +126,17 @@ export function ServerCard({
           <span className="server-card-chevron" aria-hidden>
             {expanded ? '▼' : '▶'}
           </span>
-          <div className="server-info">
-            <span className="server-name">{server.name || server.id}</span>
+          <div className="server-info server-card-info">
+            <div className="skill-name-row">
+              <span className="server-name">{server.name || server.id}</span>
+              <span className={`server-status ${server.enabled ? 'enabled' : 'disabled'}`}>
+                {server.enabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
             <span className="server-meta">
               {server.type}
               {server.command ? ` • ${server.command}` : ''}
               {server.url ? ` • ${server.url}` : ''}
-            </span>
-            <span className={`server-status ${server.enabled ? 'enabled' : 'disabled'}`}>
-              {server.enabled ? 'Enabled' : 'Disabled'}
             </span>
           </div>
         </button>

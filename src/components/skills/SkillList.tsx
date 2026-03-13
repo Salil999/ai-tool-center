@@ -4,6 +4,7 @@ import type { Skill } from '../../types';
 
 interface SkillListProps {
   skills: (Skill & { id: string })[];
+  lintRefreshKey?: number;
   onEdit: (id: string | undefined) => void;
   onDelete: (id: string) => void;
   onToggle: (id: string, enabled: boolean) => void;
@@ -12,6 +13,7 @@ interface SkillListProps {
 
 export function SkillList({
   skills,
+  lintRefreshKey = 0,
   onEdit,
   onDelete,
   onToggle,
@@ -75,6 +77,7 @@ export function SkillList({
         <SkillCard
           key={skill.id}
           skill={skill}
+          lintRefreshKey={lintRefreshKey}
           isDragging={draggedId === skill.id}
           isDropTarget={dropTargetId === skill.id}
           onEdit={onEdit}
