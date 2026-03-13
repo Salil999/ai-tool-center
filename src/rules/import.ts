@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { RULES_PROVIDERS, getRuleProviderPath } from './providers.js';
 import { readAgentsForAgent, writeAgentsForAgent } from './sync.js';
 import { isPathSafe } from '../providers/utils.js';
@@ -184,4 +185,59 @@ export function importFromCustomPath(filePath: string, targetAgentId: string): {
   const content = readRulesFromFile(filePath);
   writeAgentsForAgent(targetAgentId, content);
   return { success: true };
+}
+
+/** Provider IDs that support importing into the app's Rules section (multi-file providers). */
+const PROVIDER_RULES_IMPORT_IDS = ['cursor', 'augment'] as const;
+
+/**
+ * Import rules from a provider's directory (e.g. ~/.cursor/rules) into the app's Rules section
+ * (~/.ai_tools_manager/rules/{providerId}). Use when the user has rules in Cursor or Augment
+ * and wants to bring them into the app for central management.
+ */
+export function importFromProviderToRules(
+  providerId: string,
+  config: AppConfig
+): { success: boolean; importedCount: number } {
+  if (!PROVIDER_RULES_IMPORT_IDS.includes(providerId as (typeof PROVIDER_RULES_IMPORT_IDS)[number])) {
+    throw new Error(`Cannot import to provider rules: ${providerId}. Supported: cursor, augment.`);
+  }
+
+  const provider = getRuleProviderPath(providerId);
+  if (!provider || provider.type !== 'directory') {
+    throw new Error(`Provider ${providerId} is not a directory-based rules source`);
+  }
+
+  const rulesBase = process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(os.homedir(), '.ai_tools_manager', 'rules');
+  const destDir = path.join(rulesBase, providerId);
+  const ext = providerId === 'cursor' ? '.mdc' : '.md';
+  const srcDir = path.resolve(provider.path);
+
+  if (!isPathSafe(srcDir) || !isPathSafe(destDir)) {
+    throw new Error('Path is not allowed');
+  }
+  if (!fs.existsSync(srcDir) || !fs.statSync(srcDir).isDirectory()) {
+    throw new Error(`Source directory not found: ${srcDir}`);
+  }
+
+  fs.mkdirSync(destDir, { recursive: true });
+  const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+  let importedCount = 0;
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    if (!entry.name.endsWith(ext)) continue;
+    const base = path.basename(entry.name, ext);
+    if (!base) continue;
+
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+    if (!isPathSafe(srcPath) || !isPathSafe(destPath)) continue;
+
+    const content = fs.readFileSync(srcPath, 'utf8');
+    fs.writeFileSync(destPath, content, 'utf8');
+    importedCount++;
+  }
+
+  return { success: true, importedCount };
 }

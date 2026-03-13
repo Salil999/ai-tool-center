@@ -91,7 +91,7 @@ export function EditSkillModal({
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Edit Skill — {skillName}</h2>
+        <h2 id="edit-skill-modal-title">Edit Skill — {skillName}</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

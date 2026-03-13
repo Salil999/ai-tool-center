@@ -59,7 +59,7 @@ export function RuleEditorModal({ agentId, agentName, onClose, onSaved }: RuleEd
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Edit AGENTS.md — {agentName}</h2>
+        <h2 id="rule-editor-modal-title">Edit AGENTS.md — {agentName}</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

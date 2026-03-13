@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { marked } from 'marked';
 import { createSkill, lintContent, searchSkillhubRegistry, installSkillFromRegistry, type SkillhubSkill } from '../../api-client';
+import { useToast } from '@/contexts/ToastContext';
 
 /** Extract markdown body after YAML frontmatter (--- ... ---) */
 function getMarkdownBody(content: string): string {
@@ -29,10 +30,10 @@ type AddSkillTab = 'create' | 'search';
 interface AddSkillModalProps {
   onClose: () => void;
   onSaved: () => void;
-  showToast?: (message: string, type?: string) => void;
 }
 
-export function AddSkillModal({ onClose, onSaved, showToast }: AddSkillModalProps) {
+export function AddSkillModal({ onClose, onSaved }: AddSkillModalProps) {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<AddSkillTab>('create');
   const [content, setContent] = useState(DEFAULT_SKILL_TEMPLATE);
   const [saving, setSaving] = useState(false);
@@ -80,7 +81,7 @@ export function AddSkillModal({ onClose, onSaved, showToast }: AddSkillModalProp
     setError(null);
     try {
       await installSkillFromRegistry(skill.slug, repoUrl);
-      showToast?.('Skill added');
+      showToast('Skill added');
       onSaved();
       onClose();
     } catch (err) {
@@ -109,7 +110,7 @@ export function AddSkillModal({ onClose, onSaved, showToast }: AddSkillModalProp
     setError(null);
     try {
       await createSkill({ content });
-      showToast?.('Skill added');
+      showToast('Skill added');
       onSaved();
       onClose();
     } catch (err) {
@@ -122,7 +123,7 @@ export function AddSkillModal({ onClose, onSaved, showToast }: AddSkillModalProp
   return (
     <div className="modal edit-modal add-skill-modal">
       <div className="modal-header">
-        <h2>Add Skill</h2>
+        <h2 id="add-skill-modal-title">Add Skill</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

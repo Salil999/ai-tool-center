@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { createCredential } from '../../api-client';
+import { useToast } from '@/contexts/ToastContext';
 
 interface AddCredentialModalProps {
   onClose: () => void;
   onSaved: () => void;
-  showToast?: (message: string, type?: string) => void;
 }
 
-export function AddCredentialModal({ onClose, onSaved, showToast }: AddCredentialModalProps) {
+export function AddCredentialModal({ onClose, onSaved }: AddCredentialModalProps) {
+  const { showToast } = useToast();
   const [name, setName] = useState('');
   const [value, setValue] = useState('');
   const [saving, setSaving] = useState(false);
@@ -24,7 +25,7 @@ export function AddCredentialModal({ onClose, onSaved, showToast }: AddCredentia
     setError(null);
     try {
       await createCredential({ name: trimmedName, value });
-      showToast?.('Credential added');
+      showToast('Credential added');
       onSaved();
       onClose();
     } catch (err) {
@@ -37,7 +38,7 @@ export function AddCredentialModal({ onClose, onSaved, showToast }: AddCredentia
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Add API Credential</h2>
+        <h2 id="add-credential-modal-title">Add API Credential</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

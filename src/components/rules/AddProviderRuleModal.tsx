@@ -48,7 +48,7 @@ export function AddProviderRuleModal({
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Add Rule — {providerName}</h2>
+        <h2 id="add-provider-rule-modal-title">Add Rule — {providerName}</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

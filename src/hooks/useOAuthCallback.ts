@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
+import { useToast } from '@/contexts/ToastContext';
 
-export function useOAuthCallback(showToast: (message: string, type?: string) => void) {
+export function useOAuthCallback() {
+  const { showToast } = useToast();
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const oauth = params.get('oauth');

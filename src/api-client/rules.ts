@@ -133,6 +133,14 @@ export async function importRulesFromSource(sourceId: string, targetAgentId: str
   });
 }
 
+/** Import from Cursor or Augment into that provider's Rules section. No AGENTS.md needed. */
+export async function importRulesFromProvider(sourceId: string) {
+  return fetchJSON<{ success: boolean; importedCount?: number }>(
+    apiUrl(`/rules/import/${encodeURIComponent(sourceId)}/provider`),
+    { method: 'POST' }
+  );
+}
+
 export async function importRulesFromCustomPath(filePath: string, targetAgentId: string) {
   return fetchJSON<{ success: boolean }>(apiUrl('/rules/import/custom'), {
     method: 'POST',

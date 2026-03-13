@@ -14,17 +14,19 @@ import {
   syncSkillsToProject,
 } from '../../api-client';
 import type { Skill } from '../../types';
+import { useToast } from '@/contexts/ToastContext';
+import { Modal } from '@/components/shared/Modal';
+import { SyncConfirmModal } from '@/components/shared/SyncConfirmModal';
 
-interface SkillsTabProps {
-  showToast: (message: string, type?: string) => void;
-}
-
-export function SkillsTab({ showToast }: SkillsTabProps) {
+export function SkillsTab() {
+  const { showToast } = useToast();
   const [skills, setSkills] = useState<(Skill & { id: string })[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [editSkillId, setEditSkillId] = useState<string | null>(null);
   const [lintRefreshKey, setLintRefreshKey] = useState(0);
+  const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
+  const [pendingSyncAction, setPendingSyncAction] = useState<() => Promise<void>>(() => async () => {});
 
   const loadSkills = useCallback(async () => {
     const list = await getSkills();
@@ -38,43 +40,80 @@ export function SkillsTab({ showToast }: SkillsTabProps) {
   const handleEdit = (id: string | undefined) => setEditSkillId(id ?? null);
 
   const handleDelete = async (id: string) => {
-    await deleteSkill(id, true);
-    showToast('Skill removed');
-    loadSkills();
+    try {
+      await deleteSkill(id, true);
+      showToast('Skill removed');
+      loadSkills();
+    } catch (err) {
+      showToast((err as Error).message, 'error');
+    }
   };
 
   const handleToggle = async (id: string, enabled: boolean) => {
-    await setSkillEnabled(id, enabled);
-    showToast(enabled ? 'Skill enabled' : 'Skill disabled');
-    loadSkills();
+    try {
+      await setSkillEnabled(id, enabled);
+      showToast(enabled ? 'Skill enabled' : 'Skill disabled');
+      loadSkills();
+    } catch (err) {
+      showToast((err as Error).message, 'error');
+    }
   };
 
   const handleReorder = async (order: string[]) => {
-    await reorderSkills(order);
-    showToast('Order updated');
-    loadSkills();
+    try {
+      await reorderSkills(order);
+      showToast('Order updated');
+      loadSkills();
+    } catch (err) {
+      showToast((err as Error).message, 'error');
+    }
   };
 
   const handleSyncToProvider = async (target: string) => {
-    const result = await syncSkillsTo(target);
-    showToast(`Synced ${result.syncedCount} skill(s) to ${target}`);
+    try {
+      const result = await syncSkillsTo(target);
+      showToast(`Synced ${result.syncedCount} skill(s) to ${target}`);
+    } catch (err) {
+      showToast((err as Error).message, 'error');
+    }
   };
 
   const handleSyncToProject = async (projectId: string) => {
-    const result = await syncSkillsToProject(projectId);
-    showToast(`Synced ${result.syncedCount} skill(s) to project`);
+    try {
+      const result = await syncSkillsToProject(projectId);
+      showToast(`Synced ${result.syncedCount} skill(s) to project`);
+    } catch (err) {
+      showToast((err as Error).message, 'error');
+    }
+  };
+
+  const handleSyncToProviderRequest = (target: string) => {
+    setPendingSyncAction(() => () => handleSyncToProvider(target));
+    setSyncConfirmOpen(true);
+  };
+
+  const handleSyncToProjectRequest = (projectId: string) => {
+    setPendingSyncAction(() => () => handleSyncToProject(projectId));
+    setSyncConfirmOpen(true);
   };
 
   const editSkill = editSkillId ? skills.find((s) => s.id === editSkillId) : null;
 
   return (
     <>
+      {syncConfirmOpen && (
+        <SyncConfirmModal
+          isOpen
+          onClose={() => setSyncConfirmOpen(false)}
+          onConfirm={async () => await pendingSyncAction()}
+        />
+      )}
       <div className="servers-section-header">
         <h2>Skills</h2>
         <div className="header-actions">
           <SkillSyncSection
-            onSyncToProvider={handleSyncToProvider}
-            onSyncToProject={handleSyncToProject}
+            onSyncToProvider={handleSyncToProviderRequest}
+            onSyncToProject={handleSyncToProjectRequest}
           />
           <button type="button" className="btn" onClick={() => setImportModalOpen(true)}>
             Import
@@ -95,21 +134,17 @@ export function SkillsTab({ showToast }: SkillsTabProps) {
       <ProjectDirectoriesSection />
 
       {addModalOpen && (
-        <div className="modal-overlay" onClick={() => setAddModalOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <AddSkillModal
-              onClose={() => setAddModalOpen(false)}
-              onSaved={() => loadSkills()}
-              showToast={showToast}
-            />
-          </div>
-        </div>
+        <Modal isOpen onClose={() => setAddModalOpen(false)} aria-labelledby="add-skill-modal-title">
+          <AddSkillModal
+            onClose={() => setAddModalOpen(false)}
+            onSaved={() => loadSkills()}
+          />
+        </Modal>
       )}
 
       {importModalOpen && (
-        <div className="modal-overlay" onClick={() => setImportModalOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <ImportSkillModal
+        <Modal isOpen onClose={() => setImportModalOpen(false)} aria-labelledby="import-skill-modal-title">
+          <ImportSkillModal
               onClose={() => setImportModalOpen(false)}
               onImport={(result) => {
                 const msg =
@@ -121,14 +156,12 @@ export function SkillsTab({ showToast }: SkillsTabProps) {
               }}
               onError={(msg) => showToast(msg, 'error')}
             />
-          </div>
-        </div>
+        </Modal>
       )}
 
       {editSkill && (
-        <div className="modal-overlay" onClick={() => setEditSkillId(null)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <EditSkillModal
+        <Modal isOpen onClose={() => setEditSkillId(null)} aria-labelledby="edit-skill-modal-title">
+          <EditSkillModal
               skillId={editSkill.id}
               skillName={editSkill.name}
               onClose={() => setEditSkillId(null)}
@@ -138,8 +171,7 @@ export function SkillsTab({ showToast }: SkillsTabProps) {
                 loadSkills();
               }}
             />
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   );

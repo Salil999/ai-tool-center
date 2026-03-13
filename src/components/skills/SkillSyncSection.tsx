@@ -82,7 +82,7 @@ export function SkillSyncSection({ onSyncToProvider, onSyncToProject }: SkillSyn
         aria-expanded={open}
         aria-haspopup="true"
       >
-        Write
+        Sync
         <span className="sync-chevron">{open ? '▲' : '▼'}</span>
       </button>
       {open && (

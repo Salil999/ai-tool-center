@@ -260,7 +260,7 @@ export function AuditModal({ onClose }: AuditModalProps) {
   return (
     <div className="modal audit-modal">
       <div className="modal-header">
-        <h2>Audit Log</h2>
+        <h2 id="audit-modal-title">Audit Log</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

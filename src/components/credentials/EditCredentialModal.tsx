@@ -5,14 +5,12 @@ interface EditCredentialModalProps {
   credentialId: string;
   onClose: () => void;
   onSaved: () => void;
-  showToast?: (message: string, type?: string) => void;
 }
 
 export function EditCredentialModal({
   credentialId,
   onClose,
   onSaved,
-  showToast,
 }: EditCredentialModalProps) {
   const [name, setName] = useState('');
   const [value, setValue] = useState('');
@@ -41,7 +39,6 @@ export function EditCredentialModal({
     setError(null);
     try {
       await updateCredential(credentialId, { name: trimmedName, value });
-      showToast?.('Credential updated');
       onSaved();
       onClose();
     } catch (err) {
@@ -55,7 +52,7 @@ export function EditCredentialModal({
     return (
       <div className="modal edit-modal">
         <div className="modal-header">
-          <h2>Edit Credential</h2>
+          <h2 id="edit-credential-modal-title">Edit Credential</h2>
           <button type="button" className="btn btn-sm" onClick={onClose}>
             ×
           </button>
@@ -70,7 +67,7 @@ export function EditCredentialModal({
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Edit Credential</h2>
+        <h2 id="edit-credential-modal-title">Edit Credential</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

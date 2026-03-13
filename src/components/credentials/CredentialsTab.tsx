@@ -4,12 +4,11 @@ import { AddCredentialModal } from './AddCredentialModal';
 import { EditCredentialModal } from './EditCredentialModal';
 import { getCredentials, deleteCredential, reorderCredentials } from '../../api-client';
 import type { Credential } from '../../types';
+import { useToast } from '@/contexts/ToastContext';
+import { Modal } from '@/components/shared/Modal';
 
-interface CredentialsTabProps {
-  showToast: (message: string, type?: string) => void;
-}
-
-export function CredentialsTab({ showToast }: CredentialsTabProps) {
+export function CredentialsTab() {
+  const { showToast } = useToast();
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editCredentialId, setEditCredentialId] = useState<string | null>(null);
@@ -65,31 +64,25 @@ export function CredentialsTab({ showToast }: CredentialsTabProps) {
       />
 
       {addModalOpen && (
-        <div className="modal-overlay" onClick={() => setAddModalOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <AddCredentialModal
-              onClose={() => setAddModalOpen(false)}
-              onSaved={loadCredentials}
-              showToast={showToast}
-            />
-          </div>
-        </div>
+        <Modal isOpen onClose={() => setAddModalOpen(false)} aria-labelledby="add-credential-modal-title">
+          <AddCredentialModal
+            onClose={() => setAddModalOpen(false)}
+            onSaved={loadCredentials}
+          />
+        </Modal>
       )}
 
       {editCredentialId && (
-        <div className="modal-overlay" onClick={() => setEditCredentialId(null)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <EditCredentialModal
-              credentialId={editCredentialId}
-              onClose={() => setEditCredentialId(null)}
-              onSaved={() => {
-                showToast('Credential updated');
-                loadCredentials();
-              }}
-              showToast={showToast}
-            />
-          </div>
-        </div>
+        <Modal isOpen onClose={() => setEditCredentialId(null)} aria-labelledby="edit-credential-modal-title">
+          <EditCredentialModal
+            credentialId={editCredentialId}
+            onClose={() => setEditCredentialId(null)}
+            onSaved={() => {
+              showToast('Credential updated');
+              loadCredentials();
+            }}
+          />
+        </Modal>
       )}
     </>
   );

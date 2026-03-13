@@ -2,25 +2,35 @@ import { useState, useEffect, useCallback } from 'react';
 import { ProviderRuleList } from './ProviderRuleList';
 import { AddProviderRuleModal } from './AddProviderRuleModal';
 import { EditProviderRuleModal } from './EditProviderRuleModal';
+import { SyncConfirmModal } from '@/components/shared/SyncConfirmModal';
 import {
   getProviderRules,
   deleteProviderRule,
   reorderProviderRules,
 } from '../../api-client';
 import type { ProviderRule } from '../../types';
+import { useToast } from '@/contexts/ToastContext';
+import { Modal } from '@/components/shared/Modal';
 
 interface ProviderRulesSectionProps {
   providerId: string;
   providerName: string;
-  showToast: (message: string, type?: string) => void;
+  /** When provided, shows a Sync button that syncs this provider's rules to its target path */
+  onSync?: (providerId: string) => void | Promise<void>;
+  /** When this changes, rules are reloaded (e.g. after import) */
+  refreshTrigger?: number;
 }
 
 export function ProviderRulesSection({
   providerId,
   providerName,
-  showToast,
+  onSync,
+  refreshTrigger,
 }: ProviderRulesSectionProps) {
+  const { showToast } = useToast();
   const [rules, setRules] = useState<ProviderRule[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editRuleId, setEditRuleId] = useState<string | null>(null);
 
@@ -31,7 +41,7 @@ export function ProviderRulesSection({
 
   useEffect(() => {
     loadRules();
-  }, [loadRules]);
+  }, [loadRules, refreshTrigger]);
 
   const handleDelete = async (id: string) => {
     await deleteProviderRule(providerId, id);
@@ -43,6 +53,20 @@ export function ProviderRulesSection({
     await reorderProviderRules(providerId, order);
     showToast('Order updated');
     loadRules();
+  };
+
+  const handleSyncClick = () => {
+    if (onSync) setSyncConfirmOpen(true);
+  };
+
+  const handleSyncConfirm = async () => {
+    if (!onSync) return;
+    setSyncing(true);
+    try {
+      await onSync(providerId);
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const editRule = editRuleId ? rules.find((r) => r.id === editRuleId) : null;
@@ -73,9 +97,21 @@ export function ProviderRulesSection({
             <>Custom rules configuration. Synced to your specified path.</>
           )}
         </p>
-        <button type="button" className="btn btn-sm btn-primary" onClick={() => setAddModalOpen(true)}>
-          Add Rule
-        </button>
+        <div className="provider-rules-header-actions">
+          {onSync && (
+            <button
+              type="button"
+              className="btn btn-sm"
+              onClick={handleSyncClick}
+              disabled={syncing}
+            >
+              {syncing ? 'Syncing…' : 'Sync'}
+            </button>
+          )}
+          <button type="button" className="btn btn-sm btn-primary" onClick={() => setAddModalOpen(true)}>
+            Add Rule
+          </button>
+        </div>
       </div>
       <ProviderRuleList
         rules={rules}
@@ -84,10 +120,17 @@ export function ProviderRulesSection({
         onReorder={handleReorder}
       />
 
+      {syncConfirmOpen && (
+        <SyncConfirmModal
+          isOpen
+          onClose={() => setSyncConfirmOpen(false)}
+          onConfirm={handleSyncConfirm}
+        />
+      )}
+
       {addModalOpen && (
-        <div className="modal-overlay" onClick={() => setAddModalOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <AddProviderRuleModal
+        <Modal isOpen onClose={() => setAddModalOpen(false)} aria-labelledby="add-provider-rule-modal-title">
+          <AddProviderRuleModal
               providerId={providerId}
               providerName={providerName}
               onClose={() => setAddModalOpen(false)}
@@ -96,14 +139,12 @@ export function ProviderRulesSection({
                 loadRules();
               }}
             />
-          </div>
-        </div>
+        </Modal>
       )}
 
       {editRule && (
-        <div className="modal-overlay" onClick={() => setEditRuleId(null)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <EditProviderRuleModal
+        <Modal isOpen onClose={() => setEditRuleId(null)} aria-labelledby="edit-provider-rule-modal-title">
+          <EditProviderRuleModal
               providerId={providerId}
               providerName={providerName}
               ruleId={editRule.id}
@@ -114,8 +155,7 @@ export function ProviderRulesSection({
                 loadRules();
               }}
             />
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

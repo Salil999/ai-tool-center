@@ -20,7 +20,7 @@ export function CustomSyncModal({ onClose, onSync }: CustomSyncModalProps) {
   return (
     <div className="modal">
       <div className="modal-header">
-        <h2>Custom Sync</h2>
+        <h2 id="custom-sync-modal-title">Custom Sync</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

@@ -79,7 +79,7 @@ export function ImportModal({ onClose, onImport, onError }: ImportModalProps) {
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Import MCP Config</h2>
+        <h2 id="import-modal-title">Import MCP Config</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

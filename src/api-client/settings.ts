@@ -14,17 +14,17 @@ export async function exportConfig(): Promise<Blob> {
 }
 
 export async function importConfig(file: File): Promise<{
-  imported: { servers: number; skills: number; creds: number };
+  imported: { servers: number; skills: number; creds: number; agents?: number; rules?: number };
 }> {
   const text = await file.text();
   const body = JSON.parse(text);
-  return fetchJSON<{ success: boolean; imported: { servers: number; skills: number; creds: number } }>(
-    apiUrl('/settings/import'),
-    {
-      method: 'POST',
-      body: JSON.stringify(body),
-    }
-  ).then((data) => ({ imported: data.imported }));
+  return fetchJSON<{
+    success: boolean;
+    imported: { servers: number; skills: number; creds: number; agents?: number; rules?: number };
+  }>(apiUrl('/settings/import'), {
+    method: 'POST',
+    body: JSON.stringify(body),
+  }).then((data) => ({ imported: data.imported }));
 }
 
 export async function getTheme(): Promise<{ theme: 'dark' | 'light' | 'system' }> {

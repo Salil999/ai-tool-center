@@ -1,39 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
-import { RuleSyncSection } from './RuleSyncSection';
+import { useState } from 'react';
 import { ImportRuleModal } from './ImportRuleModal';
 import { ProviderRulesSection } from './ProviderRulesSection';
 import { CustomRulesSection } from './CustomRulesSection';
-import { syncRulesTo, syncRulesToProject, getAgentRules } from '../../api-client';
+import { syncRulesTo } from '../../api-client';
+import { useToast } from '@/contexts/ToastContext';
+import { Modal } from '@/components/shared/Modal';
 
-interface AgentRuleItem {
-  id: string;
-  projectPath: string;
-  name?: string;
-}
-
-interface RulesTabProps {
-  showToast: (message: string, type?: string) => void;
-}
-
-export function RulesTab({ showToast }: RulesTabProps) {
+export function RulesTab() {
+  const { showToast } = useToast();
   const [importModalOpen, setImportModalOpen] = useState(false);
-  const [agentRules, setAgentRules] = useState<AgentRuleItem[]>([]);
+  const [rulesRefreshTrigger, setRulesRefreshTrigger] = useState(0);
 
-  const loadAgentRules = useCallback(() => {
-    getAgentRules().then((list) => setAgentRules(list)).catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    loadAgentRules();
-  }, [loadAgentRules]);
-
-  useEffect(() => {
-    if (importModalOpen) loadAgentRules();
-  }, [importModalOpen, loadAgentRules]);
-
-  const handleSyncToProvider = async (target: string, sourceAgentId?: string) => {
+  const handleSyncToProvider = async (target: string) => {
     try {
-      const result = await syncRulesTo(target, sourceAgentId);
+      const result = await syncRulesTo(target);
       const count = result.syncedCount;
       showToast(
         count !== undefined
@@ -45,34 +25,11 @@ export function RulesTab({ showToast }: RulesTabProps) {
     }
   };
 
-  const handleSyncToProject = async (
-    agentId: string,
-    options?: { providerId?: string; sourceAgentId?: string }
-  ) => {
-    try {
-      const result = await syncRulesToProject(agentId, options);
-      const count = result.syncedCount;
-      showToast(
-        count !== undefined
-          ? `Synced ${count} rule(s) to project`
-          : 'Rules synced to project'
-      );
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
   return (
     <>
       <div className="servers-section-header">
         <h2>Rules</h2>
         <div className="header-actions">
-          <RuleSyncSection
-            agentRules={agentRules}
-            onSyncToProvider={handleSyncToProvider}
-            onSyncToProject={handleSyncToProject}
-            showAgentsTargets={false}
-          />
           <button type="button" className="btn" onClick={() => setImportModalOpen(true)}>
             Import
           </button>
@@ -83,29 +40,29 @@ export function RulesTab({ showToast }: RulesTabProps) {
         <ProviderRulesSection
           providerId="cursor"
           providerName="Cursor Rules"
-          showToast={showToast}
+          onSync={handleSyncToProvider}
+          refreshTrigger={rulesRefreshTrigger}
         />
         <ProviderRulesSection
           providerId="augment"
           providerName="Augment Rules"
-          showToast={showToast}
+          onSync={handleSyncToProvider}
+          refreshTrigger={rulesRefreshTrigger}
         />
-        <CustomRulesSection showToast={showToast} />
+        <CustomRulesSection onSync={handleSyncToProvider} refreshTrigger={rulesRefreshTrigger} />
       </section>
 
       {importModalOpen && (
-        <div className="modal-overlay" onClick={() => setImportModalOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
+        <Modal isOpen onClose={() => setImportModalOpen(false)} aria-labelledby="import-rule-modal-title">
             <ImportRuleModal
               onClose={() => setImportModalOpen(false)}
               onImport={() => {
                 showToast('Rules imported');
-                loadAgentRules();
+                setRulesRefreshTrigger((t) => t + 1);
               }}
               onError={(msg) => showToast(msg, 'error')}
             />
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   );

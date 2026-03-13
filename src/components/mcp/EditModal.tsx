@@ -228,7 +228,7 @@ export function EditModal({ serverId, onClose, onSave }: EditModalProps) {
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>{serverId ? 'Edit Server' : 'Add Server'}</h2>
+        <h2 id="edit-modal-title">{serverId ? 'Edit Server' : 'Add Server'}</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

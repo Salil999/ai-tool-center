@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   getRuleImportSources,
   importRulesFromSource,
+  importRulesFromProvider,
   importRulesFromCustomPath,
   getAgentRules,
 } from '../../api-client';
@@ -67,7 +68,21 @@ export function ImportRuleModal({ onClose, onImport, onError }: ImportRuleModalP
     if (!loading) searchInputRef.current?.focus();
   }, [loading]);
 
+  const isProviderRulesSource = (id: string) => id === 'cursor' || id === 'augment';
+
   const handleImport = async (sourceId: string) => {
+    if (isProviderRulesSource(sourceId)) {
+      setImporting(sourceId);
+      try {
+        await importRulesFromProvider(sourceId);
+        onImport();
+        onClose();
+      } catch (err) {
+        setImporting(null);
+        onError?.((err as Error).message);
+      }
+      return;
+    }
     if (!targetAgentId) {
       onError?.('Select a target AGENTS.md first');
       return;
@@ -102,23 +117,28 @@ export function ImportRuleModal({ onClose, onImport, onError }: ImportRuleModalP
     }
   };
 
-  const canImport = targetAgentId && agentRules.length > 0;
+  const canImportToAgents = targetAgentId && agentRules.length > 0;
+  const canImport = (source: RuleImportSource) =>
+    source.exists &&
+    source.hasContent &&
+    (isProviderRulesSource(source.id) || canImportToAgents);
 
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Import Rules</h2>
+        <h2 id="import-rule-modal-title">Import Rules</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>
       </div>
       <div className="modal-body">
         <p className="import-intro">
-          Import rules from provider directories or project paths into a target AGENTS.md (stored in ~/.ai_tools_manager).
+          <strong>Cursor</strong> and <strong>Augment</strong>: Import directly into the Rules section (no AGENTS.md needed).
+          Other sources: Import into a target AGENTS.md.
         </p>
 
         <div className="form-group">
-          <label htmlFor="import-target-agent">Import into</label>
+          <label htmlFor="import-target-agent">Import into AGENTS.md (for non-provider sources)</label>
           <select
             id="import-target-agent"
             value={targetAgentId}
@@ -133,7 +153,7 @@ export function ImportRuleModal({ onClose, onImport, onError }: ImportRuleModalP
             ))}
           </select>
           {agentRules.length === 0 && !loading && (
-            <span className="form-hint">Add AGENTS.md first to import into.</span>
+            <span className="form-hint">Add AGENTS.md to import from agent/project sources. Cursor and Augment import without this.</span>
           )}
         </div>
 
@@ -169,7 +189,7 @@ export function ImportRuleModal({ onClose, onImport, onError }: ImportRuleModalP
                   <button
                     type="button"
                     className="btn btn-sm btn-primary"
-                    disabled={!canImport || !s.exists || !s.hasContent || importing !== null}
+                    disabled={!canImport(s) || importing !== null}
                     onClick={() => handleImport(s.id)}
                   >
                     {importing === s.id ? 'Importing…' : 'Import'}
@@ -196,7 +216,7 @@ export function ImportRuleModal({ onClose, onImport, onError }: ImportRuleModalP
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={!canImport || !customPath.trim() || importing !== null}
+              disabled={!canImportToAgents || !customPath.trim() || importing !== null}
             >
               {importing === 'custom' ? 'Importing…' : 'Import from file'}
             </button>

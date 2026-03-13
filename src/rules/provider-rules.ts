@@ -4,7 +4,9 @@ import os from 'os';
 import { isPathSafe } from '../providers/utils.js';
 import type { AppConfig, ProviderRule } from '../types.js';
 
-const RULES_BASE = process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(os.homedir(), '.ai_tools_manager', 'rules');
+function getRulesBase(): string {
+  return process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(os.homedir(), '.ai_tools_manager', 'rules');
+}
 
 /** Providers that support multiple rule files (directory of .md/.mdc) */
 export const MULTI_FILE_RULE_PROVIDERS = ['cursor', 'augment'] as const;
@@ -20,10 +22,11 @@ export type SingleFileRuleProviderId = (typeof SINGLE_FILE_RULE_PROVIDERS)[numbe
 export type RuleProviderId = (typeof ALL_RULE_PROVIDERS)[number];
 
 function getProviderRulesDir(providerId: string): string {
+  const base = getRulesBase();
   if (providerId.startsWith('custom-')) {
-    return path.join(RULES_BASE, 'custom', providerId.replace('custom-', ''));
+    return path.join(base, 'custom', providerId.replace('custom-', ''));
   }
-  return path.join(RULES_BASE, providerId);
+  return path.join(base, providerId);
 }
 
 function getRuleExtension(providerId: string, config?: AppConfig): '.md' | '.mdc' {
@@ -133,15 +136,30 @@ export function getOrderedProviderRules(
 }
 
 /**
+ * Ensure the resolved file path stays under the base directory (prevents path traversal via ruleId).
+ */
+function ensurePathUnderDir(filePath: string, baseDir: string): void {
+  const resolved = path.resolve(filePath);
+  const baseResolved = path.resolve(baseDir);
+  if (!resolved.startsWith(baseResolved + path.sep) && resolved !== baseResolved) {
+    throw new Error('Path is not allowed');
+  }
+}
+
+/**
  * Read rule file content.
  */
 export function readProviderRuleContent(providerId: string, ruleId: string, config?: AppConfig): string {
   const dir = getProviderRulesDir(providerId);
   const ext = getRuleExtension(providerId, config);
-  const filePath = path.join(dir, `${ruleId}${ext}`);
+  // Sanitize ruleId: disallow path traversal (.., /, \)
+  const safeId = (ruleId || 'rule').replace(/\.\./g, '').replace(/[/\\]/g, '');
+  if (!safeId) throw new Error(`Rule not found: ${ruleId}`);
+  const filePath = path.join(dir, `${safeId}${ext}`);
   if (!isPathSafe(filePath)) {
-    throw new Error(`Rule not found: ${ruleId}`);
+    throw new Error('Path is not allowed');
   }
+  ensurePathUnderDir(filePath, dir);
   if (!fs.existsSync(filePath)) {
     return '';
   }
@@ -159,10 +177,13 @@ export function writeProviderRuleContent(
 ): void {
   const dir = getProviderRulesDir(providerId);
   const ext = getRuleExtension(providerId, config);
-  const filePath = path.join(dir, `${ruleId}${ext}`);
+  const safeId = (ruleId || 'rule').replace(/\.\./g, '').replace(/[/\\]/g, '');
+  if (!safeId) throw new Error('Invalid rule id');
+  const filePath = path.join(dir, `${safeId}${ext}`);
   if (!isPathSafe(filePath)) {
     throw new Error('Path is not allowed');
   }
+  ensurePathUnderDir(filePath, dir);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(filePath, content, 'utf8');
 }
@@ -203,6 +224,7 @@ export function createProviderRule(
   if (!isPathSafe(filePath)) {
     throw new Error('Path is not allowed');
   }
+  ensurePathUnderDir(filePath, dir);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(filePath, content, 'utf8');
   return {
@@ -222,10 +244,13 @@ export function deleteProviderRule(providerId: string, ruleId: string, config?: 
   }
   const dir = getProviderRulesDir(providerId);
   const ext = getRuleExtension(providerId, config);
-  const filePath = path.join(dir, `${ruleId}${ext}`);
+  const safeId = (ruleId || 'rule').replace(/\.\./g, '').replace(/[/\\]/g, '');
+  if (!safeId) return;
+  const filePath = path.join(dir, `${safeId}${ext}`);
   if (!isPathSafe(filePath)) {
     throw new Error('Path is not allowed');
   }
+  ensurePathUnderDir(filePath, dir);
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
   }

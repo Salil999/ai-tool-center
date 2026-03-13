@@ -5,6 +5,8 @@ import { InfoModal } from '@/components/shared/InfoModal';
 import { AuditModal } from '@/components/shared/AuditModal';
 import { SettingsModal } from '@/components/settings/SettingsModal';
 import { Toast } from '@/components/shared/Toast';
+import { Modal } from '@/components/shared/Modal';
+import { useToast } from '@/contexts/ToastContext';
 
 type TabId = 'mcp' | 'skills' | 'rules' | 'agents' | 'credentials';
 
@@ -16,7 +18,6 @@ interface ModalContainerProps {
   infoOpen: boolean;
   auditOpen: boolean;
   settingsOpen: boolean;
-  toast: { message: string; type: string } | null;
   onCloseEdit: () => void;
   onSave: (id: string | null, payload: Record<string, unknown>) => Promise<void>;
   onCustomSync: (path: string, configKey: string) => Promise<void>;
@@ -31,7 +32,6 @@ interface ModalContainerProps {
   onSettingsImport: () => void;
   onSettingsError: (msg: string) => void;
   onSettingsSuccess: (msg: string) => void;
-  onDismissToast: () => void;
   loadServers: () => void;
 }
 
@@ -43,7 +43,6 @@ export function ModalContainer({
   infoOpen,
   auditOpen,
   settingsOpen,
-  toast,
   onCloseEdit,
   onSave,
   onCustomSync,
@@ -58,51 +57,43 @@ export function ModalContainer({
   onSettingsImport,
   onSettingsError,
   onSettingsSuccess,
-  onDismissToast,
   loadServers,
 }: ModalContainerProps) {
+  const { toast, dismissToast } = useToast();
+
   return (
     <>
       {editServerId !== null && (
-        <div className="modal-overlay" onClick={onCloseEdit}>
-          <div onClick={(e) => e.stopPropagation()}>
+        <Modal isOpen onClose={onCloseEdit} aria-labelledby="edit-modal-title">
             <EditModal
               serverId={editServerId === 'new' ? null : editServerId}
               onClose={onCloseEdit}
               onSave={onSave}
             />
-          </div>
-        </div>
+        </Modal>
       )}
 
       {customSyncOpen && (
-        <div className="modal-overlay" onClick={onCloseCustomSync}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <CustomSyncModal onClose={onCloseCustomSync} onSync={onCustomSync} />
-          </div>
-        </div>
+        <Modal isOpen onClose={onCloseCustomSync} aria-labelledby="custom-sync-modal-title">
+          <CustomSyncModal onClose={onCloseCustomSync} onSync={onCustomSync} />
+        </Modal>
       )}
 
       {auditOpen && (
-        <div className="modal-overlay" onClick={onCloseAudit}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <AuditModal onClose={onCloseAudit} />
-          </div>
-        </div>
+        <Modal isOpen onClose={onCloseAudit} aria-labelledby="audit-modal-title">
+          <AuditModal onClose={onCloseAudit} />
+        </Modal>
       )}
 
       {infoOpen && (
-        <div className="modal-overlay" onClick={onCloseInfo}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <InfoModal onClose={onCloseInfo} activeTab={activeTab} />
-          </div>
-        </div>
+        <Modal isOpen onClose={onCloseInfo} aria-labelledby="info-modal-title">
+          <InfoModal onClose={onCloseInfo} activeTab={activeTab} />
+        </Modal>
       )}
 
       {importOpen && (
-        <div className="modal-overlay" onClick={onCloseImport}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <ImportModal
+        <Modal isOpen onClose={onCloseImport} aria-labelledby="import-modal-title">
+          <ImportModal
               onClose={onCloseImport}
               onImport={(result) => {
                 onImport(result);
@@ -110,26 +101,23 @@ export function ModalContainer({
               }}
               onError={onImportError}
             />
-          </div>
-        </div>
+        </Modal>
       )}
 
       {settingsOpen && (
-        <div className="modal-overlay" onClick={onCloseSettings}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <SettingsModal
+        <Modal isOpen onClose={onCloseSettings} aria-labelledby="settings-modal-title">
+          <SettingsModal
               onClose={onCloseSettings}
               onReset={onSettingsReset}
               onImport={onSettingsImport}
-              onError={onSettingsError}
-              onSuccess={onSettingsSuccess}
-            />
-          </div>
-        </div>
+            onError={onSettingsError}
+            onSuccess={onSettingsSuccess}
+          />
+        </Modal>
       )}
 
       {toast && (
-        <Toast message={toast.message} type={toast.type} onDismiss={onDismissToast} />
+        <Toast message={toast.message} type={toast.type} onDismiss={dismissToast} />
       )}
     </>
   );

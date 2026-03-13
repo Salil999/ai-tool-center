@@ -4,6 +4,9 @@ import { ImportRuleModal } from '../rules/ImportRuleModal';
 import { RuleEditorModal } from '../rules/RuleEditorModal';
 import { AddAgentsModal } from '../rules/AddAgentsModal';
 import { syncRulesTo, syncRulesToProject, getAgentRules, deleteAgentRule } from '../../api-client';
+import { useToast } from '@/contexts/ToastContext';
+import { Modal } from '@/components/shared/Modal';
+import { SyncConfirmModal } from '@/components/shared/SyncConfirmModal';
 
 interface AgentRuleItem {
   id: string;
@@ -11,15 +14,14 @@ interface AgentRuleItem {
   name?: string;
 }
 
-interface AgentsTabProps {
-  showToast: (message: string, type?: string) => void;
-}
-
-export function AgentsTab({ showToast }: AgentsTabProps) {
+export function AgentsTab() {
+  const { showToast } = useToast();
   const [editorAgent, setEditorAgent] = useState<AgentRuleItem | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [agentRules, setAgentRules] = useState<AgentRuleItem[]>([]);
+  const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
+  const [pendingSyncAction, setPendingSyncAction] = useState<() => Promise<void>>(() => async () => {});
 
   const loadAgentRules = useCallback(() => {
     getAgentRules().then((list) => setAgentRules(list)).catch(() => {});
@@ -64,6 +66,11 @@ export function AgentsTab({ showToast }: AgentsTabProps) {
     }
   };
 
+  const requestSync = (action: () => Promise<void>) => {
+    setPendingSyncAction(() => action);
+    setSyncConfirmOpen(true);
+  };
+
   const handleDeleteAgent = async (agentId: string) => {
     try {
       await deleteAgentRule(agentId);
@@ -77,13 +84,24 @@ export function AgentsTab({ showToast }: AgentsTabProps) {
 
   return (
     <>
+      {syncConfirmOpen && (
+        <SyncConfirmModal
+          isOpen
+          onClose={() => setSyncConfirmOpen(false)}
+          onConfirm={pendingSyncAction}
+        />
+      )}
       <div className="servers-section-header">
         <h2>AGENTS.md</h2>
         <div className="header-actions">
           <RuleSyncSection
             agentRules={agentRules}
-            onSyncToProvider={handleSyncToProvider}
-            onSyncToProject={handleSyncToProject}
+            onSyncToProvider={(target, sourceAgentId) =>
+              requestSync(() => handleSyncToProvider(target, sourceAgentId))
+            }
+            onSyncToProject={(agentId, options) =>
+              requestSync(() => handleSyncToProject(agentId, options))
+            }
             showAgentsTargets={true}
           />
           <button type="button" className="btn" onClick={() => setImportModalOpen(true)}>
@@ -118,7 +136,9 @@ export function AgentsTab({ showToast }: AgentsTabProps) {
                   <button
                     type="button"
                     className="btn btn-sm"
-                    onClick={() => handleSyncToProject(a.id, { sourceAgentId: a.id })}
+                    onClick={() =>
+                      requestSync(() => handleSyncToProject(a.id, { sourceAgentId: a.id }))
+                    }
                   >
                     Sync to project
                   </button>
@@ -137,38 +157,33 @@ export function AgentsTab({ showToast }: AgentsTabProps) {
       </section>
 
       {addModalOpen && (
-        <div className="modal-overlay" onClick={() => setAddModalOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <AddAgentsModal
-              onClose={() => setAddModalOpen(false)}
-              onSaved={() => {
-                showToast('AGENTS.md added');
-                loadAgentRules();
-              }}
-            />
-          </div>
-        </div>
+        <Modal isOpen onClose={() => setAddModalOpen(false)} aria-labelledby="add-agents-modal-title">
+          <AddAgentsModal
+            onClose={() => setAddModalOpen(false)}
+            onSaved={() => {
+              showToast('AGENTS.md added');
+              loadAgentRules();
+            }}
+          />
+        </Modal>
       )}
 
       {importModalOpen && (
-        <div className="modal-overlay" onClick={() => setImportModalOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <ImportRuleModal
-              onClose={() => setImportModalOpen(false)}
-              onImport={() => {
-                showToast('Rules imported');
-                loadAgentRules();
-              }}
-              onError={(msg) => showToast(msg, 'error')}
-            />
-          </div>
-        </div>
+        <Modal isOpen onClose={() => setImportModalOpen(false)} aria-labelledby="import-rule-modal-title">
+          <ImportRuleModal
+            onClose={() => setImportModalOpen(false)}
+            onImport={() => {
+              showToast('Rules imported');
+              loadAgentRules();
+            }}
+            onError={(msg) => showToast(msg, 'error')}
+          />
+        </Modal>
       )}
 
       {editorAgent && (
-        <div className="modal-overlay" onClick={() => setEditorAgent(null)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <RuleEditorModal
+        <Modal isOpen onClose={() => setEditorAgent(null)} aria-labelledby="rule-editor-modal-title">
+          <RuleEditorModal
               agentId={editorAgent.id}
               agentName={editorAgent.name || editorAgent.projectPath}
               onClose={() => setEditorAgent(null)}
@@ -176,8 +191,7 @@ export function AgentsTab({ showToast }: AgentsTabProps) {
                 showToast('AGENTS.md updated');
               }}
             />
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   );

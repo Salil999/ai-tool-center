@@ -18,7 +18,7 @@ export function InfoModal({ onClose, activeTab }: InfoModalProps) {
   return (
     <div className="modal info-modal">
       <div className="modal-header">
-        <h2>{title}</h2>
+        <h2 id="info-modal-title">{title}</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>
@@ -57,10 +57,10 @@ function MCPInfoContent() {
           <dl className="info-dl">
             <dt>Sync</dt>
             <dd>
-              A dropdown that writes your current server list to an AI tool&apos;s config file. Click it to see
-              targets (Cursor, VS Code, Claude, OpenCode, ChatGPT, Codex, Gemini CLI, Windsurf, Antigravity). Choosing a target overwrites that tool&apos;s MCP config with your servers. Use
+              A dropdown that syncs your current server list to an AI tool&apos;s config file. Click it to see
+              targets (Cursor, VS Code, Claude, OpenCode, ChatGPT, Codex, Gemini CLI, Windsurf, Antigravity, GitHub Copilot). Choosing a target overwrites that tool&apos;s MCP config with your servers. Use
               <strong> Custom…</strong> to specify a file path and config key (e.g. <code>mcpServers</code>) for
-              tools not in the list.
+              tools not in the list. A confirmation appears before syncing: whatever is displayed on the page is the source of truth, and it&apos;s strongly recommended to import before syncing.
             </dd>
             <dt>Import</dt>
             <dd>
@@ -214,7 +214,7 @@ function SkillsInfoContent() {
         <section>
           <h3>Header Buttons</h3>
           <dl className="info-dl">
-            <dt>Write</dt>
+            <dt>Sync</dt>
             <dd>
               A dropdown that copies your enabled skills to a target. Choose a <strong>Provider</strong> (Cursor,
               Claude Code, Gemini CLI, GitHub Copilot, or Agents) to sync to that tool&apos;s skills directory.
@@ -283,7 +283,7 @@ function SkillsInfoContent() {
           <h3>Project Directories</h3>
           <p>
             Save project paths to quickly sync skills to <code>.agents/skills/</code> in each project. Add a
-            path (e.g. <code>~/my-project</code>) and optionally a display name. The <strong>Write</strong> dropdown
+            path (e.g. <code>~/my-project</code>) and optionally a display name.             The <strong>Sync</strong> dropdown
             will list your saved projects so you can sync with one click.
           </p>
         </section>
@@ -291,7 +291,7 @@ function SkillsInfoContent() {
         <section>
           <h3>Sync Targets</h3>
           <p>
-            Write copies your enabled skills to the target directory. Supported providers:
+            Sync copies your enabled skills to the target directory. Supported providers:
           </p>
           <ul>
             <li><strong>Cursor</strong> — <code>~/.cursor/skills/</code></li>
@@ -335,12 +335,6 @@ function RulesInfoContent() {
         <section>
           <h3>Header Buttons</h3>
           <dl className="info-dl">
-            <dt>Write</dt>
-            <dd>
-              A dropdown that syncs rules to a target. For <strong>Providers</strong> (Cursor, Augment): syncs the
-              corresponding provider rules to that tool&apos;s directory. For <strong>Projects</strong>: choose Cursor
-              rules or Augment rules to sync to that project path.
-            </dd>
             <dt>Import</dt>
             <dd>
               Opens a modal to import rules from provider directories (Cursor, Augment) or project paths (AGENTS.md,
@@ -351,21 +345,20 @@ function RulesInfoContent() {
 
         <section>
           <h3>Provider Rules Sections</h3>
-          <p>Each provider has its own section. You can:</p>
+          <p>Each provider has its own section with a <strong>Sync</strong> button and <strong>Add Rule</strong>. Sync copies that section&apos;s rules to the provider&apos;s directory (e.g. Cursor rules → <code>~/.cursor/rules/</code>, Augment rules → <code>~/.augment/rules/</code>). You can:</p>
           <dl className="info-dl">
             <dt>Cursor Rules</dt>
             <dd>
               <code>.mdc</code> files with YAML frontmatter (description, globs, alwaysApply). Add, edit, reorder, and
-              sync to Cursor or to projects.
+              click <strong>Sync</strong> to sync to Cursor.
             </dd>
             <dt>Augment Rules</dt>
             <dd>
-              <code>.md</code> files with Always, Manual, or Auto types. Add, edit, reorder, and sync to Augment or projects.
+              <code>.md</code> files with Always, Manual, or Auto types. Add, edit, reorder, and click <strong>Sync</strong> to sync to Augment.
             </dd>
             <dt>Custom Rules</dt>
             <dd>
-              Add custom rule configs by specifying a directory or file path and extension (.mdc or .md). Use for tools
-              not in the built-in list.
+              Add custom rule configs by specifying a directory or file path and extension (.mdc or .md). Each config has its own Sync button to sync to your specified path. Use for tools not in the built-in list.
             </dd>
           </dl>
         </section>
@@ -407,7 +400,7 @@ function AgentsInfoContent() {
         <section>
           <h3>Header Buttons</h3>
           <dl className="info-dl">
-            <dt>Write</dt>
+            <dt>Sync</dt>
             <dd>
               A dropdown that syncs AGENTS.md to providers (Claude, Gemini CLI, OpenCode, Universal Agent) or to project
               paths. Choose a source agent and target.

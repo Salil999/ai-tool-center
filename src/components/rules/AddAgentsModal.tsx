@@ -46,7 +46,7 @@ export function AddAgentsModal({ onClose, onSaved }: AddAgentsModalProps) {
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Add AGENTS.md</h2>
+        <h2 id="add-agents-modal-title">Add AGENTS.md</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

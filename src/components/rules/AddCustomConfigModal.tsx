@@ -42,7 +42,7 @@ export function AddCustomConfigModal({ onClose, onSaved }: AddCustomConfigModalP
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Add custom configuration</h2>
+        <h2 id="add-custom-config-modal-title">Add custom configuration</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

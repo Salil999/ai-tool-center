@@ -24,6 +24,7 @@ const TARGETS = [
   { id: 'gemini-cli', label: 'Gemini CLI' },
   { id: 'windsurf', label: 'Windsurf' },
   { id: 'antigravity', label: 'Antigravity' },
+  { id: 'augment', label: 'Augment' },
   { id: 'copilot', label: 'GitHub Copilot' },
 ];
 
@@ -73,7 +74,7 @@ export function SyncSection({ onSync, onCustomSync }: SyncSectionProps) {
         aria-expanded={open}
         aria-haspopup="true"
       >
-        Write
+        Sync
         <span className="sync-chevron">{open ? '▲' : '▼'}</span>
       </button>
       {open && (

@@ -9,6 +9,7 @@ import codex from './codex.js';
 import geminiCli from './gemini-cli.js';
 import windsurf from './windsurf.js';
 import antigravity from './antigravity.js';
+import augment from './augment.js';
 import copilot from './copilot.js';
 import custom from './custom.js';
 import { mergeServers } from './utils.js';
@@ -25,6 +26,7 @@ const PROVIDERS = [
   geminiCli,
   windsurf,
   antigravity,
+  augment,
   copilot,
 ];
 

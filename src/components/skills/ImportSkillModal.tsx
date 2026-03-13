@@ -82,7 +82,7 @@ export function ImportSkillModal({ onClose, onImport, onError }: ImportSkillModa
   return (
     <div className="modal edit-modal">
       <div className="modal-header">
-        <h2>Import Skills</h2>
+        <h2 id="import-skill-modal-title">Import Skills</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>

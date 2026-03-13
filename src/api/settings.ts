@@ -4,9 +4,31 @@ import { Router, Request, Response } from 'express';
 import { getConfigBaseDir, getConfigPath, saveConfig, DEFAULT_CONFIG } from '../config/loader.js';
 import { loadCreds, saveCreds, type CredentialsData } from '../credentials/store.js';
 import { getManagedSkillsDir, syncSkillsFromDisk } from '../skills/sync.js';
+import { readAgentsForAgent, writeAgentsForAgent } from '../rules/sync.js';
+import {
+  MULTI_FILE_RULE_PROVIDERS,
+  listProviderRules,
+  type MultiFileRuleProviderId,
+} from '../rules/provider-rules.js';
 import { isPathSafe, mergeServers } from '../providers/utils.js';
 import type { AuditStore } from '../audit/store.js';
 import type { AppConfig } from '../types.js';
+
+function getRulesBase(): string {
+  return process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(getConfigBaseDir(), 'rules');
+}
+
+function getAgentsBase(): string {
+  return process.env.AI_TOOLS_MANAGER_AGENTS_DIR || path.join(getConfigBaseDir(), 'agents');
+}
+
+function getProviderRulesDir(providerId: string): string {
+  const base = getRulesBase();
+  if (providerId.startsWith('custom-')) {
+    return path.join(base, 'custom', providerId.replace('custom-', ''));
+  }
+  return path.join(base, providerId);
+}
 
 const SETTINGS_FILENAME = 'settings.json';
 
@@ -64,6 +86,22 @@ export function createSettingsRouter(
             fs.rmSync(subPath, { recursive: true });
           }
         }
+      }
+
+      const agentsDir = getAgentsBase();
+      if (fs.existsSync(agentsDir)) {
+        const entries = fs.readdirSync(agentsDir);
+        for (const entry of entries) {
+          const subPath = path.join(agentsDir, entry);
+          if (fs.statSync(subPath).isDirectory()) {
+            fs.rmSync(subPath, { recursive: true });
+          }
+        }
+      }
+
+      const rulesDir = getRulesBase();
+      if (fs.existsSync(rulesDir)) {
+        fs.rmSync(rulesDir, { recursive: true });
       }
 
       for (const p of toDelete) {
@@ -166,13 +204,47 @@ export function createSettingsRouter(
         }
       }
 
+      const agents: Record<string, string> = {};
+      const agentRules = configData.agentRules || [];
+      for (const agent of agentRules) {
+        try {
+          const content = readAgentsForAgent(agent.id);
+          if (content) agents[agent.id] = content;
+        } catch {
+          // Skip agents with missing/invalid content
+        }
+      }
+
+      const rules: Record<string, Record<string, string>> = {};
+      const providerIds: string[] = [
+        ...MULTI_FILE_RULE_PROVIDERS,
+        ...(configData.customRuleConfigs || []).map((c) => `custom-${c.id}`),
+      ];
+      for (const providerId of providerIds) {
+        const ruleList = listProviderRules(providerId as MultiFileRuleProviderId, configData);
+        if (ruleList.length > 0) {
+          rules[providerId] = {};
+          for (const rule of ruleList) {
+            try {
+              if (fs.existsSync(rule.path)) {
+                rules[providerId][rule.id] = fs.readFileSync(rule.path, 'utf8');
+              }
+            } catch {
+              // Skip rules that can't be read
+            }
+          }
+        }
+      }
+
       const exportPayload = {
-        version: 1,
+        version: 2,
         exportedAt: new Date().toISOString(),
         config: configData,
         creds: credsData,
         oauth,
         skills,
+        agents,
+        rules,
       };
 
       const filename = `ai-tools-manager-export-${new Date().toISOString().slice(0, 10)}.json`;
@@ -196,6 +268,8 @@ export function createSettingsRouter(
       let importedServers = 0;
       let importedSkills = 0;
       let importedCreds = 0;
+      let importedAgents = 0;
+      let importedRules = 0;
 
       if (body.config && typeof body.config === 'object') {
         const imported = body.config as AppConfig;
@@ -273,6 +347,69 @@ export function createSettingsRouter(
             }
           }
         }
+
+        if (imported.providerRuleOrder && typeof imported.providerRuleOrder === 'object') {
+          config.providerRuleOrder = config.providerRuleOrder || {};
+          for (const [providerId, order] of Object.entries(imported.providerRuleOrder) as [string, string[]][]) {
+            if (Array.isArray(order) && order.length > 0) {
+              config.providerRuleOrder![providerId] = order;
+            }
+          }
+        }
+      }
+
+      if (body.agents && typeof body.agents === 'object') {
+        const agentsBase = getAgentsBase();
+        if (isPathSafe(agentsBase)) {
+          const agentIds = new Set((config.agentRules || []).map((a) => a.id));
+          for (const [agentId, content] of Object.entries(body.agents) as [string, string][]) {
+            if (agentIds.has(agentId) && typeof content === 'string') {
+              try {
+                writeAgentsForAgent(agentId, content);
+                importedAgents++;
+              } catch {
+                // Skip agents that fail to write
+              }
+            }
+          }
+        }
+      }
+
+      if (body.rules && typeof body.rules === 'object') {
+        const rulesBase = getRulesBase();
+        if (isPathSafe(rulesBase)) {
+          const allowedProviderIds = new Set<string>([
+            ...MULTI_FILE_RULE_PROVIDERS,
+            ...(config.customRuleConfigs || []).map((c) => `custom-${c.id}`),
+          ]);
+          for (const [providerId, ruleFiles] of Object.entries(body.rules) as [string, Record<string, string>][]) {
+            if (!ruleFiles || typeof ruleFiles !== 'object' || !allowedProviderIds.has(providerId)) continue;
+            const destDir = getProviderRulesDir(providerId);
+            if (!isPathSafe(destDir)) continue;
+            if (!fs.existsSync(destDir)) {
+              fs.mkdirSync(destDir, { recursive: true });
+            }
+            const ext =
+              providerId === 'cursor'
+                ? '.mdc'
+                : providerId.startsWith('custom-')
+                  ? (config.customRuleConfigs || []).find((c) => `custom-${c.id}` === providerId)?.extension ?? '.md'
+                  : '.md';
+            for (const [ruleId, content] of Object.entries(ruleFiles)) {
+              if (typeof content !== 'string') continue;
+              const safeRuleId = (ruleId || 'rule').replace(/[^a-z0-9-]/gi, '-') || 'rule';
+              const filePath = path.join(destDir, `${safeRuleId}${ext}`);
+              if (isPathSafe(filePath)) {
+                try {
+                  fs.writeFileSync(filePath, content, 'utf8');
+                  importedRules++;
+                } catch {
+                  // Skip rules that fail to write
+                }
+              }
+            }
+          }
+        }
       }
 
       if (body.creds && typeof body.creds === 'object') {
@@ -340,12 +477,24 @@ export function createSettingsRouter(
 
       saveConfigFn(config, {
         action: 'config_import',
-        details: { importedServers, importedSkills, importedCreds },
+        details: {
+          importedServers,
+          importedSkills,
+          importedCreds,
+          importedAgents,
+          importedRules,
+        },
       });
 
       res.json({
         success: true,
-        imported: { servers: importedServers, skills: importedSkills, creds: importedCreds },
+        imported: {
+          servers: importedServers,
+          skills: importedSkills,
+          creds: importedCreds,
+          agents: importedAgents,
+          rules: importedRules,
+        },
       });
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });

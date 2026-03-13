@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { ProviderRulesSection } from './ProviderRulesSection';
 import { AddCustomConfigModal } from './AddCustomConfigModal';
 import { getCustomRuleConfigs, deleteCustomRuleConfig } from '../../api-client';
+import { useToast } from '@/contexts/ToastContext';
+import { Modal } from '@/components/shared/Modal';
 
 interface CustomConfig {
   id: string;
@@ -12,10 +14,12 @@ interface CustomConfig {
 }
 
 interface CustomRulesSectionProps {
-  showToast: (message: string, type?: string) => void;
+  onSync?: (providerId: string) => void | Promise<void>;
+  refreshTrigger?: number;
 }
 
-export function CustomRulesSection({ showToast }: CustomRulesSectionProps) {
+export function CustomRulesSection({ onSync, refreshTrigger }: CustomRulesSectionProps) {
+  const { showToast } = useToast();
   const [configs, setConfigs] = useState<CustomConfig[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
 
@@ -68,23 +72,22 @@ export function CustomRulesSection({ showToast }: CustomRulesSectionProps) {
           <ProviderRulesSection
             providerId={`custom-${c.id}`}
             providerName={c.name}
-            showToast={showToast}
+            onSync={onSync}
+            refreshTrigger={refreshTrigger}
           />
         </div>
       ))}
 
       {addModalOpen && (
-        <div className="modal-overlay" onClick={() => setAddModalOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <AddCustomConfigModal
+        <Modal isOpen onClose={() => setAddModalOpen(false)} aria-labelledby="add-custom-config-modal-title">
+          <AddCustomConfigModal
               onClose={() => setAddModalOpen(false)}
               onSaved={() => {
                 showToast('Custom configuration added');
                 loadConfigs();
               }}
             />
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

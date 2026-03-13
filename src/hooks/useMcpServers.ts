@@ -9,9 +9,11 @@ import {
   syncTo,
   syncToCustom,
 } from '../api-client';
+import { useToast } from '@/contexts/ToastContext';
 import type { Server } from '../types';
 
-export function useMcpServers(showToast: (message: string, type?: string) => void) {
+export function useMcpServers() {
+  const { showToast } = useToast();
   const [servers, setServers] = useState<Server[]>([]);
 
   const loadServers = useCallback(async () => {

@@ -26,7 +26,7 @@ interface RuleSyncSectionProps {
   agentRules: AgentRuleItem[];
   onSyncToProvider: (target: string, sourceAgentId?: string) => void;
   onSyncToProject: (agentId: string, options?: { providerId?: string; sourceAgentId?: string }) => void;
-  /** When false (Rules tab), hide AGENTS.md providers from the Write dropdown */
+  /** When false (Rules tab), hide AGENTS.md providers from the Sync dropdown */
   showAgentsTargets?: boolean;
 }
 
@@ -108,7 +108,7 @@ export function RuleSyncSection({
         aria-expanded={open}
         aria-haspopup="true"
       >
-        Write
+        Sync
         <span className="sync-chevron">{open ? '▲' : '▼'}</span>
       </button>
       {open && (

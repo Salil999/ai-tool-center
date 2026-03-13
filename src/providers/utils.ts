@@ -171,6 +171,80 @@ export function isDuplicate(server: Omit<Server, 'id'>, existing: Record<string,
 }
 
 /**
+ * Factory for MCP providers that use the standard mcpServers JSON format (Cursor, Claude, ChatGPT, etc.).
+ * Reduces boilerplate across providers that share the same import/export logic.
+ */
+export interface CreateMcpProviderOptions {
+  id: string;
+  name: string;
+  getMcpPath: () => string;
+  getSkillsPath?: () => string;
+  getRulesPath?: () => string;
+  /** 'replace' (default): overwrite entire config with mcpServers. 'merge-mcp': merge mcpServers into existing config (e.g. gemini-cli). */
+  mergeStrategy?: 'replace' | 'merge-mcp';
+}
+
+export function createMcpProvider(options: CreateMcpProviderOptions): import('../types.js').Provider {
+  const {
+    id,
+    name,
+    getMcpPath,
+    getSkillsPath,
+    getRulesPath,
+    mergeStrategy = 'replace',
+  } = options;
+
+  function importConfig(): Record<string, Omit<Server, 'id'>> {
+    const configPath = getMcpPath();
+    const data = readConfig(configPath);
+    if (!data) throw new Error(`Config file not found: ${configPath}`);
+
+    const servers: Record<string, Omit<Server, 'id'>> = {};
+    const mcpServers = (data.mcpServers || {}) as Record<string, unknown>;
+    for (const [n, def] of Object.entries(mcpServers)) {
+      const canonicalId = toCanonicalId(n);
+      servers[canonicalId] = defToCanonical(n, def as Parameters<typeof defToCanonical>[1]) as Omit<Server, 'id'>;
+    }
+    return servers;
+  }
+
+  function exportConfig(servers: Record<string, Omit<Server, 'id'>>): { path: string; success: boolean } {
+    const configPath = getMcpPath();
+    const data = canonicalToMcpServers(servers);
+    ensureDir(configPath);
+    let existing: Record<string, unknown> = {};
+    try {
+      const raw = readConfig(configPath);
+      if (raw) existing = raw;
+    } catch {
+      /* ignore */
+    }
+    const merged =
+      mergeStrategy === 'merge-mcp'
+        ? {
+            ...existing,
+            mcpServers: {
+              ...((existing.mcpServers as Record<string, unknown>) || {}),
+              ...(data.mcpServers || {}),
+            },
+          }
+        : { ...existing, ...data };
+    writeConfig(configPath, merged);
+    return { path: configPath, success: true };
+  }
+
+  return {
+    id,
+    name,
+    getMcpPath,
+    getSkillsPath,
+    getRulesPath,
+    importConfig,
+    exportConfig,
+  };
+}
+
+/**
  * Merge imported servers into existing, avoiding id collisions and skipping duplicates.
  * A server is considered a duplicate if it has the same url (for HTTP) or command+args (for stdio).
  */

@@ -104,6 +104,8 @@ export function SettingsModal({
       if (imported.servers > 0) parts.push(`${imported.servers} server(s)`);
       if (imported.skills > 0) parts.push(`${imported.skills} skill(s)`);
       if (imported.creds > 0) parts.push(`${imported.creds} credential(s)`);
+      if ((imported.agents ?? 0) > 0) parts.push(`${imported.agents} AGENTS.md`);
+      if ((imported.rules ?? 0) > 0) parts.push(`${imported.rules} rule(s)`);
       const msg = parts.length > 0 ? `Imported: ${parts.join(', ')}` : 'Import complete (no new items).';
       onSuccess?.(msg);
       onImport?.();
@@ -118,7 +120,7 @@ export function SettingsModal({
   return (
     <div className="modal settings-modal">
       <div className="modal-header">
-        <h2>Settings</h2>
+        <h2 id="settings-modal-title">Settings</h2>
         <button type="button" className="btn btn-sm" onClick={onClose}>
           ×
         </button>
@@ -148,7 +150,8 @@ export function SettingsModal({
         <section className="settings-section">
           <h3>Export</h3>
           <p className="settings-description">
-            Export all configs (excludes audit log). Use for backup.
+            Export all configs including MCP servers, skills, rules, AGENTS.md, and credentials (excludes audit log).
+            Use for backup.
           </p>
           <button
             type="button"

@@ -7,8 +7,10 @@ import { RulesTab } from '@/components/rules/RulesTab';
 import { AgentsTab } from '@/components/agents/AgentsTab';
 import { CredentialsTab } from '@/components/credentials/CredentialsTab';
 import { ModalContainer } from '@/components/shared/ModalContainer';
+import { SyncConfirmModal } from '@/components/shared/SyncConfirmModal';
 import { useMcpServers } from '@/hooks/useMcpServers';
 import { useOAuthCallback } from '@/hooks/useOAuthCallback';
+import { useToast } from '@/contexts/ToastContext';
 
 type TabId = 'mcp' | 'skills' | 'rules' | 'agents' | 'credentials';
 
@@ -33,11 +35,13 @@ export default function App() {
   }, []);
   const [editServerId, setEditServerId] = useState<string | null>(null);
   const [customSyncOpen, setCustomSyncOpen] = useState(false);
+  const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
+  const [pendingSyncAction, setPendingSyncAction] = useState<() => Promise<void>>(() => async () => {});
   const [importOpen, setImportOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: string } | null>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     getTheme()
@@ -49,13 +53,9 @@ export default function App() {
       });
   }, []);
 
-  const showToast = useCallback((message: string, type = 'success') => {
-    setToast({ message, type });
-  }, []);
+  useOAuthCallback();
 
-  useOAuthCallback(showToast);
-
-  const mcp = useMcpServers(showToast);
+  const mcp = useMcpServers();
 
   const handleSave = useCallback(
     async (id: string | null, payload: Record<string, unknown>) => {
@@ -113,6 +113,14 @@ export default function App() {
     [mcp, showToast]
   );
 
+  const handleSyncRequest = useCallback(
+    (target: string) => {
+      setPendingSyncAction(() => () => handleSync(target));
+      setSyncConfirmOpen(true);
+    },
+    [handleSync]
+  );
+
   const handleCustomSync = useCallback(
     async (path: string, configKey: string) => {
       try {
@@ -125,12 +133,32 @@ export default function App() {
     [mcp, showToast]
   );
 
+  const handleCustomSyncRequest = useCallback(
+    (path: string, configKey: string) => {
+      setPendingSyncAction(() => () => handleCustomSync(path, configKey));
+      setCustomSyncOpen(false);
+      setSyncConfirmOpen(true);
+    },
+    [handleCustomSync]
+  );
+
+  const handleSyncConfirm = useCallback(async () => {
+    await pendingSyncAction();
+  }, [pendingSyncAction]);
+
   const handleEdit = (id: string | undefined) => setEditServerId(id ?? '');
   const handleCloseEdit = () => setEditServerId(null);
   const handleAddServer = () => setEditServerId('new');
 
   return (
     <div className="app">
+      {syncConfirmOpen && (
+        <SyncConfirmModal
+          isOpen
+          onClose={() => setSyncConfirmOpen(false)}
+          onConfirm={handleSyncConfirm}
+        />
+      )}
       <header className="header">
         <h1>AI Tools Manager</h1>
         <div className="header-icon-actions">
@@ -204,7 +232,7 @@ export default function App() {
             <div className="servers-section-header">
               <h2>MCP Servers</h2>
               <div className="header-actions">
-                <SyncSection onSync={handleSync} onCustomSync={() => setCustomSyncOpen(true)} />
+                <SyncSection onSync={handleSyncRequest} onCustomSync={() => setCustomSyncOpen(true)} />
                 <button type="button" className="btn" onClick={() => setImportOpen(true)}>
                   Import
                 </button>
@@ -225,25 +253,25 @@ export default function App() {
 
         {activeTab === 'skills' && (
           <section className="servers-section">
-            <SkillsTab showToast={showToast} />
+            <SkillsTab />
           </section>
         )}
 
         {activeTab === 'rules' && (
           <section className="servers-section">
-            <RulesTab showToast={showToast} />
+            <RulesTab />
           </section>
         )}
 
         {activeTab === 'agents' && (
           <section className="servers-section">
-            <AgentsTab showToast={showToast} />
+            <AgentsTab />
           </section>
         )}
 
         {activeTab === 'credentials' && (
           <section className="servers-section">
-            <CredentialsTab showToast={showToast} />
+            <CredentialsTab />
           </section>
         )}
       </main>
@@ -273,10 +301,9 @@ export default function App() {
         infoOpen={infoOpen}
         auditOpen={auditOpen}
         settingsOpen={settingsOpen}
-        toast={toast}
         onCloseEdit={handleCloseEdit}
         onSave={handleSave}
-        onCustomSync={handleCustomSync}
+        onCustomSync={handleCustomSyncRequest}
         onCloseCustomSync={() => setCustomSyncOpen(false)}
         onCloseImport={() => setImportOpen(false)}
         onImport={(result) => {
@@ -294,7 +321,6 @@ export default function App() {
         onSettingsImport={() => mcp.loadServers()}
         onSettingsError={(msg) => showToast(msg, 'error')}
         onSettingsSuccess={(msg) => showToast(msg)}
-        onDismissToast={() => setToast(null)}
         loadServers={mcp.loadServers}
       />
     </div>
