@@ -79,6 +79,8 @@ export function createSettingsRouter(
         skillOrder: [],
         customProviders: [],
         projectDirectories: [],
+        agentRules: [],
+        customRuleConfigs: [],
       };
       syncSkillsFromDisk(freshConfig);
       saveConfig(configPath, freshConfig);
@@ -225,6 +227,28 @@ export function createSettingsRouter(
               config.projectDirectories = config.projectDirectories || [];
               config.projectDirectories.push(d);
               existingIds.add(d.id);
+            }
+          }
+        }
+
+        if (Array.isArray(imported.agentRules) && imported.agentRules.length > 0) {
+          const existingIds = new Set((config.agentRules || []).map((a) => a.id));
+          for (const a of imported.agentRules) {
+            if (!existingIds.has(a.id)) {
+              config.agentRules = config.agentRules || [];
+              config.agentRules.push(a);
+              existingIds.add(a.id);
+            }
+          }
+        }
+
+        if (Array.isArray(imported.customRuleConfigs) && imported.customRuleConfigs.length > 0) {
+          const existingIds = new Set((config.customRuleConfigs || []).map((c) => c.id));
+          for (const c of imported.customRuleConfigs) {
+            if (!existingIds.has(c.id)) {
+              config.customRuleConfigs = config.customRuleConfigs || [];
+              config.customRuleConfigs.push(c);
+              existingIds.add(c.id);
             }
           }
         }

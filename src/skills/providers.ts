@@ -12,7 +12,6 @@ export interface SkillSyncTarget {
 
 /** Standalone skill targets (no MCP provider in this app) */
 const STANDALONE_SKILL_TARGETS: SkillSyncTarget[] = [
-  { id: 'copilot', name: 'GitHub Copilot', path: path.join(HOME, '.copilot', 'skills') },
   { id: 'agents', name: 'Agents (cross-client)', path: path.join(HOME, '.agents', 'skills') },
 ];
 

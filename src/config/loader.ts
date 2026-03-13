@@ -15,6 +15,9 @@ export const DEFAULT_CONFIG = {
   skills: {},
   skillOrder: [] as string[],
   projectDirectories: [],
+  agentRules: [],
+  customRuleConfigs: [],
+  providerRuleOrder: {},
 } satisfies AppConfig;
 
 function getDefaultConfigPath(): string {
@@ -79,6 +82,9 @@ export function loadConfig(configPath?: string): AppConfig {
       skills: config.skills || {},
       skillOrder: config.skillOrder ?? [],
       projectDirectories: config.projectDirectories ?? [],
+      agentRules: config.agentRules ?? [],
+      customRuleConfigs: config.customRuleConfigs ?? [],
+      providerRuleOrder: config.providerRuleOrder ?? {},
     };
     if (syncSkillsFromDisk(merged)) {
       saveConfig(resolvedPath, merged);

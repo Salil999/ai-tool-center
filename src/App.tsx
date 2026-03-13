@@ -3,16 +3,18 @@ import { ServerList } from '@/components/mcp/ServerList';
 import { SyncSection } from '@/components/mcp/SyncSection';
 import { getTheme } from '@/api-client';
 import { SkillsTab } from '@/components/skills/SkillsTab';
+import { RulesTab } from '@/components/rules/RulesTab';
+import { AgentsTab } from '@/components/agents/AgentsTab';
 import { CredentialsTab } from '@/components/credentials/CredentialsTab';
 import { ModalContainer } from '@/components/shared/ModalContainer';
 import { useMcpServers } from '@/hooks/useMcpServers';
 import { useOAuthCallback } from '@/hooks/useOAuthCallback';
 
-type TabId = 'mcp' | 'skills' | 'credentials';
+type TabId = 'mcp' | 'skills' | 'rules' | 'agents' | 'credentials';
 
 function tabFromHash(): TabId {
   const hash = window.location.hash.slice(1).toLowerCase();
-  if (hash === 'skills' || hash === 'credentials') return hash;
+  if (hash === 'skills' || hash === 'rules' || hash === 'agents' || hash === 'credentials') return hash;
   return 'mcp';
 }
 
@@ -176,6 +178,20 @@ export default function App() {
           </button>
           <button
             type="button"
+            className={`tab ${activeTab === 'rules' ? 'active' : ''}`}
+            onClick={() => handleTabChange('rules')}
+          >
+            Rules
+          </button>
+          <button
+            type="button"
+            className={`tab ${activeTab === 'agents' ? 'active' : ''}`}
+            onClick={() => handleTabChange('agents')}
+          >
+            AGENTS.md
+          </button>
+          <button
+            type="button"
             className={`tab ${activeTab === 'credentials' ? 'active' : ''}`}
             onClick={() => handleTabChange('credentials')}
           >
@@ -210,6 +226,18 @@ export default function App() {
         {activeTab === 'skills' && (
           <section className="servers-section">
             <SkillsTab showToast={showToast} />
+          </section>
+        )}
+
+        {activeTab === 'rules' && (
+          <section className="servers-section">
+            <RulesTab showToast={showToast} />
+          </section>
+        )}
+
+        {activeTab === 'agents' && (
+          <section className="servers-section">
+            <AgentsTab showToast={showToast} />
           </section>
         )}
 

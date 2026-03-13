@@ -6,7 +6,7 @@ import { AuditModal } from '@/components/shared/AuditModal';
 import { SettingsModal } from '@/components/settings/SettingsModal';
 import { Toast } from '@/components/shared/Toast';
 
-type TabId = 'mcp' | 'skills' | 'credentials';
+type TabId = 'mcp' | 'skills' | 'rules' | 'agents' | 'credentials';
 
 interface ModalContainerProps {
   activeTab: TabId;

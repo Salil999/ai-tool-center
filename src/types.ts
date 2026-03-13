@@ -39,6 +39,20 @@ export interface AppConfig {
   skillOrder?: string[];
   /** Saved project directories for skill sync */
   projectDirectories: ProjectDirectory[];
+  /** AGENTS.md rules (source of truth in ~/.ai_tools_manager, synced to project paths) */
+  agentRules: AgentRule[];
+  /** Custom rule configurations (user-defined paths) */
+  customRuleConfigs: CustomRuleConfig[];
+  /** Order of rule file IDs per provider (cursor, augment, opencode, custom) for provider-specific rules */
+  providerRuleOrder?: Record<string, string[]>;
+}
+
+/** Provider rule file (e.g. .cursor/rules/*.mdc, .augment/rules/*.md) */
+export interface ProviderRule {
+  id: string;
+  name: string;
+  path: string;
+  extension: '.md' | '.mdc';
 }
 
 export interface CustomProvider {
@@ -56,6 +70,8 @@ export interface Provider {
   getMcpPath: () => string;
   /** Optional path to skills directory (e.g. ~/.cursor/skills). Providers that support skills implement this. */
   getSkillsPath?: () => string;
+  /** Optional path to rules directory or file (AGENTS.md, .cursor/rules, etc.). Providers that support rules implement this. */
+  getRulesPath?: () => string;
   importConfig: () => Record<string, Omit<Server, 'id'>>;
   exportConfig: (servers: Record<string, Omit<Server, 'id'>>) => { path: string; success: boolean };
 }
@@ -82,6 +98,22 @@ export interface ProjectDirectory {
   id: string;
   path: string;
   name?: string;
+}
+
+/** AGENTS.md rule stored in ~/.ai_tools_manager, synced to project path */
+export interface AgentRule {
+  id: string;
+  projectPath: string;
+  name?: string;
+}
+
+/** Custom rule configuration (user-defined path for rules) */
+export interface CustomRuleConfig {
+  id: string;
+  name: string;
+  path: string;
+  type: 'file' | 'directory';
+  extension?: '.md' | '.mdc';
 }
 
 /** Credential (API key) for API credentials tab */

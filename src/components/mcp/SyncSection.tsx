@@ -24,6 +24,7 @@ const TARGETS = [
   { id: 'gemini-cli', label: 'Gemini CLI' },
   { id: 'windsurf', label: 'Windsurf' },
   { id: 'antigravity', label: 'Antigravity' },
+  { id: 'copilot', label: 'GitHub Copilot' },
 ];
 
 interface SyncSectionProps {

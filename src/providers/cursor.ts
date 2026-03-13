@@ -12,6 +12,7 @@ import type { Provider } from '../types.js';
 
 const CONFIG_PATH = path.join(HOME, '.cursor', 'mcp.json');
 const SKILLS_PATH = path.join(HOME, '.cursor', 'skills');
+const RULES_PATH = path.join(HOME, '.cursor', 'rules');
 
 function getMcpPath(): string {
   return CONFIG_PATH;
@@ -19,6 +20,10 @@ function getMcpPath(): string {
 
 function getSkillsPath(): string {
   return SKILLS_PATH;
+}
+
+function getRulesPath(): string {
+  return RULES_PATH;
 }
 
 function importConfig(): Record<string, import('../types.js').Server> {
@@ -54,6 +59,7 @@ export default {
   name: 'Cursor',
   getMcpPath,
   getSkillsPath,
+  getRulesPath,
   importConfig,
   exportConfig,
 } satisfies Provider;

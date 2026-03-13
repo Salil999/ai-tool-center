@@ -12,7 +12,11 @@ interface ProjectDir {
   name?: string;
 }
 
-export function ProjectDirectoriesSection() {
+interface ProjectDirectoriesSectionProps {
+  onChanged?: () => void;
+}
+
+export function ProjectDirectoriesSection({ onChanged }: ProjectDirectoriesSectionProps = {}) {
   const [projects, setProjects] = useState<ProjectDir[]>([]);
   const [addPath, setAddPath] = useState('');
   const [addName, setAddName] = useState('');
@@ -21,7 +25,12 @@ export function ProjectDirectoriesSection() {
   const [editName, setEditName] = useState('');
 
   const load = () => {
-    getProjectDirectories().then((list) => setProjects(list as ProjectDir[])).catch(() => {});
+    getProjectDirectories()
+      .then((list) => {
+        setProjects(list as ProjectDir[]);
+        onChanged?.();
+      })
+      .catch(() => {});
   };
 
   useEffect(() => load(), []);
@@ -74,7 +83,7 @@ export function ProjectDirectoriesSection() {
     <div className="project-directories-section">
       <h3>Project Directories</h3>
       <p className="project-directories-desc">
-        Save project paths to sync skills to <code>.agents/skills/</code> in each project.
+        Save project paths to sync skills and rules to each project.
       </p>
       <form onSubmit={handleAdd} className="project-directories-add">
         <input

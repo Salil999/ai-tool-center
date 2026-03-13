@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSkillSyncTargets } from '../../api-client';
 
 function fuzzyMatch(str: string, query: string): boolean {
@@ -29,9 +29,19 @@ export function SkillSyncSection({ onSyncToProvider, onSyncToProject }: SkillSyn
   const ref = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const fetchTargets = useCallback(() => {
     getSkillSyncTargets().then(setTargets).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchTargets();
+  }, [fetchTargets]);
+
+  useEffect(() => {
+    if (open) {
+      fetchTargets();
+    }
+  }, [open, fetchTargets]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

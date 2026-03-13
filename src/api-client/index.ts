@@ -6,6 +6,7 @@ export * from './servers';
 export * from './import';
 export * from './audit';
 export * from './skills';
+export * from './rules';
 export * from './project-directories';
 export * from './credentials';
 export * from './settings';

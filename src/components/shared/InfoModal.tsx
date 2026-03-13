@@ -1,6 +1,6 @@
 interface InfoModalProps {
   onClose: () => void;
-  activeTab: 'mcp' | 'skills' | 'credentials';
+  activeTab: 'mcp' | 'skills' | 'rules' | 'agents' | 'credentials';
 }
 
 export function InfoModal({ onClose, activeTab }: InfoModalProps) {
@@ -9,7 +9,11 @@ export function InfoModal({ onClose, activeTab }: InfoModalProps) {
       ? 'MCP Servers — User Guide'
       : activeTab === 'skills'
         ? 'Skills — User Guide'
-        : 'API Credentials — User Guide';
+        : activeTab === 'rules'
+          ? 'Rules — User Guide'
+          : activeTab === 'agents'
+            ? 'AGENTS.md — User Guide'
+            : 'API Credentials — User Guide';
 
   return (
     <div className="modal info-modal">
@@ -22,6 +26,8 @@ export function InfoModal({ onClose, activeTab }: InfoModalProps) {
       <div className="modal-body info-modal-body">
         {activeTab === 'mcp' && <MCPInfoContent />}
         {activeTab === 'skills' && <SkillsInfoContent />}
+        {activeTab === 'rules' && <RulesInfoContent />}
+        {activeTab === 'agents' && <AgentsInfoContent />}
         {activeTab === 'credentials' && <CredentialsInfoContent />}
         <div className="modal-actions">
           <button type="button" className="btn btn-primary" onClick={onClose}>
@@ -305,6 +311,125 @@ function SkillsInfoContent() {
             Skills are stored in <code>~/.ai_tools_manager/skills/</code>. Each skill is a subdirectory
             containing its <code>SKILL.md</code> and any supporting files. Keep this directory private if
             your skills contain sensitive information.
+          </p>
+        </section>
+    </>
+  );
+}
+
+function RulesInfoContent() {
+  return (
+    <>
+        <section>
+          <h3>What are Provider Rules?</h3>
+          <p>
+            <strong>Provider rules</strong> are tool-specific configuration files that give AI coding agents
+            instructions—code style, conventions, build steps, and testing procedures. Different tools use different
+            formats: <strong>Cursor</strong> uses <code>.cursor/rules/*.mdc</code>, <strong>Augment</strong> uses{' '}
+            <code>.augment/rules/*.md</code>. This tab lets you manage Cursor and Augment rules, plus add{' '}
+            <strong>custom rule configs</strong> for other tools, then sync to providers or projects. Tools that use
+            AGENTS.md (Claude, Gemini CLI, OpenCode) are managed in the AGENTS.md tab.
+          </p>
+        </section>
+
+        <section>
+          <h3>Header Buttons</h3>
+          <dl className="info-dl">
+            <dt>Write</dt>
+            <dd>
+              A dropdown that syncs rules to a target. For <strong>Providers</strong> (Cursor, Augment): syncs the
+              corresponding provider rules to that tool&apos;s directory. For <strong>Projects</strong>: choose Cursor
+              rules or Augment rules to sync to that project path.
+            </dd>
+            <dt>Import</dt>
+            <dd>
+              Opens a modal to import rules from provider directories (Cursor, Augment) or project paths (AGENTS.md,
+              CLAUDE.md). Imported content is merged into your AGENTS.md entries (managed in the AGENTS.md tab).
+            </dd>
+          </dl>
+        </section>
+
+        <section>
+          <h3>Provider Rules Sections</h3>
+          <p>Each provider has its own section. You can:</p>
+          <dl className="info-dl">
+            <dt>Cursor Rules</dt>
+            <dd>
+              <code>.mdc</code> files with YAML frontmatter (description, globs, alwaysApply). Add, edit, reorder, and
+              sync to Cursor or to projects.
+            </dd>
+            <dt>Augment Rules</dt>
+            <dd>
+              <code>.md</code> files with Always, Manual, or Auto types. Add, edit, reorder, and sync to Augment or projects.
+            </dd>
+            <dt>Custom Rules</dt>
+            <dd>
+              Add custom rule configs by specifying a directory or file path and extension (.mdc or .md). Use for tools
+              not in the built-in list.
+            </dd>
+          </dl>
+        </section>
+
+        <section>
+          <h3>Provider Conventions</h3>
+          <p>Different tools use different paths for rules:</p>
+          <ul>
+            <li><strong>Cursor</strong> — <code>~/.cursor/rules/*.mdc</code></li>
+            <li><strong>Augment</strong> — <code>~/.augment/rules/*.md</code></li>
+            <li><strong>AGENTS.md</strong> — Claude, Gemini CLI, OpenCode use AGENTS.md (managed in AGENTS.md tab)</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Data Storage</h3>
+          <p>
+            Provider rules are stored in <code>~/.ai_tools_manager/rules/</code>. AGENTS.md entries are managed in the
+            AGENTS.md tab.
+          </p>
+        </section>
+    </>
+  );
+}
+
+function AgentsInfoContent() {
+  return (
+    <>
+        <section>
+          <h3>What is AGENTS.md?</h3>
+          <p>
+            <strong>AGENTS.md</strong> is a cross-tool standard Markdown file that provides AI coding agents with
+            project-specific instructions and context—build steps, testing procedures, code style, and conventions.
+            Content is stored in <code>~/.ai_tools_manager/agents/</code> and synced to project paths. Supported by
+            Cursor, OpenAI Codex, GitHub Copilot, Windsurf, Gemini CLI, and many others.
+          </p>
+        </section>
+
+        <section>
+          <h3>Header Buttons</h3>
+          <dl className="info-dl">
+            <dt>Write</dt>
+            <dd>
+              A dropdown that syncs AGENTS.md to providers (Claude, Gemini CLI, OpenCode, Universal Agent) or to project
+              paths. Choose a source agent and target.
+            </dd>
+            <dt>Import</dt>
+            <dd>
+              Import rules from provider directories or project paths into an AGENTS.md entry. Content is stored in{' '}
+              <code>~/.ai_tools_manager/agents/</code>.
+            </dd>
+            <dt>Add AGENTS.md</dt>
+            <dd>
+              Creates a new AGENTS.md entry. Pick a project path, optionally add a display name, and edit the markdown
+              content. Content is stored centrally and can be synced to the project path.
+            </dd>
+          </dl>
+        </section>
+
+        <section>
+          <h3>Data Storage</h3>
+          <p>
+            All AGENTS.md content is stored in <code>~/.ai_tools_manager/agents/</code>. Each entry has an ID; content
+            is in <code>agents/{'{id}'}/AGENTS.md</code>. Use Sync to project to write content to your project directory.
           </p>
         </section>
     </>

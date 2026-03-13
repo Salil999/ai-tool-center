@@ -106,6 +106,7 @@ const ACTION_LABELS: Record<string, string> = {
   sync_to_custom: 'Synced to custom path',
   audit_options_update: 'Audit options updated',
   config_change: 'Configuration changed',
+  config_export: 'Configuration exported',
   skill_create: 'Skill created',
   skill_update: 'Skill updated',
   skill_delete: 'Skill deleted',
@@ -116,6 +117,22 @@ const ACTION_LABELS: Record<string, string> = {
   skill_sync_to_project: 'Skills synced to project',
   skill_import_source: 'Skills imported from source',
   skill_import_custom: 'Skills imported from custom path',
+  rule_content_update: 'Rules content updated',
+  rule_sync_to_provider: 'Rules synced to provider',
+  rule_sync_to_project: 'Rules synced to project',
+  rule_import_source: 'Rules imported from source',
+  rule_import_custom: 'Rules imported from custom path',
+  provider_rule_create: 'Provider rule created',
+  provider_rule_delete: 'Provider rule deleted',
+  provider_rule_content_update: 'Provider rule content updated',
+  provider_rule_reorder: 'Provider rules reordered',
+  agent_rule_add: 'AGENTS.md added',
+  agent_rule_content_update: 'AGENTS.md content updated',
+  agent_rule_update: 'AGENTS.md metadata updated',
+  agent_rule_remove: 'AGENTS.md removed',
+  custom_rule_config_add: 'Custom rule config added',
+  custom_rule_config_update: 'Custom rule config updated',
+  custom_rule_config_remove: 'Custom rule config removed',
   project_directory_add: 'Project directory added',
   project_directory_update: 'Project directory updated',
   project_directory_remove: 'Project directory removed',
@@ -354,7 +371,10 @@ export function AuditModal({ onClose }: AuditModalProps) {
                     </button>
                     {isExpanded && (
                       <div className="audit-entry-body">
-                        {entry.action === 'skill_content_update' &&
+                        {(entry.action === 'skill_content_update' ||
+                          entry.action === 'rule_content_update' ||
+                          entry.action === 'provider_rule_content_update' ||
+                          entry.action === 'agent_rule_content_update') &&
                         typeof entry.details?.contentBefore === 'string' &&
                         typeof entry.details?.contentAfter === 'string' ? (
                           <ContentDiff
