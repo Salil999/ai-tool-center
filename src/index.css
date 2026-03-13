@@ -1950,6 +1950,11 @@ body {
   min-width: 180px;
 }
 
+.project-dir-input.project-dir-path {
+  flex: 1;
+  min-width: 280px;
+}
+
 .project-dir-name {
   min-width: 120px;
 }
@@ -1958,6 +1963,9 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .project-dir-item {
@@ -1965,12 +1973,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.project-dir-item:last-child {
-  border-bottom: none;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
 
 .project-dir-display {

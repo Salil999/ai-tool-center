@@ -91,7 +91,7 @@ export function ProjectDirectoriesSection({ onChanged }: ProjectDirectoriesSecti
           placeholder="Path (e.g. ~/my-project)"
           value={addPath}
           onChange={(e) => setAddPath(e.target.value)}
-          className="project-dir-input"
+          className="project-dir-input project-dir-path"
         />
         <input
           type="text"
@@ -113,7 +113,7 @@ export function ProjectDirectoriesSection({ onChanged }: ProjectDirectoriesSecti
                   type="text"
                   value={editPath}
                   onChange={(e) => setEditPath(e.target.value)}
-                  className="project-dir-input"
+                  className="project-dir-input project-dir-path"
                 />
                 <input
                   type="text"
