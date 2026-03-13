@@ -17,7 +17,7 @@ import type { Provider } from '../types.js';
 
 const CONFIG_PATH = path.join(HOME, '.config', 'opencode', 'opencode.json');
 
-function getPath(): string {
+function getMcpPath(): string {
   return CONFIG_PATH;
 }
 
@@ -144,7 +144,7 @@ function exportConfig(servers: Record<string, import('../types.js').Server>): { 
 export default {
   id: 'opencode',
   name: 'OpenCode',
-  getPath,
+  getMcpPath,
   importConfig,
   exportConfig,
 } satisfies Provider;

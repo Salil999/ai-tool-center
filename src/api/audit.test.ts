@@ -12,11 +12,18 @@ describe('api/audit', () => {
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'audit-test-'));
     const configPath = path.join(tmpDir, 'config.json');
-    fs.writeFileSync(configPath, JSON.stringify({ servers: {}, customProviders: [] }), 'utf8');
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ servers: {}, customProviders: [], skills: {}, skillOrder: [], projectDirectories: [] }),
+      'utf8'
+    );
+    process.env.AI_TOOLS_MANAGER_SKILLS_DIR = path.join(tmpDir, 'skills');
+    fs.mkdirSync(path.join(tmpDir, 'skills'), { recursive: true });
     app = createApp({ configPath, auditDir: tmpDir });
   });
 
   afterEach(() => {
+    delete process.env.AI_TOOLS_MANAGER_SKILLS_DIR;
     try {
       fs.rmSync(tmpDir, { recursive: true });
     } catch {
@@ -73,6 +80,100 @@ describe('api/audit', () => {
       expect(res.body.entries[0].configBefore).toBeDefined();
       expect(res.body.entries[0].configAfter).toBeDefined();
       expect(res.body.entries[0].details?.serverId).toBeDefined();
+    });
+
+    it('records server delete in audit log', async () => {
+      const createRes = await request(app).post('/api/servers').send({
+        name: 'To Delete',
+        type: 'stdio',
+        command: 'node',
+        args: [],
+      });
+      const serverId = createRes.body.id;
+
+      await request(app).delete(`/api/servers/${serverId}`);
+
+      const res = await request(app).get('/api/audit');
+      expect(res.body.entries).toHaveLength(2);
+      expect(res.body.entries[0].action).toBe('server_delete');
+      expect(res.body.entries[0].details?.serverId).toBe(serverId);
+      expect(res.body.entries[0].configBefore.servers?.[serverId]).toBeDefined();
+      expect(res.body.entries[0].configAfter.servers?.[serverId]).toBeUndefined();
+    });
+
+    it('records server update in audit log', async () => {
+      const createRes = await request(app).post('/api/servers').send({
+        name: 'Original',
+        type: 'stdio',
+        command: 'node',
+        args: [],
+      });
+      const serverId = createRes.body.id;
+
+      await request(app).put(`/api/servers/${serverId}`).send({ name: 'Updated Name' });
+
+      const res = await request(app).get('/api/audit');
+      expect(res.body.entries).toHaveLength(2);
+      expect(res.body.entries[0].action).toBe('server_update');
+      expect(res.body.entries[0].details?.serverId).toBe(serverId);
+      expect(res.body.entries[0].configAfter.servers?.[serverId].name).toBe('Updated Name');
+    });
+
+    it('records server reorder in audit log', async () => {
+      await request(app).post('/api/servers').send({ name: 'A', type: 'stdio', command: 'node' });
+      await request(app).post('/api/servers').send({ name: 'B', type: 'stdio', command: 'node' });
+      const listRes = await request(app).get('/api/servers');
+      const ids = listRes.body.map((s: { id: string }) => s.id);
+
+      await request(app).patch('/api/servers/reorder').send({ order: ids.reverse() });
+
+      const res = await request(app).get('/api/audit');
+      expect(res.body.entries[0].action).toBe('server_reorder');
+      expect(res.body.entries[0].details?.order).toEqual(ids);
+    });
+
+    it('records server enable toggle in audit log', async () => {
+      const createRes = await request(app).post('/api/servers').send({
+        name: 'Toggle',
+        type: 'stdio',
+        command: 'node',
+        args: [],
+      });
+      const serverId = createRes.body.id;
+
+      await request(app).patch(`/api/servers/${serverId}/enabled`).send({ enabled: false });
+
+      const res = await request(app).get('/api/audit');
+      expect(res.body.entries[0].action).toBe('server_enable_toggle');
+      expect(res.body.entries[0].details?.serverId).toBe(serverId);
+      expect(res.body.entries[0].details?.enabled).toBe(false);
+    });
+
+    it('records import_custom in audit log', async () => {
+      const importPath = path.join(process.cwd(), 'tmp-audit-import-test.json');
+      try {
+        fs.writeFileSync(
+          importPath,
+          JSON.stringify({
+            mcpServers: {
+              imported: { command: 'npx', args: ['-y', 'x'] },
+            },
+          }),
+          'utf8'
+        );
+
+        await request(app)
+          .post('/api/import/custom')
+          .send({ path: importPath, configKey: 'mcpServers' });
+
+        const res = await request(app).get('/api/audit');
+        expect(res.body.entries).toHaveLength(1);
+        expect(res.body.entries[0].action).toBe('import_custom');
+        expect(res.body.entries[0].details?.imported).toBe(1);
+        expect(res.body.entries[0].details?.total).toBe(1);
+      } finally {
+        if (fs.existsSync(importPath)) fs.unlinkSync(importPath);
+      }
     });
   });
 

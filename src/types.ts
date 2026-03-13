@@ -52,7 +52,10 @@ export interface CustomProvider {
 export interface Provider {
   id: string;
   name: string;
-  getPath: () => string;
+  /** Path to MCP server config (e.g. ~/.cursor/mcp.json) */
+  getMcpPath: () => string;
+  /** Optional path to skills directory (e.g. ~/.cursor/skills). Providers that support skills implement this. */
+  getSkillsPath?: () => string;
   importConfig: () => Record<string, Omit<Server, 'id'>>;
   exportConfig: (servers: Record<string, Omit<Server, 'id'>>) => { path: string; success: boolean };
 }
@@ -115,4 +118,20 @@ export interface LintReport {
   infos: number;
   fixed: number;
   generatedAt: string;
+}
+
+/** Skillhub registry search result item */
+export interface SkillhubSkill {
+  id: string;
+  name: string;
+  slug: string;
+  author: string;
+  description: string | null;
+  description_zh?: string | null;
+  category?: string;
+  tags?: string[];
+  simple_score?: number | null;
+  simple_rating?: string | null;
+  github_stars?: number;
+  repo_url?: string;
 }

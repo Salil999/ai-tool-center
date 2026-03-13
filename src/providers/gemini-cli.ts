@@ -16,9 +16,14 @@ import {
 import type { Provider } from '../types.js';
 
 const CONFIG_PATH = path.join(HOME, '.gemini', 'settings.json');
+const SKILLS_PATH = path.join(HOME, '.gemini', 'skills');
 
-function getPath(): string {
+function getMcpPath(): string {
   return CONFIG_PATH;
+}
+
+function getSkillsPath(): string {
+  return SKILLS_PATH;
 }
 
 function importConfig(): Record<string, import('../types.js').Server> {
@@ -56,7 +61,8 @@ function exportConfig(servers: Record<string, import('../types.js').Server>): { 
 export default {
   id: 'gemini-cli',
   name: 'Gemini CLI',
-  getPath,
+  getMcpPath,
+  getSkillsPath,
   importConfig,
   exportConfig,
 } satisfies Provider;

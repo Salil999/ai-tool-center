@@ -4,8 +4,7 @@ import { Router, Request, Response } from 'express';
 import { getConfigBaseDir, getConfigPath, saveConfig, DEFAULT_CONFIG } from '../config/loader.js';
 import { loadCreds, saveCreds, type CredentialsData } from '../credentials/store.js';
 import { getManagedSkillsDir, syncSkillsFromDisk } from '../skills/sync.js';
-import { isPathSafe } from '../providers/utils.js';
-import { mergeServers } from '../providers/utils.js';
+import { isPathSafe, mergeServers } from '../providers/utils.js';
 import type { AuditStore } from '../audit/store.js';
 import type { AppConfig } from '../types.js';
 

@@ -74,5 +74,44 @@ describe('api/import', () => {
       expect(res.body.imported).toBe(0);
       expect(res.body.total).toBe(1);
     });
+
+    it('imported servers visible in list and match saved data', async () => {
+      const configPath = path.join(tmpDir, 'mcp.json');
+      fs.writeFileSync(
+        configPath,
+        JSON.stringify({
+          mcpServers: {
+            'Imported Server': {
+              command: 'npx',
+              args: ['-y', 'some-package'],
+            },
+          },
+        }),
+        'utf8'
+      );
+
+      const importRes = await request(app)
+        .post('/api/import/custom')
+        .send({ path: configPath, configKey: 'mcpServers' });
+      expect(importRes.status).toBe(200);
+      expect(importRes.body.imported).toBe(1);
+      expect(importRes.body.total).toBe(1);
+
+      const listRes = await request(app).get('/api/servers');
+      expect(listRes.status).toBe(200);
+      expect(listRes.body).toHaveLength(1);
+      const server = listRes.body[0];
+      expect(server.name).toBe('Imported Server');
+      expect(server.command).toBe('npx');
+      expect(server.args).toEqual(['-y', 'some-package']);
+
+      const getRes = await request(app).get(`/api/servers/${server.id}`);
+      expect(getRes.status).toBe(200);
+      expect(getRes.body).toMatchObject({
+        name: 'Imported Server',
+        command: 'npx',
+        args: ['-y', 'some-package'],
+      });
+    });
   });
 });

@@ -43,7 +43,7 @@ export function discoverSources(): DiscoverSource[] {
     let error: string | null = null;
 
     try {
-      const providerPath = provider.getPath();
+      const providerPath = provider.getMcpPath();
       if (fs.existsSync(providerPath)) {
         exists = true;
         const servers = provider.importConfig();
@@ -56,7 +56,7 @@ export function discoverSources(): DiscoverSource[] {
     result.push({
       id: provider.id,
       name: provider.name,
-      path: provider.getPath(),
+      path: provider.getMcpPath(),
       exists,
       serverCount,
       error: error || undefined,
@@ -94,7 +94,7 @@ export function exportToCustom(
 
 export function getProviderPath(providerId: string): string | null {
   const provider = PROVIDERS.find((p) => p.id === providerId);
-  return provider ? provider.getPath() : null;
+  return provider ? provider.getMcpPath() : null;
 }
 
 export { PROVIDERS, mergeServers };

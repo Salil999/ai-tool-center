@@ -1,8 +1,6 @@
 node_modules/
 dist/
-tmp-test-*/
-tmp-*-test-*/
-tmp-import-test-*/
+tmp-*
 tmp-test-*.json
 mcp-manager
 mcp-manager.exe

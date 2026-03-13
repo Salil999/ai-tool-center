@@ -1,7 +1,7 @@
 import { fetchJSON, apiUrl } from './fetch';
-import type { LintReport } from '../types';
+import type { LintReport, SkillhubSkill } from '@/types';
 
-export type { LintReport };
+export type { LintReport, SkillhubSkill };
 
 export async function getSkills() {
   return fetchJSON<Array<Record<string, unknown>>>(apiUrl('/skills'));
@@ -84,22 +84,6 @@ export async function importSkillsFromCustomPath(dirPath: string) {
     method: 'POST',
     body: JSON.stringify({ path: dirPath }),
   });
-}
-
-/** Skillhub registry search result item */
-export interface SkillhubSkill {
-  id: string;
-  name: string;
-  slug: string;
-  author: string;
-  description: string | null;
-  description_zh?: string | null;
-  category?: string;
-  tags?: string[];
-  simple_score?: number | null;
-  simple_rating?: string | null;
-  github_stars?: number;
-  repo_url?: string;
 }
 
 export async function searchSkillhubRegistry(query: string, limit = 20) {

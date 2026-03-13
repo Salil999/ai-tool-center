@@ -1,18 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
-import { ServerList } from './components/mcp/ServerList';
-import { EditModal } from './components/mcp/EditModal';
-import { SyncSection } from './components/mcp/SyncSection';
-import { CustomSyncModal } from './components/mcp/CustomSyncModal';
-import { ImportModal } from './components/mcp/ImportModal';
-import { InfoModal } from './components/shared/InfoModal';
-import { AuditModal } from './components/shared/AuditModal';
-import { SettingsModal } from './components/settings/SettingsModal';
-import { Toast } from './components/shared/Toast';
-import { getTheme } from './api-client';
-import { SkillsTab } from './components/skills/SkillsTab';
-import { CredentialsTab } from './components/credentials/CredentialsTab';
-import { useMcpServers } from './hooks/useMcpServers';
-import { useOAuthCallback } from './hooks/useOAuthCallback';
+import { ServerList } from '@/components/mcp/ServerList';
+import { SyncSection } from '@/components/mcp/SyncSection';
+import { getTheme } from '@/api-client';
+import { SkillsTab } from '@/components/skills/SkillsTab';
+import { CredentialsTab } from '@/components/credentials/CredentialsTab';
+import { ModalContainer } from '@/components/shared/ModalContainer';
+import { useMcpServers } from '@/hooks/useMcpServers';
+import { useOAuthCallback } from '@/hooks/useOAuthCallback';
 
 type TabId = 'mcp' | 'skills' | 'credentials';
 
@@ -243,89 +237,38 @@ export default function App() {
         </button>
       </footer>
 
-      {editServerId !== null && (
-        <div className="modal-overlay" onClick={handleCloseEdit}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <EditModal
-              serverId={editServerId === 'new' ? null : editServerId}
-              onClose={handleCloseEdit}
-              onSave={handleSave}
-            />
-          </div>
-        </div>
-      )}
-
-      {customSyncOpen && (
-        <div className="modal-overlay" onClick={() => setCustomSyncOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <CustomSyncModal
-              onClose={() => setCustomSyncOpen(false)}
-              onSync={handleCustomSync}
-            />
-          </div>
-        </div>
-      )}
-
-      {auditOpen && (
-        <div className="modal-overlay" onClick={() => setAuditOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <AuditModal onClose={() => setAuditOpen(false)} />
-          </div>
-        </div>
-      )}
-
-      {infoOpen && (
-        <div className="modal-overlay" onClick={() => setInfoOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <InfoModal onClose={() => setInfoOpen(false)} activeTab={activeTab as 'mcp' | 'skills' | 'credentials'} />
-          </div>
-        </div>
-      )}
-
-      {importOpen && (
-        <div className="modal-overlay" onClick={() => setImportOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <ImportModal
-              onClose={() => setImportOpen(false)}
-              onImport={(result) => {
-                const msg =
-                  result.imported === 0
-                    ? `No new servers (all already exist). Total: ${result.total}`
-                    : `Imported ${result.imported} server(s). Total: ${result.total}`;
-                showToast(msg);
-                mcp.loadServers();
-              }}
-              onError={(msg) => showToast(msg, 'error')}
-            />
-          </div>
-        </div>
-      )}
-
-      {settingsOpen && (
-        <div className="modal-overlay" onClick={() => setSettingsOpen(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <SettingsModal
-              onClose={() => setSettingsOpen(false)}
-              onReset={() => {
-                window.location.reload();
-              }}
-              onImport={() => {
-                mcp.loadServers();
-              }}
-              onError={(msg) => showToast(msg, 'error')}
-              onSuccess={(msg) => showToast(msg)}
-            />
-          </div>
-        </div>
-      )}
-
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onDismiss={() => setToast(null)}
-        />
-      )}
+      <ModalContainer
+        activeTab={activeTab}
+        editServerId={editServerId}
+        customSyncOpen={customSyncOpen}
+        importOpen={importOpen}
+        infoOpen={infoOpen}
+        auditOpen={auditOpen}
+        settingsOpen={settingsOpen}
+        toast={toast}
+        onCloseEdit={handleCloseEdit}
+        onSave={handleSave}
+        onCustomSync={handleCustomSync}
+        onCloseCustomSync={() => setCustomSyncOpen(false)}
+        onCloseImport={() => setImportOpen(false)}
+        onImport={(result) => {
+          const msg =
+            result.imported === 0
+              ? `No new servers (all already exist). Total: ${result.total}`
+              : `Imported ${result.imported} server(s). Total: ${result.total}`;
+          showToast(msg);
+        }}
+        onImportError={(msg) => showToast(msg, 'error')}
+        onCloseInfo={() => setInfoOpen(false)}
+        onCloseAudit={() => setAuditOpen(false)}
+        onCloseSettings={() => setSettingsOpen(false)}
+        onSettingsReset={() => window.location.reload()}
+        onSettingsImport={() => mcp.loadServers()}
+        onSettingsError={(msg) => showToast(msg, 'error')}
+        onSettingsSuccess={(msg) => showToast(msg)}
+        onDismissToast={() => setToast(null)}
+        loadServers={mcp.loadServers}
+      />
     </div>
   );
 }

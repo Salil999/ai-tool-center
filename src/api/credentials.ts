@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { loadCreds, saveCreds, getCredsDir } from '../credentials/store.js';
+import { loadCreds, saveCreds } from '../credentials/store.js';
 import type { AuditStore } from '../audit/store.js';
 import type { AppConfig } from '../types.js';
 

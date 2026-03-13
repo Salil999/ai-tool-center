@@ -31,8 +31,12 @@ describe('providers/cursor', () => {
     expect(cursor.name).toBe('Cursor');
   });
 
-  it('getPath returns cursor config path', () => {
-    expect(cursor.getPath()).toBe(cursorPath);
+  it('getMcpPath returns cursor config path', () => {
+    expect(cursor.getMcpPath()).toBe(cursorPath);
+  });
+
+  it('getSkillsPath returns cursor skills path', () => {
+    expect(cursor.getSkillsPath?.()).toBe(path.join(os.homedir(), '.cursor', 'skills'));
   });
 
   it.skip('importConfig throws when file does not exist', () => {

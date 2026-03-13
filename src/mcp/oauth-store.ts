@@ -66,13 +66,3 @@ export function generateState(serverId: string): string {
   const nonce = crypto.randomBytes(16).toString('hex');
   return `${nonce}:${serverId}`;
 }
-
-export function parseState(stateStr: string): { nonce: string; serverId: string } | null {
-  if (!stateStr || typeof stateStr !== 'string') return null;
-  const idx = stateStr.indexOf(':');
-  if (idx === -1) return null;
-  return {
-    nonce: stateStr.slice(0, idx),
-    serverId: stateStr.slice(idx + 1),
-  };
-}

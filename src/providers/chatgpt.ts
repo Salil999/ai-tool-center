@@ -15,7 +15,7 @@ import {
 } from './utils.js';
 import type { Provider } from '../types.js';
 
-function getPath(): string {
+function getMcpPath(): string {
   if (process.platform === 'darwin') {
     return path.join(HOME, 'Library', 'Application Support', 'OpenAI', 'ChatGPT', 'mcp.json');
   }
@@ -26,7 +26,7 @@ function getPath(): string {
 }
 
 function importConfig(): Record<string, import('../types.js').Server> {
-  const configPath = getPath();
+  const configPath = getMcpPath();
   const data = readConfig(configPath);
   if (!data) throw new Error(`Config file not found: ${configPath}`);
 
@@ -40,7 +40,7 @@ function importConfig(): Record<string, import('../types.js').Server> {
 }
 
 function exportConfig(servers: Record<string, import('../types.js').Server>): { path: string; success: boolean } {
-  const configPath = getPath();
+  const configPath = getMcpPath();
   const data = canonicalToMcpServers(servers);
   ensureDir(configPath);
   let existing: Record<string, unknown> = {};
@@ -58,7 +58,7 @@ function exportConfig(servers: Record<string, import('../types.js').Server>): { 
 export default {
   id: 'chatgpt',
   name: 'ChatGPT',
-  getPath,
+  getMcpPath,
   importConfig,
   exportConfig,
 } satisfies Provider;

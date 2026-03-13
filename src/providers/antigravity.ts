@@ -15,7 +15,7 @@ import {
 } from './utils.js';
 import type { Provider } from '../types.js';
 
-function getPath(): string {
+function getMcpPath(): string {
   if (process.platform === 'win32') {
     return path.join(process.env.USERPROFILE || process.env.HOME || HOME, '.antigravity_tools', 'mcp_config.json');
   }
@@ -55,7 +55,7 @@ function exportConfig(servers: Record<string, import('../types.js').Server>): { 
 export default {
   id: 'antigravity',
   name: 'Antigravity',
-  getPath,
+  getMcpPath,
   importConfig,
   exportConfig,
 } satisfies Provider;

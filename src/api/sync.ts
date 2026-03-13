@@ -12,7 +12,7 @@ export function createSyncRouter(getConfig: GetConfig, auditStore: AuditStore) {
   const BUILTIN_TARGETS = PROVIDERS.filter((p) => p.id !== 'claude_desktop').map((p) => ({
     id: p.id,
     name: p.name,
-    path: p.getPath(),
+    path: p.getMcpPath(),
   }));
 
   router.post('/custom', (req: Request, res: Response) => {

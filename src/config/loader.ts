@@ -8,14 +8,14 @@ import type { AppConfig } from '../types.js';
 /** MCP config and OAuth storage: ~/.ai_tools_manager/mcp/ */
 const MCP_DIR = path.join(os.homedir(), '.ai_tools_manager', 'mcp');
 
-export const DEFAULT_CONFIG: AppConfig = {
+export const DEFAULT_CONFIG = {
   servers: {},
   customProviders: [],
   auditOptions: { maxEntries: 100 },
   skills: {},
-  skillOrder: [],
+  skillOrder: [] as string[],
   projectDirectories: [],
-};
+} satisfies AppConfig;
 
 function getDefaultConfigPath(): string {
   const homeConfig = path.join(MCP_DIR, 'config.json');

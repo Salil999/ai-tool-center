@@ -1,5 +1,6 @@
 import path from 'path';
 import os from 'os';
+import { PROVIDERS } from '../providers/index.js';
 
 const HOME = os.homedir();
 
@@ -9,13 +10,20 @@ export interface SkillSyncTarget {
   path: string;
 }
 
-/** Skill sync targets for LLM providers (agentskills.io conventions) */
-export const SKILL_PROVIDERS: SkillSyncTarget[] = [
-  { id: 'cursor', name: 'Cursor', path: path.join(HOME, '.cursor', 'skills') },
-  { id: 'claude', name: 'Claude Code', path: path.join(HOME, '.claude', 'skills') },
-  { id: 'gemini-cli', name: 'Gemini CLI', path: path.join(HOME, '.gemini', 'skills') },
+/** Standalone skill targets (no MCP provider in this app) */
+const STANDALONE_SKILL_TARGETS: SkillSyncTarget[] = [
   { id: 'copilot', name: 'GitHub Copilot', path: path.join(HOME, '.copilot', 'skills') },
   { id: 'agents', name: 'Agents (cross-client)', path: path.join(HOME, '.agents', 'skills') },
+];
+
+/** Skill sync targets: from providers with getSkillsPath + standalone (agentskills.io conventions) */
+export const SKILL_PROVIDERS: SkillSyncTarget[] = [
+  ...PROVIDERS.filter((p) => p.getSkillsPath).map((p) => ({
+    id: p.id,
+    name: p.name,
+    path: p.getSkillsPath!(),
+  })),
+  ...STANDALONE_SKILL_TARGETS,
 ];
 
 export function getSkillProviderPath(targetId: string): string | null {

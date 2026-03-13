@@ -9,7 +9,7 @@ import {
 } from './utils.js';
 import type { Provider } from '../types.js';
 
-function getPath(): string {
+function getMcpPath(): string {
   const baseDir =
     process.platform === 'darwin'
       ? path.join(HOME, 'Library', 'Application Support', 'Code', 'User')
@@ -20,7 +20,7 @@ function getPath(): string {
 }
 
 function importConfig(): Record<string, import('../types.js').Server> {
-  const configPath = getPath();
+  const configPath = getMcpPath();
   const data = readConfig(configPath);
   if (!data) throw new Error(`Config file not found: ${configPath}`);
 
@@ -35,7 +35,7 @@ function importConfig(): Record<string, import('../types.js').Server> {
 }
 
 function exportConfig(servers: Record<string, import('../types.js').Server>): { path: string; success: boolean } {
-  const configPath = getPath();
+  const configPath = getMcpPath();
   const data = canonicalToVSCodeServers(servers);
   let existing: { servers: Record<string, unknown>; inputs: unknown[] } = { servers: {}, inputs: [] };
   try {
@@ -52,7 +52,7 @@ function exportConfig(servers: Record<string, import('../types.js').Server>): { 
 export default {
   id: 'vscode',
   name: 'VS Code',
-  getPath,
+  getMcpPath,
   importConfig,
   exportConfig,
 } satisfies Provider;
