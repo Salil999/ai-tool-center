@@ -37,7 +37,7 @@ export function SkillsTab({ showToast }: SkillsTabProps) {
   const handleEdit = (id: string | undefined) => setEditSkillId(id ?? null);
 
   const handleDelete = async (id: string) => {
-    await deleteSkill(id);
+    await deleteSkill(id, true);
     showToast('Skill removed');
     loadSkills();
   };

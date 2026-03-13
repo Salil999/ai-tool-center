@@ -85,3 +85,32 @@ export async function importSkillsFromCustomPath(dirPath: string) {
     body: JSON.stringify({ path: dirPath }),
   });
 }
+
+/** Skillhub registry search result item */
+export interface SkillhubSkill {
+  id: string;
+  name: string;
+  slug: string;
+  author: string;
+  description: string | null;
+  description_zh?: string | null;
+  category?: string;
+  tags?: string[];
+  simple_score?: number | null;
+  simple_rating?: string | null;
+  github_stars?: number;
+  repo_url?: string;
+}
+
+export async function searchSkillhubRegistry(query: string, limit = 20) {
+  return fetchJSON<{ skills: SkillhubSkill[]; total: number }>(
+    apiUrl(`/skills/registry/search?q=${encodeURIComponent(query)}&limit=${limit}`)
+  );
+}
+
+export async function installSkillFromRegistry(slug: string, repoUrl: string) {
+  return fetchJSON<{ id: string; path: string; name: string; enabled: boolean }>(apiUrl('/skills/registry/install'), {
+    method: 'POST',
+    body: JSON.stringify({ slug, repo_url: repoUrl }),
+  });
+}

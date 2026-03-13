@@ -1,5 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
+import { marked } from 'marked';
 import { getSkillContent, saveSkillContent, lintSkillContent } from '../../api-client';
+
+/** Extract markdown body after YAML frontmatter (--- ... ---) */
+function getMarkdownBody(content: string): string {
+  const match = content.match(/^---\s*\r?\n[\s\S]*?\r?\n---\s*\r?\n([\s\S]*)$/);
+  return match ? match[1].trim() : content;
+}
+
+function renderMarkdown(md: string): string {
+  try {
+    return marked.parse(md, { async: false });
+  } catch {
+    return `<p class="skill-preview-error">Failed to render markdown preview.</p>`;
+  }
+}
 import type { LintReport } from '../../types';
 
 interface EditSkillModalProps {
@@ -18,6 +33,7 @@ export function EditSkillModal({
   const [content, setContent] = useState('');
   const [contentLoading, setContentLoading] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [lintReport, setLintReport] = useState<LintReport | null>(null);
 
   const [saving, setSaving] = useState(false);
@@ -95,6 +111,13 @@ export function EditSkillModal({
         <div className="raw-editor-wrap skill-editor-wrap">
           {contentLoading ? (
             <p className="import-loading">Loading…</p>
+          ) : showPreview ? (
+            <div
+              className="skill-editor-preview"
+              dangerouslySetInnerHTML={{
+                __html: renderMarkdown(getMarkdownBody(content)),
+              }}
+            />
           ) : (
             <textarea
               className="skill-editor-textarea"
@@ -105,14 +128,24 @@ export function EditSkillModal({
             />
           )}
         </div>
-        <button
-          type="button"
-          className="btn btn-sm"
-          onClick={handleValidate}
-          disabled={validating || contentLoading}
-        >
-          {validating ? 'Validating…' : 'Validate'}
-        </button>
+        <div className="skill-editor-actions">
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => setShowPreview(!showPreview)}
+            disabled={contentLoading}
+          >
+            {showPreview ? 'Raw' : 'Preview'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={handleValidate}
+            disabled={validating || contentLoading}
+          >
+            {validating ? 'Validating…' : 'Validate'}
+          </button>
+        </div>
         {lintReport && (
           <div className="skill-editor-lint">
             <h4 className="skill-editor-lint-title">

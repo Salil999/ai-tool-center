@@ -100,3 +100,8 @@ export function saveConfig(configPath: string, config: AppConfig): void {
 export function getConfigPath(override?: string): string {
   return override || process.env.MCP_MANAGER_CONFIG || getDefaultConfigPath();
 }
+
+/** Base directory for config (~/.ai_tools_manager). Used for Reset/Export/Import. */
+export function getConfigBaseDir(): string {
+  return path.join(os.homedir(), '.ai_tools_manager');
+}

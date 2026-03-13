@@ -8,3 +8,4 @@ export * from './audit';
 export * from './skills';
 export * from './project-directories';
 export * from './credentials';
+export * from './settings';

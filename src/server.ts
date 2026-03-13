@@ -13,8 +13,10 @@ import { createAuditRouter } from './api/audit.js';
 import { createSkillsRouter } from './api/skills.js';
 import { createSkillsSyncRouter } from './api/skills-sync.js';
 import { createSkillsImportRouter } from './api/skills-import.js';
+import { createSkillsRegistryRouter } from './api/skills-registry.js';
 import { createProjectDirectoriesRouter } from './api/project-directories.js';
 import { createCredentialsRouter } from './api/credentials.js';
+import { createSettingsRouter } from './api/settings.js';
 import { AuditStore } from './audit/store.js';
 import type { AppConfig } from './types.js';
 
@@ -70,12 +72,14 @@ export function createApp(options: CreateAppOptions = {}) {
   app.use('/api/sync', createSyncRouter(getConfig, auditStore));
   app.use('/api/skills/sync', createSkillsSyncRouter(getConfig, auditStore));
   app.use('/api/skills/import', createSkillsImportRouter(getConfig, saveConfigFn));
+  app.use('/api/skills/registry', createSkillsRegistryRouter(getConfig, saveConfigFn));
   app.use('/api/skills', createSkillsRouter(getConfig, saveConfigFn, auditStore));
   app.use('/api/project-directories', createProjectDirectoriesRouter(getConfig, saveConfigFn));
   app.use('/api/credentials', createCredentialsRouter(getConfig, auditStore));
   app.use('/api/config', createConfigRouter(getConfig, saveConfigFn));
   app.use('/api/import', createImportRouter(getConfig, saveConfigFn));
   app.use('/api/audit', createAuditRouter(auditStore, getConfig, saveConfigFn));
+  app.use('/api/settings', createSettingsRouter(getConfig, saveConfigFn, auditStore));
   app.use('/oauth', createOAuthRouter(baseUrl));
 
   app.use('/api', (_req, res) => {
