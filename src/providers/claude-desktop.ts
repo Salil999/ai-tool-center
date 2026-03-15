@@ -1,14 +1,9 @@
 import path from 'path';
-import { createMcpProvider, HOME } from './utils.js';
+import { createMcpProvider } from './utils.js';
+import { platformConfigPath } from '../utils/platform-path.js';
 
 function getMcpPath(): string {
-  const baseDir =
-    process.platform === 'darwin'
-      ? path.join(HOME, 'Library', 'Application Support', 'Claude')
-      : process.platform === 'win32'
-        ? path.join(process.env.APPDATA || HOME, 'Claude')
-        : path.join(HOME, '.config', 'Claude');
-  return path.join(baseDir, 'claude_desktop_config.json');
+  return path.join(platformConfigPath('Claude'), 'claude_desktop_config.json');
 }
 
 export default createMcpProvider({

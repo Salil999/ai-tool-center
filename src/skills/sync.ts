@@ -4,6 +4,7 @@ import os from 'os';
 import { isPathSafe, resolvePath } from '../providers/utils.js';
 import { SKILL_PROVIDERS, getSkillProviderPath } from './providers.js';
 import { parseSkillDir, validateSkillDir } from './parse.js';
+import { slugify } from '../utils/slugify.js';
 import type { AppConfig, Skill } from '../types.js';
 
 function getManagedSkillsDir(): string {
@@ -77,7 +78,7 @@ export function syncSkillsFromDisk(config: AppConfig): boolean {
 }
 
 function toSkillId(name: string): string {
-  return (name || 'skill').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'skill';
+  return slugify(name, 'skill');
 }
 
 /**

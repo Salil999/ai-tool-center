@@ -10,6 +10,8 @@ import { useToast } from '@/contexts/ToastContext';
 
 type TabId = 'mcp' | 'skills' | 'rules' | 'agents' | 'credentials';
 
+type SettingsTabId = 'general' | 'projects' | 'providers';
+
 interface ModalContainerProps {
   activeTab: TabId;
   editServerId: string | null;
@@ -18,6 +20,7 @@ interface ModalContainerProps {
   infoOpen: boolean;
   auditOpen: boolean;
   settingsOpen: boolean;
+  settingsInitialTab?: SettingsTabId;
   onCloseEdit: () => void;
   onSave: (id: string | null, payload: Record<string, unknown>) => Promise<void>;
   onCustomSync: (path: string, configKey: string) => Promise<void>;
@@ -43,6 +46,7 @@ export function ModalContainer({
   infoOpen,
   auditOpen,
   settingsOpen,
+  settingsInitialTab = 'general',
   onCloseEdit,
   onSave,
   onCustomSync,
@@ -107,11 +111,12 @@ export function ModalContainer({
       {settingsOpen && (
         <Modal isOpen onClose={onCloseSettings} aria-labelledby="settings-modal-title">
           <SettingsModal
-              onClose={onCloseSettings}
-              onReset={onSettingsReset}
-              onImport={onSettingsImport}
+            onClose={onCloseSettings}
+            onReset={onSettingsReset}
+            onImport={onSettingsImport}
             onError={onSettingsError}
             onSuccess={onSettingsSuccess}
+            initialTab={settingsInitialTab}
           />
         </Modal>
       )}

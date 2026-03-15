@@ -50,6 +50,15 @@ export async function getServerTools(id: string) {
   return data as { tools: Array<{ name: string }> };
 }
 
+export interface SyncTargetsResponse {
+  builtin: Array<{ id: string; name: string; path: string }>;
+  custom: Array<{ id: string; name: string; path: string; configKey?: string }>;
+}
+
+export async function getSyncTargets() {
+  return fetchJSON<SyncTargetsResponse>(apiUrl('/sync/targets'));
+}
+
 export async function syncTo(target: string) {
   return fetchJSON<{ path: string }>(apiUrl(`/sync/${target}`), { method: 'POST' });
 }

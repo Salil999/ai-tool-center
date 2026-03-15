@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { SkillList } from './SkillList';
 import { SkillSyncSection } from './SkillSyncSection';
-import { ProjectDirectoriesSection } from './ProjectDirectoriesSection';
 import { AddSkillModal } from './AddSkillModal';
 import { EditSkillModal } from './EditSkillModal';
 import { ImportSkillModal } from './ImportSkillModal';
@@ -15,18 +14,22 @@ import {
 } from '../../api-client';
 import type { Skill } from '../../types';
 import { useToast } from '@/contexts/ToastContext';
+import { useSyncConfirmation } from '@/hooks/useSyncConfirmation';
 import { Modal } from '@/components/shared/Modal';
 import { SyncConfirmModal } from '@/components/shared/SyncConfirmModal';
 
-export function SkillsTab() {
+interface SkillsTabProps {
+  onOpenManageProjects?: () => void;
+}
+
+export function SkillsTab({ onOpenManageProjects }: SkillsTabProps) {
   const { showToast } = useToast();
   const [skills, setSkills] = useState<(Skill & { id: string })[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [editSkillId, setEditSkillId] = useState<string | null>(null);
   const [lintRefreshKey, setLintRefreshKey] = useState(0);
-  const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
-  const [pendingSyncAction, setPendingSyncAction] = useState<() => Promise<void>>(() => async () => {});
+  const syncConfirm = useSyncConfirmation();
 
   const loadSkills = useCallback(async () => {
     const list = await getSkills();
@@ -88,29 +91,36 @@ export function SkillsTab() {
   };
 
   const handleSyncToProviderRequest = (target: string) => {
-    setPendingSyncAction(() => () => handleSyncToProvider(target));
-    setSyncConfirmOpen(true);
+    syncConfirm.requestSync(() => handleSyncToProvider(target));
   };
 
   const handleSyncToProjectRequest = (projectId: string) => {
-    setPendingSyncAction(() => () => handleSyncToProject(projectId));
-    setSyncConfirmOpen(true);
+    syncConfirm.requestSync(() => handleSyncToProject(projectId));
   };
 
   const editSkill = editSkillId ? skills.find((s) => s.id === editSkillId) : null;
 
   return (
     <>
-      {syncConfirmOpen && (
+      {syncConfirm.isOpen && (
         <SyncConfirmModal
           isOpen
-          onClose={() => setSyncConfirmOpen(false)}
-          onConfirm={async () => await pendingSyncAction()}
+          onClose={syncConfirm.cancel}
+          onConfirm={syncConfirm.confirm}
         />
       )}
       <div className="servers-section-header">
         <h2>Skills</h2>
         <div className="header-actions">
+          {onOpenManageProjects && (
+            <button
+              type="button"
+              className="btn"
+              onClick={onOpenManageProjects}
+            >
+              Manage Projects
+            </button>
+          )}
           <SkillSyncSection
             onSyncToProvider={handleSyncToProviderRequest}
             onSyncToProject={handleSyncToProjectRequest}
@@ -131,7 +141,6 @@ export function SkillsTab() {
         onToggle={handleToggle}
         onReorder={handleReorder}
       />
-      <ProjectDirectoriesSection />
 
       {addModalOpen && (
         <Modal isOpen onClose={() => setAddModalOpen(false)} aria-labelledby="add-skill-modal-title">

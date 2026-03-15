@@ -10,7 +10,7 @@ import type { AppConfig } from '../types.js';
 type GetConfig = () => AppConfig;
 type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
 
-const PROVIDER_RULES_IMPORT_IDS = ['cursor', 'augment', 'windsurf', 'continue'];
+const PROVIDER_RULES_IMPORT_IDS = ['cursor', 'augment', 'continue'];
 
 export function createRulesImportRouter(getConfig: GetConfig, saveConfig: SaveConfig) {
   const router = Router();

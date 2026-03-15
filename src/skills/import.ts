@@ -4,34 +4,20 @@ import { SKILL_PROVIDERS } from './providers.js';
 import { parseSkillDir, validateSkillDir } from './parse.js';
 import { copySkillInto, isDuplicateSkill, getManagedSkillsDir } from './sync.js';
 import { isPathSafe } from '../providers/utils.js';
-import type { AppConfig, Skill } from '../types.js';
+import { slugify } from '../utils/slugify.js';
+import type { AppConfig, Skill, SkillImportSource, ProjectSkillSource, SkillImportSourcesResponse } from '../types.js';
 
-export interface SkillImportSource {
-  id: string;
-  name: string;
-  path: string;
-  exists: boolean;
-  skillCount: number;
-  error?: string;
-}
+export type { SkillImportSource, ProjectSkillSource, SkillImportSourcesResponse };
 
-/** Provider-specific skill subdirs within a project (GitHub Copilot, Cursor, Claude, cross-client). */
+/** Provider-specific skill subdirs within a project (Cursor, Claude, cross-client). */
 export const PROJECT_SKILL_SUBDIRS = [
-  { key: 'github', subdir: '.github/skills', label: 'GitHub Copilot' },
   { key: 'cursor', subdir: '.cursor/skills', label: 'Cursor' },
   { key: 'claude', subdir: '.claude/skills', label: 'Claude Code' },
   { key: 'agents', subdir: '.agents/skills', label: 'Agents (cross-client)' },
 ] as const;
 
-export interface ProjectSkillSource {
-  id: string;
-  name: string;
-  path: string;
-  sources: SkillImportSource[];
-}
-
 function toSkillId(name: string): string {
-  return (name || 'skill').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'skill';
+  return slugify(name, 'skill');
 }
 
 /**
@@ -58,11 +44,6 @@ function listSkillDirs(parentPath: string): string[] {
  * Discover skill import sources: provider directories + project directories.
  * Projects are returned with nested sources for each provider-specific subdir.
  */
-export interface SkillImportSourcesResponse {
-  providers: SkillImportSource[];
-  projects: ProjectSkillSource[];
-}
-
 export function discoverSkillSources(config: AppConfig): SkillImportSourcesResponse {
   const providers: SkillImportSource[] = [];
 
@@ -142,7 +123,7 @@ export function resolveProjectSourcePath(
   sourceId: string,
   projectDirectories: Array<{ id: string; path: string }>
 ): string | null {
-  const match = sourceId.match(/^project-(.+)__(github|cursor|claude|agents)$/);
+  const match = sourceId.match(/^project-(.+)__(cursor|claude|agents)$/);
   if (!match) return null;
   const [, projectId, key] = match;
   const project = projectDirectories.find((pd) => pd.id === projectId);

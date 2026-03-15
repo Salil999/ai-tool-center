@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { ProviderRuleCard } from './ProviderRuleCard';
+import { useDragReorder } from '@/hooks/useDragReorder';
 import type { ProviderRule } from '../../types';
 
 interface ProviderRuleListProps {
@@ -10,8 +10,8 @@ interface ProviderRuleListProps {
 }
 
 export function ProviderRuleList({ rules, onEdit, onDelete, onReorder }: ProviderRuleListProps) {
-  const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const ids = rules.map((r) => r.id);
+  const drag = useDragReorder(ids, onReorder);
 
   if (!rules.length) {
     return (
@@ -21,56 +21,23 @@ export function ProviderRuleList({ rules, onEdit, onDelete, onReorder }: Provide
     );
   }
 
-  const ids = rules.map((r) => r.id);
-
-  const handleMove = (index: number, direction: 'up' | 'down') => {
-    const newOrder = [...ids];
-    const target = direction === 'up' ? index - 1 : index + 1;
-    if (target < 0 || target >= newOrder.length) return;
-    [newOrder[index], newOrder[target]] = [newOrder[target], newOrder[index]];
-    onReorder(newOrder);
-  };
-
-  const handleDragStart = (id: string) => setDraggedId(id);
-  const handleDragOver = (e: React.DragEvent, id: string) => {
-    e.preventDefault();
-    if (draggedId && draggedId !== id) setDropTargetId(id);
-  };
-  const handleDragLeave = () => setDropTargetId(null);
-  const handleDrop = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    setDropTargetId(null);
-    if (!draggedId || draggedId === targetId) return;
-    const fromIndex = ids.indexOf(draggedId);
-    const toIndex = ids.indexOf(targetId);
-    if (fromIndex === -1 || toIndex === -1) return;
-    const newOrder = [...ids];
-    newOrder.splice(fromIndex, 1);
-    newOrder.splice(toIndex, 0, draggedId);
-    onReorder(newOrder);
-  };
-  const handleDragEnd = () => {
-    setDraggedId(null);
-    setDropTargetId(null);
-  };
-
   return (
     <div className="server-list">
       {rules.map((rule, index) => (
         <ProviderRuleCard
           key={rule.id}
           rule={rule}
-          isDragging={draggedId === rule.id}
-          isDropTarget={dropTargetId === rule.id}
+          isDragging={drag.draggedId === rule.id}
+          isDropTarget={drag.dropTargetId === rule.id}
           onEdit={onEdit}
           onDelete={onDelete}
-          onMoveUp={index > 0 ? () => handleMove(index, 'up') : undefined}
-          onMoveDown={index < rules.length - 1 ? () => handleMove(index, 'down') : undefined}
-          onDragStart={() => handleDragStart(rule.id)}
-          onDragOver={(e) => handleDragOver(e, rule.id)}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, rule.id)}
-          onDragEnd={handleDragEnd}
+          onMoveUp={index > 0 ? () => drag.handleMove(index, 'up') : undefined}
+          onMoveDown={index < rules.length - 1 ? () => drag.handleMove(index, 'down') : undefined}
+          onDragStart={() => drag.handleDragStart(rule.id)}
+          onDragOver={(e) => drag.handleDragOver(e, rule.id)}
+          onDragLeave={drag.handleDragLeave}
+          onDrop={(e) => drag.handleDrop(e, rule.id)}
+          onDragEnd={drag.handleDragEnd}
         />
       ))}
     </div>

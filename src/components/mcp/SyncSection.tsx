@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { getSyncTargets } from '../../api-client';
 
 /** Fuzzy match: query chars must appear in order in str (case-insensitive). */
 function fuzzyMatch(str: string, query: string): boolean {
@@ -14,30 +15,46 @@ function fuzzyMatch(str: string, query: string): boolean {
   return true;
 }
 
-const TARGETS = [
-  { id: 'cursor', label: 'Cursor' },
-  { id: 'vscode', label: 'VS Code' },
-  { id: 'claude', label: 'Claude' },
-  { id: 'opencode', label: 'OpenCode' },
-  { id: 'chatgpt', label: 'ChatGPT' },
-  { id: 'codex', label: 'Codex' },
-  { id: 'gemini-cli', label: 'Gemini CLI' },
-  { id: 'windsurf', label: 'Windsurf' },
-  { id: 'antigravity', label: 'Antigravity' },
-  { id: 'augment', label: 'Augment' },
-  { id: 'copilot', label: 'GitHub Copilot' },
-];
-
 interface SyncSectionProps {
   onSync: (target: string) => void;
+  onCursorSync: () => void;
+  onClaudeSync: () => void;
   onCustomSync: () => void;
 }
 
-export function SyncSection({ onSync, onCustomSync }: SyncSectionProps) {
+export function SyncSection({ onSync, onCursorSync, onClaudeSync, onCustomSync }: SyncSectionProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [targets, setTargets] = useState<{ id: string; label: string }[]>([]);
+  const [hasCustomProviders, setHasCustomProviders] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const loadTargets = useCallback(() => {
+    getSyncTargets()
+      .then(({ builtin, custom }) => {
+        const items = [
+          ...builtin.map((p) => ({ id: p.id, label: p.name })),
+          ...custom.map((p) => ({ id: p.id, label: p.name })),
+        ];
+        setTargets(items);
+        setHasCustomProviders(custom.length > 0);
+      })
+      .catch(() => {
+        setTargets([]);
+        setHasCustomProviders(false);
+      });
+  }, []);
+
+  useEffect(() => loadTargets(), [loadTargets]);
+
+  useEffect(() => {
+    if (open) {
+      loadTargets();
+      setQuery('');
+      searchInputRef.current?.focus();
+    }
+  }, [open, loadTargets]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -49,16 +66,13 @@ export function SyncSection({ onSync, onCustomSync }: SyncSectionProps) {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (open) {
-      setQuery('');
-      searchInputRef.current?.focus();
-    }
-  }, [open]);
-
   const handleSelect = (id: string) => {
     if (id === 'custom') {
       onCustomSync();
+    } else if (id === 'cursor') {
+      onCursorSync();
+    } else if (id === 'claude') {
+      onClaudeSync();
     } else {
       onSync(id);
     }
@@ -89,7 +103,7 @@ export function SyncSection({ onSync, onCustomSync }: SyncSectionProps) {
             onKeyDown={(e) => e.stopPropagation()}
             aria-label="Search sync targets"
           />
-          {TARGETS.filter(({ label }) => fuzzyMatch(label, query)).map(({ id, label }) => (
+          {targets.filter(({ label }) => fuzzyMatch(label, query)).map(({ id, label }) => (
             <button
               key={id}
               type="button"
@@ -99,7 +113,7 @@ export function SyncSection({ onSync, onCustomSync }: SyncSectionProps) {
               {label}
             </button>
           ))}
-          {fuzzyMatch('Custom', query) && (
+          {hasCustomProviders && fuzzyMatch('Custom', query) && (
             <button
               type="button"
               className="sync-dropdown-item sync-dropdown-item-custom"

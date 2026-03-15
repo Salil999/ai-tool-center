@@ -4,16 +4,11 @@ import vscode from './vscode.js';
 import claude from './claude.js';
 import claudeDesktop from './claude-desktop.js';
 import opencode from './opencode.js';
-import chatgpt from './chatgpt.js';
-import codex from './codex.js';
 import geminiCli from './gemini-cli.js';
-import windsurf from './windsurf.js';
-import antigravity from './antigravity.js';
 import augment from './augment.js';
-import copilot from './copilot.js';
 import custom from './custom.js';
 import { mergeServers } from './utils.js';
-import type { Server } from '../types.js';
+import type { Server, DiscoverSource } from '../types.js';
 
 const PROVIDERS = [
   cursor,
@@ -21,23 +16,9 @@ const PROVIDERS = [
   claude,
   claudeDesktop,
   opencode,
-  chatgpt,
-  codex,
   geminiCli,
-  windsurf,
-  antigravity,
   augment,
-  copilot,
 ];
-
-export interface DiscoverSource {
-  id: string;
-  name: string;
-  path: string;
-  exists: boolean;
-  serverCount: number;
-  error?: string;
-}
 
 export function discoverSources(): DiscoverSource[] {
   const result: DiscoverSource[] = [];

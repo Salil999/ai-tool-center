@@ -8,7 +8,7 @@ import {
   deleteProviderRule,
   syncProviderRulesToTarget,
 } from '../rules/provider-rules.js';
-import { getRuleProviderPath } from '../rules/providers.js';
+import { getRulesProviders, getRuleProviderPath } from '../rules/providers.js';
 import type { AppConfig } from '../types.js';
 import type { AuditStore } from '../audit/store.js';
 
@@ -24,13 +24,13 @@ export function createRulesRouter(
 
   router.get('/providers', (_req: Request, res: Response) => {
     const config = getConfig();
-    const builtIn = [
-      { id: 'cursor', name: 'Cursor Rules' },
-      { id: 'augment', name: 'Augment Rules' },
-      { id: 'windsurf', name: 'Windsurf Rules' },
-      { id: 'continue', name: 'Continue Rules' },
-      { id: 'copilot', name: 'GitHub Copilot Rules' },
-    ];
+    const ruleProviders = getRulesProviders(config);
+    const builtIn = ruleProviders
+      .filter((p) => ['cursor', 'augment', 'continue'].includes(p.id))
+      .map((p) => ({
+        id: p.id,
+        name: p.id === 'cursor' ? 'Cursor Rules' : p.id === 'augment' ? 'Augment Rules' : 'Continue Rules',
+      }));
     const custom = (config.customRuleConfigs || []).map((c) => ({
       id: `custom-${c.id}`,
       name: c.name,
@@ -41,7 +41,7 @@ export function createRulesRouter(
   router.get('/providers/:providerId/rules', (req: Request, res: Response) => {
     const config = getConfig();
     const providerId = String(req.params.providerId ?? '');
-    const isBuiltIn = ['cursor', 'augment', 'windsurf', 'continue', 'copilot'].includes(providerId);
+    const isBuiltIn = ['cursor', 'augment', 'continue'].includes(providerId);
     const isCustom = providerId.startsWith('custom-') && (config.customRuleConfigs || []).some((c) => `custom-${c.id}` === providerId);
     if (!isBuiltIn && !isCustom) {
       return res.status(400).json({ error: `Unknown provider: ${providerId}` });
@@ -90,12 +90,12 @@ export function createRulesRouter(
     const config = getConfig();
     const providerId = String(req.params.providerId ?? '');
     const { name, content } = (req.body || {}) as { name?: string; content?: string };
-    const effectiveName = (name ?? (providerId === 'copilot' ? 'copilot-instructions' : '')).trim();
-    if (!effectiveName && providerId !== 'copilot') {
+    const effectiveName = (name ?? '').trim();
+    if (!effectiveName) {
       return res.status(400).json({ error: 'name is required' });
     }
     try {
-      const rule = createProviderRule(providerId, effectiveName || 'copilot-instructions', (content ?? '').trim(), config);
+        const rule = createProviderRule(providerId, effectiveName, (content ?? '').trim(), config);
       const order = config.providerRuleOrder?.[providerId] ?? [];
       if (!order.includes(rule.id)) {
         config.providerRuleOrder = config.providerRuleOrder ?? {};

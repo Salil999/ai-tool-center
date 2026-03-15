@@ -4,24 +4,15 @@ import os from 'os';
 import { RULES_PROVIDERS, getRuleProviderPath } from './providers.js';
 import { readAgentsForAgent, writeAgentsForAgent } from './sync.js';
 import { isPathSafe } from '../providers/utils.js';
-import type { AppConfig } from '../types.js';
+import type { AppConfig, RuleImportSource, ProjectRuleSource, RuleImportSourcesResponse, AgentImportSourcesResponse } from '../types.js';
 
-export interface RuleImportSource {
-  id: string;
-  name: string;
-  path: string;
-  exists: boolean;
-  hasContent: boolean;
-  error?: string;
-}
+export type { RuleImportSource, ProjectRuleSource, RuleImportSourcesResponse, AgentImportSourcesResponse };
 
-/** Rules-only: Cursor, Augment, Windsurf, Continue, Copilot. AGENTS.md is separate. */
+/** Rules-only: Cursor, Augment, Continue. AGENTS.md is separate. */
 export const PROJECT_RULE_SUBDIRS = [
   { key: 'cursor', subdir: '.cursor/rules', label: 'Cursor', importToProvider: true },
   { key: 'augment', subdir: '.augment/rules', label: 'Augment', importToProvider: true },
-  { key: 'windsurf', subdir: '.windsurf/rules', label: 'Windsurf', importToProvider: true },
   { key: 'continue', subdir: '.continue/rules', label: 'Continue', importToProvider: true },
-  { key: 'copilot', subdir: '.github/copilot-instructions.md', label: 'GitHub Copilot', importToProvider: true },
 ] as const;
 
 /** AGENTS.md-only sources (project AGENTS.md, .claude/rules). */
@@ -29,13 +20,6 @@ export const PROJECT_AGENT_SUBDIRS = [
   { key: 'agents', subdir: 'AGENTS.md', label: 'AGENTS.md' },
   { key: 'claude', subdir: '.claude/rules', label: 'Claude Code (.claude/rules)' },
 ] as const;
-
-export interface ProjectRuleSource {
-  id: string;
-  name: string;
-  path: string;
-  sources: RuleImportSource[];
-}
 
 /**
  * Resolve path to an AGENTS.md or CLAUDE.md file.
@@ -104,13 +88,8 @@ function readRulesFromDirectory(dirPath: string): string {
   return parts.join('\n\n---\n\n');
 }
 
-export interface RuleImportSourcesResponse {
-  providers: RuleImportSource[];
-  projects: ProjectRuleSource[];
-}
-
 /** Provider IDs that are rules-only (not AGENTS.md). */
-const RULES_ONLY_PROVIDER_IDS = ['cursor', 'augment', 'windsurf', 'continue'];
+const RULES_ONLY_PROVIDER_IDS = ['cursor', 'augment', 'continue'];
 
 /**
  * Discover rule import sources: rules-only providers and project rules. AGENTS.md is separate.
@@ -207,7 +186,7 @@ export function resolveProjectRuleSource(
   sourceId: string,
   projectDirectories: Array<{ id: string; path: string }>
 ): { path: string; importToProvider: boolean; providerId?: string } | null {
-  const match = sourceId.match(/^project-(.+)__(cursor|augment|windsurf|continue|copilot)$/);
+  const match = sourceId.match(/^project-(.+)__(cursor|augment|continue)$/);
   if (!match) return null;
   const [, projectId, key] = match;
   const project = projectDirectories.find((pd) => pd.id === projectId);
@@ -216,15 +195,9 @@ export function resolveProjectRuleSource(
   if (!entry) return null;
   const fullPath = path.join(path.resolve(project.path), ...entry.subdir.split('/'));
   if (entry.importToProvider) {
-    const providerId = key === 'copilot' ? 'copilot' : key;
-    return { path: fullPath, importToProvider: true, providerId };
+    return { path: fullPath, importToProvider: true, providerId: key };
   }
   return { path: fullPath, importToProvider: false };
-}
-
-export interface AgentImportSourcesResponse {
-  projects: ProjectRuleSource[];
-  agents: RuleImportSource[];
 }
 
 /** Resolve project agent source (AGENTS.md, .claude/rules) to path. */
@@ -441,7 +414,7 @@ export function importFromCustomPath(filePath: string, targetAgentId: string): {
 }
 
 /** Provider IDs that support importing into the app's Rules section. */
-const PROVIDER_RULES_IMPORT_IDS = ['cursor', 'augment', 'windsurf', 'continue'] as const;
+const PROVIDER_RULES_IMPORT_IDS = ['cursor', 'augment', 'continue'] as const;
 
 /**
  * Import rules from a project's provider directory (e.g. project/.cursor/rules) into the app's Rules section.
@@ -462,16 +435,6 @@ export function importFromProjectSourceToProvider(
 
   fs.mkdirSync(destDir, { recursive: true });
   let importedCount = 0;
-
-  if (providerId === 'copilot') {
-    const destPath = path.join(destDir, 'copilot-instructions.md');
-    if (fs.existsSync(srcResolved) && fs.statSync(srcResolved).isFile()) {
-      const content = fs.readFileSync(srcResolved, 'utf8');
-      fs.writeFileSync(destPath, content, 'utf8');
-      importedCount = 1;
-    }
-    return { success: true, importedCount };
-  }
 
   if (!fs.existsSync(srcResolved) || !fs.statSync(srcResolved).isDirectory()) {
     throw new Error(`Source directory not found: ${srcResolved}`);
@@ -506,7 +469,7 @@ export function importFromProviderToRules(
   config: AppConfig
 ): { success: boolean; importedCount: number } {
   if (!PROVIDER_RULES_IMPORT_IDS.includes(providerId as (typeof PROVIDER_RULES_IMPORT_IDS)[number])) {
-    throw new Error(`Cannot import to provider rules: ${providerId}. Supported: cursor, augment.`);
+    throw new Error(`Cannot import to provider rules: ${providerId}. Supported: cursor, augment, continue.`);
   }
 
   const provider = getRuleProviderPath(providerId);

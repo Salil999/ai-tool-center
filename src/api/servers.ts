@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { fetchToolsFromServer, OAuthRequiredError } from '../mcp/tools.js';
+import { generateIdFromBody, handleReorder, handleToggleEnabled, getOrderedIds } from './route-utils.js';
 import type { AppConfig } from '../types.js';
 
 type GetConfig = () => AppConfig;
@@ -15,10 +16,7 @@ export function createServersRouter(
   router.get('/', (_req: Request, res: Response) => {
     const config = getConfig();
     const servers = config.servers || {};
-    const order = config.serverOrder || Object.keys(servers);
-    const orderedIds = order.filter((id) => servers[id]);
-    const extraIds = Object.keys(servers).filter((id) => !orderedIds.includes(id));
-    const ids = [...orderedIds, ...extraIds];
+    const ids = getOrderedIds(servers, config.serverOrder);
     const list = ids.map((id) => ({ id, ...servers[id] }));
     res.json(list);
   });
@@ -50,13 +48,7 @@ export function createServersRouter(
   router.post('/', (req: Request, res: Response) => {
     const config = getConfig();
     const body = (req.body || {}) as Record<string, unknown>;
-    const id = ((body.id || body.name || 'server') as string).toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'server';
-    const existing = Object.keys(config.servers || {});
-    let finalId = id;
-    let n = 1;
-    while (existing.includes(finalId)) {
-      finalId = `${id}-${n++}`;
-    }
+    const finalId = generateIdFromBody(body, Object.keys(config.servers || {}), 'server');
     const server = {
       name: (body.name as string) || finalId,
       enabled: body.enabled !== false,
@@ -108,28 +100,17 @@ export function createServersRouter(
     res.status(204).send();
   });
 
-  router.patch('/reorder', (req: Request, res: Response) => {
-    const config = getConfig();
-    const order = (req.body as { order?: string[] })?.order;
-    if (!Array.isArray(order)) return res.status(400).json({ error: 'order must be an array of server IDs' });
-    const servers = config.servers || {};
-    const validOrder = order.filter((id) => servers[id]);
-    const extraIds = Object.keys(servers).filter((id) => !validOrder.includes(id));
-    config.serverOrder = [...validOrder, ...extraIds];
-    saveConfig(config, { action: 'server_reorder', details: { order: config.serverOrder } });
-    res.json({ order: config.serverOrder });
-  });
+  router.patch('/reorder', handleReorder(getConfig, saveConfig, {
+    itemsKey: 'servers',
+    orderKey: 'serverOrder',
+    auditAction: 'server_reorder',
+  }));
 
-  router.patch('/:id/enabled', (req: Request, res: Response) => {
-    const config = getConfig();
-    const serverId = String(req.params.id ?? '');
-    if (!config.servers?.[serverId]) return res.status(404).json({ error: 'Server not found' });
-    const enabled = (req.body as { enabled?: boolean })?.enabled;
-    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled must be boolean' });
-    config.servers[serverId].enabled = enabled;
-    saveConfig(config, { action: 'server_enable_toggle', details: { serverId, enabled } });
-    res.json({ id: serverId, enabled });
-  });
+  router.patch('/:id/enabled', handleToggleEnabled(getConfig, saveConfig, {
+    itemsKey: 'servers',
+    auditAction: 'server_enable_toggle',
+    entityName: 'Server',
+  }));
 
   return router;
 }

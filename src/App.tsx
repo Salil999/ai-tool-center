@@ -8,7 +8,11 @@ import { AgentsTab } from '@/components/agents/AgentsTab';
 import { CredentialsTab } from '@/components/credentials/CredentialsTab';
 import { ModalContainer } from '@/components/shared/ModalContainer';
 import { SyncConfirmModal } from '@/components/shared/SyncConfirmModal';
+import { CursorSyncModal } from '@/components/mcp/CursorSyncModal';
+import { ClaudeSyncModal } from '@/components/mcp/ClaudeSyncModal';
+import { Modal } from '@/components/shared/Modal';
 import { useMcpServers } from '@/hooks/useMcpServers';
+import { useSyncConfirmation } from '@/hooks/useSyncConfirmation';
 import { useOAuthCallback } from '@/hooks/useOAuthCallback';
 import { useToast } from '@/contexts/ToastContext';
 
@@ -35,12 +39,14 @@ export default function App() {
   }, []);
   const [editServerId, setEditServerId] = useState<string | null>(null);
   const [customSyncOpen, setCustomSyncOpen] = useState(false);
-  const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
-  const [pendingSyncAction, setPendingSyncAction] = useState<() => Promise<void>>(() => async () => {});
+  const syncConfirm = useSyncConfirmation();
   const [importOpen, setImportOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<'general' | 'projects' | 'providers'>('general');
+  const [cursorSyncModalOpen, setCursorSyncModalOpen] = useState(false);
+  const [claudeSyncModalOpen, setClaudeSyncModalOpen] = useState(false);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -115,10 +121,51 @@ export default function App() {
 
   const handleSyncRequest = useCallback(
     (target: string) => {
-      setPendingSyncAction(() => () => handleSync(target));
-      setSyncConfirmOpen(true);
+      syncConfirm.requestSync(() => handleSync(target));
     },
-    [handleSync]
+    [handleSync, syncConfirm]
+  );
+
+  const handleCursorSyncRequest = useCallback(() => {
+    setCursorSyncModalOpen(true);
+  }, []);
+
+  const handleCursorSyncGlobal = useCallback(() => {
+    setCursorSyncModalOpen(false);
+    syncConfirm.requestSync(() => handleSync('cursor'));
+  }, [handleSync, syncConfirm]);
+
+  const handleCursorSyncProject = useCallback(
+    (projectId: string) => {
+      setCursorSyncModalOpen(false);
+      syncConfirm.requestSync(() => handleSync(`cursor-project-${projectId}`));
+    },
+    [handleSync, syncConfirm]
+  );
+
+  const handleClaudeSyncRequest = useCallback(() => {
+    setClaudeSyncModalOpen(true);
+  }, []);
+
+  const handleClaudeSyncUser = useCallback(() => {
+    setClaudeSyncModalOpen(false);
+    syncConfirm.requestSync(() => handleSync('claude'));
+  }, [handleSync, syncConfirm]);
+
+  const handleClaudeSyncLocal = useCallback(
+    (projectId: string) => {
+      setClaudeSyncModalOpen(false);
+      syncConfirm.requestSync(() => handleSync(`claude-local-${projectId}`));
+    },
+    [handleSync, syncConfirm]
+  );
+
+  const handleClaudeSyncProject = useCallback(
+    (projectId: string) => {
+      setClaudeSyncModalOpen(false);
+      syncConfirm.requestSync(() => handleSync(`claude-project-${projectId}`));
+    },
+    [handleSync, syncConfirm]
   );
 
   const handleCustomSync = useCallback(
@@ -135,16 +182,11 @@ export default function App() {
 
   const handleCustomSyncRequest = useCallback(
     (path: string, configKey: string) => {
-      setPendingSyncAction(() => () => handleCustomSync(path, configKey));
       setCustomSyncOpen(false);
-      setSyncConfirmOpen(true);
+      syncConfirm.requestSync(() => handleCustomSync(path, configKey));
     },
-    [handleCustomSync]
+    [handleCustomSync, syncConfirm]
   );
-
-  const handleSyncConfirm = useCallback(async () => {
-    await pendingSyncAction();
-  }, [pendingSyncAction]);
 
   const handleEdit = (id: string | undefined) => setEditServerId(id ?? '');
   const handleCloseEdit = () => setEditServerId(null);
@@ -152,12 +194,31 @@ export default function App() {
 
   return (
     <div className="app">
-      {syncConfirmOpen && (
+      {syncConfirm.isOpen && (
         <SyncConfirmModal
           isOpen
-          onClose={() => setSyncConfirmOpen(false)}
-          onConfirm={handleSyncConfirm}
+          onClose={syncConfirm.cancel}
+          onConfirm={syncConfirm.confirm}
         />
+      )}
+      {cursorSyncModalOpen && (
+        <Modal isOpen onClose={() => setCursorSyncModalOpen(false)} aria-labelledby="cursor-sync-modal-title">
+          <CursorSyncModal
+            onClose={() => setCursorSyncModalOpen(false)}
+            onSyncGlobal={handleCursorSyncGlobal}
+            onSyncProject={handleCursorSyncProject}
+          />
+        </Modal>
+      )}
+      {claudeSyncModalOpen && (
+        <Modal isOpen onClose={() => setClaudeSyncModalOpen(false)} aria-labelledby="claude-sync-modal-title">
+          <ClaudeSyncModal
+            onClose={() => setClaudeSyncModalOpen(false)}
+            onSyncUser={handleClaudeSyncUser}
+            onSyncLocal={handleClaudeSyncLocal}
+            onSyncProject={handleClaudeSyncProject}
+          />
+        </Modal>
       )}
       <header className="header">
         <h1>AI Tools Manager</h1>
@@ -165,7 +226,10 @@ export default function App() {
           <button
             type="button"
             className="btn-icon header-settings-btn"
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => {
+              setSettingsInitialTab('general');
+              setSettingsOpen(true);
+            }}
             title="Settings"
             aria-label="Open settings"
           >
@@ -232,7 +296,12 @@ export default function App() {
             <div className="servers-section-header">
               <h2>MCP Servers</h2>
               <div className="header-actions">
-                <SyncSection onSync={handleSyncRequest} onCustomSync={() => setCustomSyncOpen(true)} />
+                <SyncSection
+                  onSync={handleSyncRequest}
+                  onCursorSync={handleCursorSyncRequest}
+                  onClaudeSync={handleClaudeSyncRequest}
+                  onCustomSync={() => setCustomSyncOpen(true)}
+                />
                 <button type="button" className="btn" onClick={() => setImportOpen(true)}>
                   Import
                 </button>
@@ -253,13 +322,23 @@ export default function App() {
 
         {activeTab === 'skills' && (
           <section className="servers-section">
-            <SkillsTab />
+            <SkillsTab
+              onOpenManageProjects={() => {
+                setSettingsInitialTab('projects');
+                setSettingsOpen(true);
+              }}
+            />
           </section>
         )}
 
         {activeTab === 'rules' && (
           <section className="servers-section">
-            <RulesTab />
+            <RulesTab
+              onOpenManageProjects={() => {
+                setSettingsInitialTab('projects');
+                setSettingsOpen(true);
+              }}
+            />
           </section>
         )}
 
@@ -301,6 +380,7 @@ export default function App() {
         infoOpen={infoOpen}
         auditOpen={auditOpen}
         settingsOpen={settingsOpen}
+        settingsInitialTab={settingsInitialTab}
         onCloseEdit={handleCloseEdit}
         onSave={handleSave}
         onCustomSync={handleCustomSyncRequest}

@@ -19,8 +19,6 @@ interface ProviderRulesSectionProps {
   onSync?: (providerId: string) => void | Promise<void>;
   /** When this changes, rules are reloaded (e.g. after import) */
   refreshTrigger?: number;
-  /** When true, show Sync for Copilot (used when syncing to a project) */
-  showSyncForCopilot?: boolean;
 }
 
 export function ProviderRulesSection({
@@ -28,7 +26,6 @@ export function ProviderRulesSection({
   providerName,
   onSync,
   refreshTrigger,
-  showSyncForCopilot = false,
 }: ProviderRulesSectionProps) {
   const { showToast } = useToast();
   const [rules, setRules] = useState<ProviderRule[]>([]);
@@ -100,14 +97,6 @@ export function ProviderRulesSection({
               </a>
               .
             </>
-          ) : providerId === 'windsurf' ? (
-            <>
-              Rules in <code>.windsurf/rules</code>. Global: <code>~/.codeium/windsurf/rules</code>. See{' '}
-              <a href="https://docs.windsurf.com" target="_blank" rel="noopener noreferrer">
-                Windsurf docs
-              </a>
-              .
-            </>
           ) : providerId === 'continue' ? (
             <>
               Rules in <code>.continue/rules</code>. Global: <code>~/.continue/rules</code>. See{' '}
@@ -116,20 +105,12 @@ export function ProviderRulesSection({
               </a>
               .
             </>
-          ) : providerId === 'copilot' ? (
-            <>
-              Repository instructions in <code>.github/copilot-instructions.md</code>. Sync to project only. See{' '}
-              <a href="https://docs.github.com/en/copilot/customizing-copilot/adding-repository-custom-instructions-for-github-copilot" target="_blank" rel="noopener noreferrer">
-                GitHub Copilot docs
-              </a>
-              .
-            </>
           ) : (
             <>Custom rules configuration. Synced to your specified path.</>
           )}
         </p>
         <div className="provider-rules-header-actions">
-          {onSync && (providerId !== 'copilot' || showSyncForCopilot) && (
+          {onSync && (
             <button
               type="button"
               className="btn btn-sm"

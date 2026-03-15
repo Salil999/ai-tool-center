@@ -31,6 +31,8 @@ export interface AppConfig {
   /** Optional order of server IDs for display and sync. When absent, uses insertion order. */
   serverOrder?: string[];
   customProviders: CustomProvider[];
+  /** Enabled provider IDs. When absent, all builtin providers are enabled. */
+  enabledProviders?: string[];
   /** Audit log options (max entries to retain) */
   auditOptions?: AuditOptions;
   /** Skills (Agent Skills format - SKILL.md directories) */
@@ -150,6 +152,70 @@ export interface LintReport {
   infos: number;
   fixed: number;
   generatedAt: string;
+}
+
+/** Rule import source (used by both backend discover and frontend client) */
+export interface RuleImportSource {
+  id: string;
+  name: string;
+  path: string;
+  exists: boolean;
+  hasContent: boolean;
+  error?: string;
+}
+
+/** Project rule source with nested sources */
+export interface ProjectRuleSource {
+  id: string;
+  name: string;
+  path: string;
+  sources: RuleImportSource[];
+}
+
+/** Response from rule import sources API */
+export interface RuleImportSourcesResponse {
+  providers: RuleImportSource[];
+  projects: ProjectRuleSource[];
+}
+
+/** Response from agent import sources API */
+export interface AgentImportSourcesResponse {
+  projects: ProjectRuleSource[];
+  agents: RuleImportSource[];
+}
+
+/** Skill import source (used by both backend discover and frontend client) */
+export interface SkillImportSource {
+  id: string;
+  name: string;
+  path: string;
+  exists: boolean;
+  skillCount: number;
+  error?: string;
+}
+
+/** Project skill source with nested sources */
+export interface ProjectSkillSource {
+  id: string;
+  name: string;
+  path: string;
+  sources: SkillImportSource[];
+}
+
+/** Response from skill import sources API */
+export interface SkillImportSourcesResponse {
+  providers: SkillImportSource[];
+  projects: ProjectSkillSource[];
+}
+
+/** MCP discover source (used by import/discover) */
+export interface DiscoverSource {
+  id: string;
+  name: string;
+  path: string;
+  exists: boolean;
+  serverCount: number;
+  error?: string;
 }
 
 /** Skillhub registry search result item */

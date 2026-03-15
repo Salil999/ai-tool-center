@@ -2,26 +2,27 @@ import { useState, useEffect, useCallback } from 'react';
 import { ImportRuleModal } from './ImportRuleModal';
 import { ProviderRulesSection } from './ProviderRulesSection';
 import { CustomRulesSection } from './CustomRulesSection';
-import { AddProjectModal } from '@/components/shared/AddProjectModal';
-import { EditProjectModal } from '@/components/shared/EditProjectModal';
 import {
   syncRulesTo,
   syncRulesToProject,
   getProjectDirectories,
-  deleteProjectDirectory,
   reorderProjectDirectories,
+  getRuleProviders,
 } from '../../api-client';
 import { useToast } from '@/contexts/ToastContext';
+import { useDragReorder } from '@/hooks/useDragReorder';
 import { Modal } from '@/components/shared/Modal';
 import type { ProjectDirectory } from '@/types';
 
 const RULES_TAB_OPEN_KEY = 'rules-tab-open-section';
 
-export function RulesTab() {
+interface RulesTabProps {
+  onOpenManageProjects?: () => void;
+}
+
+export function RulesTab({ onOpenManageProjects }: RulesTabProps) {
   const { showToast } = useToast();
   const [importModalOpen, setImportModalOpen] = useState(false);
-  const [addProjectModalOpen, setAddProjectModalOpen] = useState(false);
-  const [editProjectId, setEditProjectId] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectDirectory[]>([]);
   const [rulesRefreshTrigger, setRulesRefreshTrigger] = useState(0);
   const [openSectionId, setOpenSectionId] = useState<string | null>(() => {
@@ -32,8 +33,7 @@ export function RulesTab() {
       return null;
     }
   });
-  const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
-  const [dropTargetProjectId, setDropTargetProjectId] = useState<string | null>(null);
+  const [ruleProviders, setRuleProviders] = useState<Array<{ id: string; name: string }>>([]);
 
   const loadProjects = useCallback(() => {
     getProjectDirectories()
@@ -41,7 +41,14 @@ export function RulesTab() {
       .catch(() => {});
   }, []);
 
+  const loadRuleProviders = useCallback(() => {
+    getRuleProviders()
+      .then(setRuleProviders)
+      .catch(() => setRuleProviders([]));
+  }, []);
+
   useEffect(() => loadProjects(), [loadProjects]);
+  useEffect(() => loadRuleProviders(), [loadRuleProviders]);
 
   useEffect(() => {
     if (!projects.length) return;
@@ -74,29 +81,8 @@ export function RulesTab() {
     }
   };
 
-  const handleProjectDragStart = (id: string) => setDraggedProjectId(id);
-  const handleProjectDragEnd = () => {
-    setDraggedProjectId(null);
-    setDropTargetProjectId(null);
-  };
-  const handleProjectDragOver = (e: React.DragEvent, id: string) => {
-    e.preventDefault();
-    if (draggedProjectId && draggedProjectId !== id) setDropTargetProjectId(id);
-  };
-  const handleProjectDragLeave = () => setDropTargetProjectId(null);
-  const handleProjectDrop = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    setDropTargetProjectId(null);
-    if (!draggedProjectId || draggedProjectId === targetId) return;
-    const ids = projects.map((p) => p.id);
-    const fromIndex = ids.indexOf(draggedProjectId);
-    const toIndex = ids.indexOf(targetId);
-    if (fromIndex === -1 || toIndex === -1) return;
-    const newOrder = [...ids];
-    newOrder.splice(fromIndex, 1);
-    newOrder.splice(toIndex, 0, draggedProjectId);
-    handleProjectReorder(newOrder);
-  };
+  const projectIds = projects.map((p) => p.id);
+  const projectDrag = useDragReorder(projectIds, handleProjectReorder);
 
   const handleSyncToProvider = async (target: string) => {
     try {
@@ -126,35 +112,20 @@ export function RulesTab() {
     }
   };
 
-  const handleDeleteProject = async (id: string) => {
-    if (!confirm('Remove this project directory?')) return;
-    try {
-      await deleteProjectDirectory(id);
-      showToast('Project removed');
-      loadProjects();
-      if (openSectionId === id) {
-        setOpenSectionId(null);
-        try {
-          localStorage.setItem(RULES_TAB_OPEN_KEY, '');
-        } catch {
-          /* ignore */
-        }
-      }
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
-  const editProject = editProjectId ? projects.find((p) => p.id === editProjectId) : null;
-
   return (
     <>
       <div className="servers-section-header">
         <h2>Rules</h2>
         <div className="header-actions">
-          <button type="button" className="btn" onClick={() => setAddProjectModalOpen(true)}>
-            Add Project
-          </button>
+          {onOpenManageProjects && (
+            <button
+              type="button"
+              className="btn"
+              onClick={onOpenManageProjects}
+            >
+              Manage Projects
+            </button>
+          )}
           <button type="button" className="btn" onClick={() => setImportModalOpen(true)}>
             Import
           </button>
@@ -178,36 +149,17 @@ export function RulesTab() {
           </summary>
           <div className="import-project-sources rules-tab-section-content">
             <section className="rules-section rules-section-providers">
-              <ProviderRulesSection
-                providerId="cursor"
-                providerName="Cursor Rules"
-                onSync={handleSyncToProvider}
-                refreshTrigger={rulesRefreshTrigger}
-              />
-              <ProviderRulesSection
-                providerId="augment"
-                providerName="Augment Rules"
-                onSync={handleSyncToProvider}
-                refreshTrigger={rulesRefreshTrigger}
-              />
-              <ProviderRulesSection
-                providerId="windsurf"
-                providerName="Windsurf Rules"
-                onSync={handleSyncToProvider}
-                refreshTrigger={rulesRefreshTrigger}
-              />
-              <ProviderRulesSection
-                providerId="continue"
-                providerName="Continue Rules"
-                onSync={handleSyncToProvider}
-                refreshTrigger={rulesRefreshTrigger}
-              />
-              <ProviderRulesSection
-                providerId="copilot"
-                providerName="GitHub Copilot Rules"
-                onSync={handleSyncToProvider}
-                refreshTrigger={rulesRefreshTrigger}
-              />
+              {ruleProviders
+                .filter((p) => !p.id.startsWith('custom-'))
+                .map((p) => (
+                  <ProviderRulesSection
+                    key={p.id}
+                    providerId={p.id}
+                    providerName={p.name}
+                    onSync={handleSyncToProvider}
+                    refreshTrigger={rulesRefreshTrigger}
+                  />
+                ))}
               <CustomRulesSection onSync={handleSyncToProvider} refreshTrigger={rulesRefreshTrigger} />
             </section>
           </div>
@@ -216,7 +168,7 @@ export function RulesTab() {
         {projects.map((project) => (
           <details
             key={project.id}
-            className={`import-project-collapse ${draggedProjectId === project.id ? 'dragging' : ''} ${dropTargetProjectId === project.id ? 'drop-target' : ''}`}
+            className={`import-project-collapse ${projectDrag.draggedId === project.id ? 'dragging' : ''} ${projectDrag.dropTargetId === project.id ? 'drop-target' : ''}`}
             open={openSectionId === project.id}
             onClick={(e) => {
               const target = e.target as HTMLElement;
@@ -226,9 +178,9 @@ export function RulesTab() {
                 toggleSection(project.id);
               }
             }}
-            onDragOver={(e) => handleProjectDragOver(e, project.id)}
-            onDragLeave={handleProjectDragLeave}
-            onDrop={(e) => handleProjectDrop(e, project.id)}
+            onDragOver={(e) => projectDrag.handleDragOver(e, project.id)}
+            onDragLeave={projectDrag.handleDragLeave}
+            onDrop={(e) => projectDrag.handleDrop(e, project.id)}
           >
             <summary className="import-project-summary rules-summary-left">
               <span
@@ -237,9 +189,9 @@ export function RulesTab() {
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = 'move';
                   e.dataTransfer.setData('text/plain', project.id);
-                  handleProjectDragStart(project.id);
+                  projectDrag.handleDragStart(project.id);
                 }}
-                onDragEnd={handleProjectDragEnd}
+                onDragEnd={projectDrag.handleDragEnd}
                 title="Drag to reorder"
                 aria-label="Drag to reorder"
                 role="button"
@@ -251,66 +203,20 @@ export function RulesTab() {
               <span className="import-source-meta import-source-path" title={project.path}>
                 {project.path.length > 50 ? `…${project.path.slice(-47)}` : project.path}
               </span>
-              <span className="project-summary-actions">
-                <button
-                  type="button"
-                  className="btn btn-sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditProjectId(project.id);
-                  }}
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-danger"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteProject(project.id);
-                  }}
-                >
-                  Remove
-                </button>
-              </span>
             </summary>
             <div className="import-project-sources rules-tab-section-content">
               <section className="rules-section rules-section-providers">
-                <ProviderRulesSection
-                  providerId="cursor"
-                  providerName="Cursor Rules"
-                  onSync={handleSyncToProject(project.id)}
-                  refreshTrigger={rulesRefreshTrigger}
-                  showSyncForCopilot
-                />
-                <ProviderRulesSection
-                  providerId="augment"
-                  providerName="Augment Rules"
-                  onSync={handleSyncToProject(project.id)}
-                  refreshTrigger={rulesRefreshTrigger}
-                  showSyncForCopilot
-                />
-                <ProviderRulesSection
-                  providerId="windsurf"
-                  providerName="Windsurf Rules"
-                  onSync={handleSyncToProject(project.id)}
-                  refreshTrigger={rulesRefreshTrigger}
-                  showSyncForCopilot
-                />
-                <ProviderRulesSection
-                  providerId="continue"
-                  providerName="Continue Rules"
-                  onSync={handleSyncToProject(project.id)}
-                  refreshTrigger={rulesRefreshTrigger}
-                  showSyncForCopilot
-                />
-                <ProviderRulesSection
-                  providerId="copilot"
-                  providerName="GitHub Copilot Rules"
-                  onSync={handleSyncToProject(project.id)}
-                  refreshTrigger={rulesRefreshTrigger}
-                  showSyncForCopilot
-                />
+                {ruleProviders
+                  .filter((p) => !p.id.startsWith('custom-'))
+                  .map((p) => (
+                    <ProviderRulesSection
+                      key={p.id}
+                      providerId={p.id}
+                      providerName={p.name}
+                      onSync={handleSyncToProject(project.id)}
+                      refreshTrigger={rulesRefreshTrigger}
+                    />
+                  ))}
               </section>
             </div>
           </details>
@@ -330,32 +236,6 @@ export function RulesTab() {
         </Modal>
       )}
 
-      {addProjectModalOpen && (
-        <Modal isOpen onClose={() => setAddProjectModalOpen(false)} aria-labelledby="add-project-modal-title">
-          <AddProjectModal
-            onClose={() => setAddProjectModalOpen(false)}
-            onSaved={() => {
-              showToast('Project added');
-              loadProjects();
-            }}
-          />
-        </Modal>
-      )}
-
-      {editProject && (
-        <Modal isOpen onClose={() => setEditProjectId(null)} aria-labelledby="edit-project-modal-title">
-          <EditProjectModal
-            projectId={editProject.id}
-            initialPath={editProject.path}
-            initialName={editProject.name || ''}
-            onClose={() => setEditProjectId(null)}
-            onSaved={() => {
-              showToast('Project updated');
-              loadProjects();
-            }}
-          />
-        </Modal>
-      )}
     </>
   );
 }

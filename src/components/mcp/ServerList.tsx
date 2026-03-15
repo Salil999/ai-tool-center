@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { ServerCard } from './ServerCard';
+import { useDragReorder } from '@/hooks/useDragReorder';
 import type { Server } from '../../types';
 
 interface ServerListProps {
@@ -17,8 +17,8 @@ export function ServerList({
   onToggle,
   onReorder,
 }: ServerListProps) {
-  const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const ids = servers.map((s) => s.id!);
+  const drag = useDragReorder(ids, onReorder);
 
   if (!servers.length) {
     return (
@@ -28,55 +28,22 @@ export function ServerList({
     );
   }
 
-  const ids = servers.map((s) => s.id!);
-
-  const handleDragStart = (id: string) => {
-    setDraggedId(id);
-  };
-
-  const handleDragOver = (e: React.DragEvent, id: string) => {
-    e.preventDefault();
-    if (draggedId && draggedId !== id) setDropTargetId(id);
-  };
-
-  const handleDragLeave = () => {
-    setDropTargetId(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    setDropTargetId(null);
-    if (!draggedId || draggedId === targetId) return;
-    const fromIndex = ids.indexOf(draggedId);
-    const toIndex = ids.indexOf(targetId);
-    if (fromIndex === -1 || toIndex === -1) return;
-    const newOrder = [...ids];
-    newOrder.splice(fromIndex, 1);
-    newOrder.splice(toIndex, 0, draggedId);
-    onReorder(newOrder);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedId(null);
-    setDropTargetId(null);
-  };
-
   return (
     <div className="server-list">
       {servers.map((server) => (
         <ServerCard
           key={server.id!}
           server={server}
-          isDragging={draggedId === server.id}
-          isDropTarget={dropTargetId === server.id}
+          isDragging={drag.draggedId === server.id}
+          isDropTarget={drag.dropTargetId === server.id}
           onEdit={onEdit}
           onDelete={onDelete}
           onToggle={onToggle}
-          onDragStart={() => handleDragStart(server.id!)}
-          onDragOver={(e) => handleDragOver(e, server.id!)}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, server.id!)}
-          onDragEnd={handleDragEnd}
+          onDragStart={() => drag.handleDragStart(server.id!)}
+          onDragOver={(e) => drag.handleDragOver(e, server.id!)}
+          onDragLeave={drag.handleDragLeave}
+          onDrop={(e) => drag.handleDrop(e, server.id!)}
+          onDragEnd={drag.handleDragEnd}
         />
       ))}
     </div>

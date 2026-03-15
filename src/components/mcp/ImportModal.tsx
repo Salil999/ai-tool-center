@@ -113,9 +113,11 @@ export function ImportModal({ onClose, onImport, onError }: ImportModalProps) {
                 <div className="import-source-info">
                   <span className="import-source-name">{s.name}</span>
                   <span className="import-source-meta">
-                    {s.exists
-                      ? `${s.serverCount} server${s.serverCount !== 1 ? 's' : ''}`
-                      : 'Not found'}
+                    {s.error
+                      ? `Error: ${s.error}`
+                      : s.exists
+                        ? `${s.serverCount} server${s.serverCount !== 1 ? 's' : ''}`
+                        : 'Not found'}
                     {s.path && (
                       <span className="import-source-path" title={s.path}>
                         {s.path.length > 50 ? `…${s.path.slice(-47)}` : s.path}

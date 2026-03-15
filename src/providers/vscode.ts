@@ -5,18 +5,12 @@ import {
   toCanonicalId,
   defToCanonical,
   canonicalToVSCodeServers,
-  HOME,
 } from './utils.js';
+import { platformConfigPath } from '../utils/platform-path.js';
 import type { Provider } from '../types.js';
 
 function getMcpPath(): string {
-  const baseDir =
-    process.platform === 'darwin'
-      ? path.join(HOME, 'Library', 'Application Support', 'Code', 'User')
-      : process.platform === 'win32'
-        ? path.join(process.env.APPDATA || HOME, 'Code', 'User')
-        : path.join(HOME, '.config', 'Code', 'User');
-  return path.join(baseDir, 'mcp.json');
+  return path.join(platformConfigPath('Code', 'User'), 'mcp.json');
 }
 
 function importConfig(): Record<string, import('../types.js').Server> {

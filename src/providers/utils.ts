@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { slugify } from '../utils/slugify.js';
 import type { AppConfig, Server } from '../types.js';
 
 export const HOME = os.homedir();
@@ -65,7 +66,7 @@ export function resolvePath(filePath: string): string {
  * Convert display name to canonical id (lowercase, hyphenated).
  */
 export function toCanonicalId(name: string): string {
-  return (name || 'server').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'server';
+  return slugify(name, 'server');
 }
 
 interface ProviderDef {
@@ -81,13 +82,32 @@ interface ProviderDef {
  * Parse provider format to canonical: { id -> { name, enabled, type, command?, args?, env?, url? } }
  */
 export function defToCanonical(name: string, def: ProviderDef): Omit<Server, 'id'> {
-  const type = def.url ? 'http' : (def.type || 'stdio');
+  let type: 'stdio' | 'http' | 'sse';
+  if (def.url) {
+    type = def.type === 'sse' || (typeof def.url === 'string' && def.url.endsWith('/sse')) ? 'sse' : 'http';
+  } else {
+    type = (def.type as 'stdio') || 'stdio';
+  }
+
+  // Normalize command: if command is a space-separated string (e.g. "npx @playwright/mcp@latest")
+  // and no args are provided, split into command + args so providers get a clean executable name.
+  let command: string | undefined;
+  let args: string[] = def.args || [];
+  const rawCommand = Array.isArray(def.command) ? def.command.join(' ') : def.command;
+  if (rawCommand && !args.length && rawCommand.includes(' ')) {
+    const parts = rawCommand.split(/\s+/);
+    command = parts[0];
+    args = parts.slice(1);
+  } else {
+    command = rawCommand;
+  }
+
   return {
     name,
     enabled: true,
     type: type as 'stdio' | 'http' | 'sse',
-    command: def.command as string | undefined,
-    args: def.args || [],
+    command,
+    args,
     env: def.env || {},
     url: def.url,
     headers: def.headers && typeof def.headers === 'object' ? def.headers : undefined,
@@ -95,48 +115,126 @@ export function defToCanonical(name: string, def: ProviderDef): Omit<Server, 'id
 }
 
 /**
- * Canonical server to mcpServers format (Cursor/Claude).
+ * Normalize a command + args pair: if command contains spaces and args is empty,
+ * split into executable + arguments. Handles already-stored broken data.
  */
-export function canonicalToMcpServers(servers: Record<string, Omit<Server, 'id'>>): { mcpServers: Record<string, unknown> } {
-  const mcpServers: Record<string, unknown> = {};
+export function normalizeCommand(command: string, args: string[]): { command: string; args: string[] } {
+  if (!args.length && command.includes(' ')) {
+    const parts = command.split(/\s+/);
+    return { command: parts[0], args: parts.slice(1) };
+  }
+  return { command, args };
+}
+
+/**
+ * Options for canonicalToNative — controls how servers are serialized for each provider format.
+ */
+export interface NativeFormatOptions {
+  /** Top-level key wrapping the servers record. Default: 'mcpServers'. */
+  wrapperKey?: string;
+  /** Always include the `type` field on every server entry (e.g. Claude Code, VS Code). */
+  alwaysIncludeType?: boolean;
+  /** For stdio, always include `args` (even if empty). */
+  alwaysIncludeArgs?: boolean;
+  /** For stdio, always include `env` (even if empty). */
+  alwaysIncludeEnv?: boolean;
+  /** Whether to normalize (split) command strings. Default: true. */
+  normalizeCommands?: boolean;
+  /** Include SSE as a distinct type (VS Code). Default: false for standard format. */
+  includeSseType?: boolean;
+}
+
+/**
+ * Unified canonical-to-native server format conversion.
+ * Replaces the three separate functions (canonicalToMcpServers, canonicalToClaudeMcpServers, canonicalToVSCodeServers).
+ */
+export function canonicalToNative(
+  servers: Record<string, Omit<Server, 'id'>>,
+  options: NativeFormatOptions = {}
+): Record<string, Record<string, unknown>> {
+  const {
+    wrapperKey = 'mcpServers',
+    alwaysIncludeType = false,
+    alwaysIncludeArgs = false,
+    alwaysIncludeEnv = false,
+    normalizeCommands = true,
+    includeSseType = false,
+  } = options;
+
+  const result: Record<string, unknown> = {};
   for (const [id, s] of Object.entries(servers)) {
     if (!s.enabled) continue;
     const name = s.name || id;
+
     if (s.url) {
-      mcpServers[name] = { url: s.url, ...(s.headers && { headers: s.headers }) };
+      const isSse = s.type === 'sse' || s.url.endsWith('/sse');
+      const entry: Record<string, unknown> = { url: s.url };
+      if (alwaysIncludeType) {
+        entry.type = (includeSseType && isSse) ? 'sse' : isSse ? 'sse' : 'http';
+      }
+      if (s.headers && Object.keys(s.headers).length) entry.headers = s.headers;
+      result[name] = entry;
     } else if (s.type === 'stdio' && s.command) {
-      mcpServers[name] = {
-        command: s.command,
-        ...(s.args?.length && { args: s.args }),
-        ...(s.env && Object.keys(s.env).length && { env: s.env }),
-      };
+      const { command, args } = normalizeCommands
+        ? normalizeCommand(s.command, s.args || [])
+        : { command: s.command, args: s.args || [] };
+      const entry: Record<string, unknown> = {};
+      if (alwaysIncludeType) entry.type = 'stdio';
+      entry.command = command;
+      if (args.length || alwaysIncludeArgs) entry.args = args;
+      const hasEnv = s.env && Object.keys(s.env).length;
+      if (hasEnv || alwaysIncludeEnv) entry.env = hasEnv ? s.env : {};
+      result[name] = entry;
+    } else if (includeSseType && s.type === 'sse' && s.url) {
+      const entry: Record<string, unknown> = { url: s.url };
+      if (alwaysIncludeType) entry.type = 'sse';
+      if (s.headers && Object.keys(s.headers).length) entry.headers = s.headers;
+      result[name] = entry;
     }
   }
-  return { mcpServers };
+  return { [wrapperKey]: result };
+}
+
+/** Standard mcpServers format preset (Cursor, Augment, Claude Desktop, Custom). */
+export const FORMAT_STANDARD: NativeFormatOptions = {};
+
+/** Claude Code format preset: always includes type, args, env. */
+export const FORMAT_CLAUDE: NativeFormatOptions = {
+  alwaysIncludeType: true,
+  alwaysIncludeArgs: true,
+  alwaysIncludeEnv: true,
+};
+
+/** VS Code format preset: uses 'servers' key, always includes type, supports SSE. */
+export const FORMAT_VSCODE: NativeFormatOptions = {
+  wrapperKey: 'servers',
+  alwaysIncludeType: true,
+  normalizeCommands: false,
+  includeSseType: true,
+};
+
+/**
+ * Canonical server to mcpServers format (Cursor, Claude Desktop, etc.).
+ */
+export function canonicalToMcpServers(servers: Record<string, Omit<Server, 'id'>>): { mcpServers: Record<string, unknown> } {
+  return canonicalToNative(servers, FORMAT_STANDARD) as { mcpServers: Record<string, unknown> };
+}
+
+/**
+ * Claude Code MCP format (~/.claude.json):
+ * Always includes type, args, env fields.
+ */
+export function canonicalToClaudeMcpServers(
+  servers: Record<string, Omit<Server, 'id'>>
+): { mcpServers: Record<string, unknown> } {
+  return canonicalToNative(servers, FORMAT_CLAUDE) as { mcpServers: Record<string, unknown> };
 }
 
 /**
  * Canonical server to VS Code servers format.
  */
 export function canonicalToVSCodeServers(servers: Record<string, Omit<Server, 'id'>>): { servers: Record<string, unknown> } {
-  const vsServers: Record<string, unknown> = {};
-  for (const [id, s] of Object.entries(servers)) {
-    if (!s.enabled) continue;
-    const name = s.name || id;
-    if (s.url) {
-      vsServers[name] = { type: 'http', url: s.url, ...(s.headers && { headers: s.headers }) };
-    } else if (s.type === 'stdio' && s.command) {
-      vsServers[name] = {
-        type: 'stdio',
-        command: s.command,
-        ...(s.args?.length && { args: s.args }),
-        ...(s.env && Object.keys(s.env).length && { env: s.env }),
-      };
-    } else if (s.type === 'sse' && s.url) {
-      vsServers[name] = { type: 'sse', url: s.url, ...(s.headers && { headers: s.headers }) };
-    }
-  }
-  return { servers: vsServers };
+  return canonicalToNative(servers, FORMAT_VSCODE) as { servers: Record<string, unknown> };
 }
 
 /**
@@ -171,7 +269,7 @@ export function isDuplicate(server: Omit<Server, 'id'>, existing: Record<string,
 }
 
 /**
- * Factory for MCP providers that use the standard mcpServers JSON format (Cursor, Claude, ChatGPT, etc.).
+ * Factory for MCP providers that use the standard mcpServers JSON format (Cursor, Claude, etc.).
  * Reduces boilerplate across providers that share the same import/export logic.
  */
 export interface CreateMcpProviderOptions {

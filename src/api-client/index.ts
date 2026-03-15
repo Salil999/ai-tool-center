@@ -8,5 +8,6 @@ export * from './audit';
 export * from './skills';
 export * from './rules';
 export * from './project-directories';
+export * from './providers';
 export * from './credentials';
 export * from './settings';

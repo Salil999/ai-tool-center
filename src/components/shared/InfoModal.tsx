@@ -46,7 +46,7 @@ function MCPInfoContent() {
           <h3>What are MCP Servers?</h3>
           <p>
             <strong>Model Context Protocol (MCP) servers</strong> expose tools and resources that AI assistants
-            (like Cursor, Claude, ChatGPT) can use—for example, file access, database queries, or API integrations.
+            (like Cursor, Claude) can use—for example, file access, database queries, or API integrations.
             AI Tools Manager lets you add, edit, and manage MCP servers in one place, then <strong>sync</strong> your
             configuration to multiple AI tools so you don&apos;t have to configure each one separately.
           </p>
@@ -58,7 +58,7 @@ function MCPInfoContent() {
             <dt>Sync</dt>
             <dd>
               A dropdown that syncs your current server list to an AI tool&apos;s config file. Click it to see
-              targets (Cursor, VS Code, Claude, OpenCode, ChatGPT, Codex, Gemini CLI, Windsurf, Antigravity, GitHub Copilot). Choosing a target overwrites that tool&apos;s MCP config with your servers. Use
+              targets (Cursor, VS Code, Claude, OpenCode, Gemini CLI, Augment). Choosing a target overwrites that tool&apos;s MCP config with your servers. Use
               <strong> Custom…</strong> to specify a file path and config key (e.g. <code>mcpServers</code>) for
               tools not in the list. A confirmation appears before syncing: whatever is displayed on the page is the source of truth, and it&apos;s strongly recommended to import before syncing.
             </dd>
@@ -161,14 +161,10 @@ function MCPInfoContent() {
           <ul>
             <li><strong>Cursor</strong> — <code>~/.cursor/mcp.json</code></li>
             <li><strong>VS Code</strong> — <code>~/Library/Application Support/Code/User/mcp.json</code> (macOS)</li>
-            <li><strong>Claude Code</strong> — <code>~/.claude/mcp.json</code></li>
+            <li><strong>Claude Code</strong> — <code>~/.claude.json</code></li>
             <li><strong>Claude Desktop</strong> — <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS)</li>
             <li><strong>OpenCode</strong> — <code>~/.config/opencode/opencode.json</code></li>
-            <li><strong>ChatGPT</strong> — <code>~/Library/Application Support/OpenAI/ChatGPT/mcp.json</code> (macOS)</li>
-            <li><strong>Codex</strong> — <code>~/.codex/config.toml</code></li>
             <li><strong>Gemini CLI</strong> — <code>~/.gemini/settings.json</code></li>
-            <li><strong>Windsurf</strong> — <code>~/.codeium/windsurf/mcp_config.json</code></li>
-            <li><strong>Antigravity</strong> — <code>~/.antigravity_tools/mcp_config.json</code></li>
           </ul>
           <p>
             <strong>Custom…</strong> lets you specify any file path and config key for tools not listed.
@@ -217,7 +213,7 @@ function SkillsInfoContent() {
             <dt>Sync</dt>
             <dd>
               A dropdown that copies your enabled skills to a target. Choose a <strong>Provider</strong> (Cursor,
-              Claude Code, Gemini CLI, GitHub Copilot, or Agents) to sync to that tool&apos;s skills directory.
+              Claude Code, Gemini CLI, or Agents) to sync to that tool&apos;s skills directory.
               Choose a <strong>Project</strong> to sync to <code>.agents/skills/</code> in that project. Add
               project paths in the Project Directories section below.
             </dd>
@@ -297,7 +293,6 @@ function SkillsInfoContent() {
             <li><strong>Cursor</strong> — <code>~/.cursor/skills/</code></li>
             <li><strong>Claude Code</strong> — <code>~/.claude/skills/</code></li>
             <li><strong>Gemini CLI</strong> — <code>~/.gemini/skills/</code></li>
-            <li><strong>GitHub Copilot</strong> — <code>~/.copilot/skills/</code></li>
             <li><strong>Agents (cross-client)</strong> — <code>~/.agents/skills/</code></li>
           </ul>
           <p>
@@ -337,7 +332,7 @@ function RulesInfoContent() {
           <dl className="info-dl">
             <dt>Import</dt>
             <dd>
-              Opens a modal to import rules from provider directories (Cursor, Augment, Windsurf, Continue) or project
+              Opens a modal to import rules from provider directories (Cursor, Augment, Continue) or project
               rules paths. AGENTS.md is managed separately on the AGENTS.md tab.
             </dd>
           </dl>
@@ -393,7 +388,7 @@ function AgentsInfoContent() {
             <strong>AGENTS.md</strong> is a cross-tool standard Markdown file that provides AI coding agents with
             project-specific instructions and context—build steps, testing procedures, code style, and conventions.
             Content is stored in <code>~/.ai_tools_manager/agents/</code> and synced to project paths. Supported by
-            Cursor, OpenAI Codex, GitHub Copilot, Windsurf, Gemini CLI, and many others.
+            Cursor, Gemini CLI, and many others.
           </p>
         </section>
 

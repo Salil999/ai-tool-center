@@ -5,15 +5,13 @@ import { isPathSafe, resolvePath } from '../providers/utils.js';
 import { parseSkillDir, parseSkillContent, validateSkillDir } from '../skills/parse.js';
 import { lintSkill, lintSkillContent } from '../skills/lint.js';
 import { getOrderedSkills, copySkillInto, isDuplicateSkill, getManagedSkillsDir } from '../skills/sync.js';
+import { slugify, uniqueId } from '../utils/slugify.js';
+import { handleReorder, handleToggleEnabled } from './route-utils.js';
 import type { AppConfig, Skill } from '../types.js';
 import type { AuditStore } from '../audit/store.js';
 
 type GetConfig = () => AppConfig;
 type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
-
-function toSkillId(name: string): string {
-  return (name || 'skill').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'skill';
-}
 
 export function createSkillsRouter(getConfig: GetConfig, saveConfig: SaveConfig, auditStore: AuditStore) {
   const router = Router();
@@ -152,13 +150,7 @@ export function createSkillsRouter(getConfig: GetConfig, saveConfig: SaveConfig,
       if (isDuplicateSkill(skillName, config.skills || {})) {
         return res.status(400).json({ error: `Skill "${skillName}" already exists` });
       }
-      const id = toSkillId(skillName);
-      const existing = Object.keys(config.skills || {});
-      finalId = id;
-      let n = 1;
-      while (existing.includes(finalId)) {
-        finalId = `${id}-${n++}`;
-      }
+      finalId = uniqueId(slugify(skillName, 'skill'), Object.keys(config.skills || {}));
       const centralPath = path.join(getManagedSkillsDir(), finalId);
       copySkillInto(resolved, centralPath);
       skillPath = centralPath;
@@ -173,13 +165,7 @@ export function createSkillsRouter(getConfig: GetConfig, saveConfig: SaveConfig,
       if (isDuplicateSkill(skillName, config.skills || {})) {
         return res.status(400).json({ error: `Skill "${skillName}" already exists` });
       }
-      const id = toSkillId(skillName);
-      const existing = Object.keys(config.skills || {});
-      finalId = id;
-      let n = 1;
-      while (existing.includes(finalId)) {
-        finalId = `${id}-${n++}`;
-      }
+      finalId = uniqueId(slugify(skillName, 'skill'), Object.keys(config.skills || {}));
       skillPath = path.join(getManagedSkillsDir(), finalId);
       if (fs.existsSync(skillPath)) {
         return res.status(400).json({ error: `Skill already exists at ${skillPath}` });
@@ -269,28 +255,17 @@ export function createSkillsRouter(getConfig: GetConfig, saveConfig: SaveConfig,
     res.status(204).send();
   });
 
-  router.patch('/reorder', (req: Request, res: Response) => {
-    const config = getConfig();
-    const order = (req.body as { order?: string[] })?.order;
-    if (!Array.isArray(order)) return res.status(400).json({ error: 'order must be an array of skill IDs' });
-    const skills = config.skills || {};
-    const validOrder = order.filter((id) => skills[id]);
-    const extraIds = Object.keys(skills).filter((id) => !validOrder.includes(id));
-    config.skillOrder = [...validOrder, ...extraIds];
-    saveConfig(config, { action: 'skill_reorder', details: { order: config.skillOrder } });
-    res.json({ order: config.skillOrder });
-  });
+  router.patch('/reorder', handleReorder(getConfig, saveConfig, {
+    itemsKey: 'skills',
+    orderKey: 'skillOrder',
+    auditAction: 'skill_reorder',
+  }));
 
-  router.patch('/:id/enabled', (req: Request, res: Response) => {
-    const config = getConfig();
-    const skillId = String(req.params.id ?? '');
-    if (!config.skills?.[skillId]) return res.status(404).json({ error: 'Skill not found' });
-    const enabled = (req.body as { enabled?: boolean })?.enabled;
-    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled must be boolean' });
-    config.skills[skillId].enabled = enabled;
-    saveConfig(config, { action: 'skill_enable_toggle', details: { skillId, enabled } });
-    res.json({ id: skillId, enabled });
-  });
+  router.patch('/:id/enabled', handleToggleEnabled(getConfig, saveConfig, {
+    itemsKey: 'skills',
+    auditAction: 'skill_enable_toggle',
+    entityName: 'Skill',
+  }));
 
   return router;
 }

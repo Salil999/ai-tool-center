@@ -21,6 +21,7 @@ import { createAgentsImportRouter } from './api/agents-import.js';
 import { createAgentsRouter } from './api/agents.js';
 import { createCustomRuleConfigsRouter } from './api/custom-rule-configs.js';
 import { createProjectDirectoriesRouter } from './api/project-directories.js';
+import { createProvidersRouter } from './api/providers.js';
 import { createCredentialsRouter } from './api/credentials.js';
 import { createSettingsRouter } from './api/settings.js';
 import { AuditStore } from './audit/store.js';
@@ -87,6 +88,7 @@ export function createApp(options: CreateAppOptions = {}) {
   app.use('/api/rules/custom-configs', createCustomRuleConfigsRouter(getConfig, saveConfigFn));
   app.use('/api/rules', createRulesRouter(getConfig, saveConfigFn, auditStore));
   app.use('/api/project-directories', createProjectDirectoriesRouter(getConfig, saveConfigFn));
+  app.use('/api/providers', createProvidersRouter(getConfig, saveConfigFn));
   app.use('/api/credentials', createCredentialsRouter(getConfig, auditStore));
   app.use('/api/config', createConfigRouter(getConfig, saveConfigFn));
   app.use('/api/import', createImportRouter(getConfig, saveConfigFn));

@@ -29,8 +29,8 @@ function projectMatchesQuery(project: ProjectRuleSource, query: string): boolean
   return project.sources.some((s) => matchesQuery(s, query));
 }
 
-const PROVIDER_IDS = ['cursor', 'augment', 'windsurf', 'continue'];
-const PROJECT_PROVIDER_KEYS = ['cursor', 'augment', 'windsurf', 'continue', 'copilot'];
+const PROVIDER_IDS = ['cursor', 'augment', 'continue'];
+const PROJECT_PROVIDER_KEYS = ['cursor', 'augment', 'continue'];
 
 function isProviderImportSource(id: string): boolean {
   if (PROVIDER_IDS.includes(id)) return true;
@@ -130,7 +130,7 @@ export function ImportRuleModal({ onClose, onImport, onError }: ImportRuleModalP
       </div>
       <div className="modal-body">
         <p className="import-intro">
-          Import rules from <strong>Cursor</strong>, <strong>Augment</strong>, <strong>Windsurf</strong>, or{' '}
+          Import rules from <strong>Cursor</strong>, <strong>Augment</strong>, or{' '}
           <strong>Continue</strong> into the Rules section. AGENTS.md is managed separately on the AGENTS.md tab.
         </p>
 

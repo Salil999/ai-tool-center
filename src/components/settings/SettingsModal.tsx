@@ -6,8 +6,11 @@ import {
   getTheme,
   setTheme,
 } from '../../api-client';
+import { ProjectsTab } from './ProjectsTab';
+import { ProvidersTab } from './ProvidersTab';
 
 type ThemeOption = 'dark' | 'light' | 'system';
+type SettingsTabId = 'general' | 'projects' | 'providers';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -15,6 +18,7 @@ interface SettingsModalProps {
   onImport?: () => void;
   onError?: (msg: string) => void;
   onSuccess?: (msg: string) => void;
+  initialTab?: SettingsTabId;
 }
 
 export function SettingsModal({
@@ -23,7 +27,9 @@ export function SettingsModal({
   onImport,
   onError,
   onSuccess,
+  initialTab = 'general',
 }: SettingsModalProps) {
+  const [activeTab, setActiveTab] = useState<SettingsTabId>(initialTab);
   const [theme, setThemeState] = useState<ThemeOption>('dark');
   const [loadingTheme, setLoadingTheme] = useState(true);
   const [resetting, setResetting] = useState(false);
@@ -46,6 +52,10 @@ export function SettingsModal({
   useEffect(() => {
     loadTheme();
   }, []);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const handleThemeChange = async (value: ThemeOption) => {
     setThemeState(value);
@@ -125,7 +135,32 @@ export function SettingsModal({
           ×
         </button>
       </div>
+      <div className="modal-tabs">
+        <button
+          type="button"
+          className={`modal-tab ${activeTab === 'general' ? 'active' : ''}`}
+          onClick={() => setActiveTab('general')}
+        >
+          General
+        </button>
+        <button
+          type="button"
+          className={`modal-tab ${activeTab === 'projects' ? 'active' : ''}`}
+          onClick={() => setActiveTab('projects')}
+        >
+          Projects
+        </button>
+        <button
+          type="button"
+          className={`modal-tab ${activeTab === 'providers' ? 'active' : ''}`}
+          onClick={() => setActiveTab('providers')}
+        >
+          Providers
+        </button>
+      </div>
       <div className="modal-body settings-modal-body">
+        {activeTab === 'general' && (
+          <>
         <section className="settings-section">
           <h3>Theme</h3>
           <div className="settings-theme-options">
@@ -228,6 +263,14 @@ export function SettingsModal({
             Close
           </button>
         </div>
+          </>
+        )}
+        {activeTab === 'projects' && (
+          <ProjectsTab onError={onError} onSuccess={onSuccess} onClose={onClose} />
+        )}
+        {activeTab === 'providers' && (
+          <ProvidersTab onError={onError} onSuccess={onSuccess} onClose={onClose} />
+        )}
       </div>
     </div>
   );

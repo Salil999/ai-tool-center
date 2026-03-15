@@ -8,7 +8,7 @@ A local web app to manage MCP (Model Context Protocol) server configurations and
 - **Edit** server configs (stdio, http, sse)
 - **Enable/disable** servers
 - **View terminal output** for stdio servers (start/stop and stream output)
-- **Sync** to Cursor, VS Code, Claude Code, OpenCode, ChatGPT, and more with one click
+- **Sync** to Cursor, VS Code, Claude Code, OpenCode, and more with one click
 - **Custom sync** to any config file path
 - **API Credentials** tab for storing API keys and secrets (masked with reveal toggle)
 
@@ -88,14 +88,10 @@ On first run, if `~/.cursor/mcp.json` exists, it will be imported as the initial
 |--------|-------------|
 | Cursor | `~/.cursor/mcp.json` |
 | VS Code | macOS: `~/Library/Application Support/Code/User/mcp.json` · Windows: `%APPDATA%\Code\User\mcp.json` · Linux: `~/.config/Code/User/mcp.json` |
-| Claude Code | `~/.claude/mcp.json` |
+| Claude Code | `~/.claude.json` |
 | Claude Desktop | macOS: `~/Library/Application Support/Claude/claude_desktop_config.json` · Windows: `%APPDATA%\Claude\claude_desktop_config.json` · Linux: `~/.config/Claude/claude_desktop_config.json` |
 | OpenCode | `~/.config/opencode/opencode.json` |
-| ChatGPT | macOS: `~/Library/Application Support/OpenAI/ChatGPT/mcp.json` · Windows: `%APPDATA%\OpenAI\ChatGPT\mcp.json` · Linux: `~/.config/openai/chatgpt/mcp.json` |
-| Codex | `~/.codex/config.toml` |
 | Gemini CLI | `~/.gemini/settings.json` |
-| Windsurf | macOS/Linux: `~/.codeium/windsurf/mcp_config.json` · Windows: `%USERPROFILE%\.codeium\windsurf\mcp_config.json` |
-| Antigravity | macOS/Linux: `~/.antigravity_tools/mcp_config.json` · Windows: `%USERPROFILE%\.antigravity_tools\mcp_config.json` |
 
 ## License
 

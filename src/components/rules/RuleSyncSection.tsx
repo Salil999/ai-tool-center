@@ -3,6 +3,9 @@ import { getRuleSyncTargets } from '../../api-client';
 
 const AGENTS_PROVIDER_IDS = ['claude', 'gemini-cli', 'agents', 'opencode'];
 
+/** Rule providers that support syncing to project directories */
+const RULE_PROJECT_PROVIDER_IDS = ['cursor', 'augment', 'continue'];
+
 function fuzzyMatch(str: string, query: string): boolean {
   if (!query.trim()) return true;
   const s = str.toLowerCase();
@@ -183,41 +186,18 @@ export function RuleSyncSection({
                       (Add another AGENTS.md to copy)
                     </div>
                   )}
-                  <button
-                    type="button"
-                    className="sync-dropdown-item sync-dropdown-sub"
-                    onClick={() => handleSelectProject(id, { providerId: 'cursor' })}
-                  >
-                    → Cursor rules
-                  </button>
-                  <button
-                    type="button"
-                    className="sync-dropdown-item sync-dropdown-sub"
-                    onClick={() => handleSelectProject(id, { providerId: 'augment' })}
-                  >
-                    → Augment rules
-                  </button>
-                  <button
-                    type="button"
-                    className="sync-dropdown-item sync-dropdown-sub"
-                    onClick={() => handleSelectProject(id, { providerId: 'windsurf' })}
-                  >
-                    → Windsurf rules
-                  </button>
-                  <button
-                    type="button"
-                    className="sync-dropdown-item sync-dropdown-sub"
-                    onClick={() => handleSelectProject(id, { providerId: 'continue' })}
-                  >
-                    → Continue rules
-                  </button>
-                  <button
-                    type="button"
-                    className="sync-dropdown-item sync-dropdown-sub"
-                    onClick={() => handleSelectProject(id, { providerId: 'copilot' })}
-                  >
-                    → Copilot rules
-                  </button>
+                  {targets.providers
+                    .filter((p) => RULE_PROJECT_PROVIDER_IDS.includes(p.id))
+                    .map((p) => (
+                      <button
+                        key={`rules-${id}-${p.id}`}
+                        type="button"
+                        className="sync-dropdown-item sync-dropdown-sub"
+                        onClick={() => handleSelectProject(id, { providerId: p.id })}
+                      >
+                        → {p.name}
+                      </button>
+                    ))}
                 </div>
               ))}
             </>

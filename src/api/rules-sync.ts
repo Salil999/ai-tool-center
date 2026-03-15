@@ -5,7 +5,7 @@ import {
   syncAgentsToProject,
   copyAgentsBetweenAgents,
 } from '../rules/sync.js';
-import { RULES_PROVIDERS, getRuleProviderPath } from '../rules/providers.js';
+import { getRulesProviders, getRuleProviderPath } from '../rules/providers.js';
 import { syncProviderRulesToTarget } from '../rules/provider-rules.js';
 import type { AppConfig } from '../types.js';
 import type { AuditStore } from '../audit/store.js';
@@ -20,7 +20,7 @@ export function createRulesSyncRouter(getConfig: GetConfig, auditStore: AuditSto
   router.get('/targets', (_req: Request, res: Response) => {
     const config = getConfig();
     const providers = [
-      ...RULES_PROVIDERS.map((p) => ({ id: p.id, name: p.name, path: p.path })),
+      ...getRulesProviders(config).map((p) => ({ id: p.id, name: p.name, path: p.path })),
       ...(config.customRuleConfigs || []).map((c) => ({
         id: `custom-${c.id}`,
         name: c.name,
@@ -65,7 +65,7 @@ export function createRulesSyncRouter(getConfig: GetConfig, auditStore: AuditSto
         targetPath = targetInfo.path;
       }
 
-      if (target === 'cursor' || target === 'augment' || target === 'windsurf' || target === 'continue' || target.startsWith('custom-')) {
+      if (target === 'cursor' || target === 'augment' || target === 'continue' || target.startsWith('custom-')) {
         const result = syncProviderRulesToTarget(target, targetPath, config);
         auditStore.record('rule_sync_to_provider', config, config, {
           target,
@@ -118,17 +118,13 @@ export function createRulesSyncRouter(getConfig: GetConfig, auditStore: AuditSto
     const sourceAgentId = String(req.query.sourceAgentId ?? req.body?.sourceAgentId ?? '');
 
     try {
-      if (['cursor', 'augment', 'windsurf', 'continue', 'copilot'].includes(providerId)) {
-        const rulesTargetPath =
+    if (['cursor', 'augment', 'continue'].includes(providerId)) {
+      const rulesTargetPath =
           providerId === 'cursor'
             ? path.join(targetPath, '.cursor', 'rules')
             : providerId === 'augment'
               ? path.join(targetPath, '.augment', 'rules')
-              : providerId === 'windsurf'
-                ? path.join(targetPath, '.windsurf', 'rules')
-                : providerId === 'continue'
-                  ? path.join(targetPath, '.continue', 'rules')
-                  : path.join(targetPath, '.github', 'copilot-instructions.md');
+              : path.join(targetPath, '.continue', 'rules');
         const result = syncProviderRulesToTarget(providerId, rulesTargetPath, config);
         auditStore.record('rule_sync_to_project', config, config, {
           targetAgentId,

@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { importFromProvider, getProviderPath } from '../providers/index.js';
 import { syncSkillsFromDisk } from '../skills/sync.js';
 import type { AppConfig } from '../types.js';
 
@@ -42,7 +41,6 @@ function getDefaultConfigPath(): string {
 
 /**
  * Load config from file. Creates default if not exists.
- * On first run, optionally import from ~/.cursor/mcp.json if it exists.
  */
 export function loadConfig(configPath?: string): AppConfig {
   const resolvedPath = configPath || getDefaultConfigPath();
@@ -58,14 +56,6 @@ export function loadConfig(configPath?: string): AppConfig {
 
   if (!fs.existsSync(resolvedPath)) {
     const config: AppConfig = { ...DEFAULT_CONFIG };
-    try {
-      const cursorPath = getProviderPath('cursor');
-      if (cursorPath && fs.existsSync(cursorPath)) {
-        config.servers = importFromProvider('cursor');
-      }
-    } catch (err) {
-      console.warn('Could not import from Cursor mcp.json:', (err as Error).message);
-    }
     syncSkillsFromDisk(config);
     saveConfig(resolvedPath, config);
     return config;
@@ -82,6 +72,7 @@ export function loadConfig(configPath?: string): AppConfig {
       skills: config.skills || {},
       skillOrder: config.skillOrder ?? [],
       projectDirectories: config.projectDirectories ?? [],
+      enabledProviders: config.enabledProviders,
       agentRules: config.agentRules ?? [],
       customRuleConfigs: config.customRuleConfigs ?? [],
       providerRuleOrder: config.providerRuleOrder ?? {},

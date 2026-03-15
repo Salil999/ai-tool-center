@@ -1,26 +1,18 @@
 import { Router, Request, Response } from 'express';
 import { loadCreds, saveCreds } from '../credentials/store.js';
+import { slugify, uniqueId } from '../utils/slugify.js';
+import { getOrderedIds } from './route-utils.js';
 import type { AuditStore } from '../audit/store.js';
 import type { AppConfig } from '../types.js';
 
 type GetConfig = () => AppConfig;
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    || 'credential';
-}
 
 export function createCredentialsRouter(getConfig: GetConfig, auditStore: AuditStore) {
   const router = Router();
 
   router.get('/', (_req: Request, res: Response) => {
     const data = loadCreds();
-    const order = data.order.filter((id) => data.items[id]);
-    const extraIds = Object.keys(data.items).filter((id) => !order.includes(id));
-    const ids = [...order, ...extraIds];
+    const ids = getOrderedIds(data.items, data.order);
     const list = ids.map((id) => ({ id, ...data.items[id] }));
     res.json(list);
   });
@@ -33,12 +25,7 @@ export function createCredentialsRouter(getConfig: GetConfig, auditStore: AuditS
 
     if (!name) return res.status(400).json({ error: 'name is required' });
 
-    const baseId = slugify(name);
-    let id = baseId;
-    let n = 1;
-    while (data.items[id]) {
-      id = `${baseId}-${n++}`;
-    }
+    const id = uniqueId(slugify(name, 'credential'), Object.keys(data.items));
 
     data.items[id] = { name, value };
     data.order = data.order.filter((i) => data.items[i]);
@@ -55,10 +42,8 @@ export function createCredentialsRouter(getConfig: GetConfig, auditStore: AuditS
     const data = loadCreds();
     const order = (req.body as { order?: string[] })?.order;
     if (!Array.isArray(order)) return res.status(400).json({ error: 'order must be an array of credential IDs' });
-    const items = data.items || {};
-    const validOrder = order.filter((id) => items[id]);
-    const extraIds = Object.keys(items).filter((id) => !validOrder.includes(id));
-    data.order = [...validOrder, ...extraIds];
+    const ids = getOrderedIds(data.items, order);
+    data.order = ids;
     saveCreds(data);
     const config = getConfig();
     auditStore.record('credential_reorder', config, config, { order: data.order });

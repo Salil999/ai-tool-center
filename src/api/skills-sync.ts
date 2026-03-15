@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { getOrderedSkills, syncSkillsToProvider, syncSkillsToProject, SKILL_PROVIDERS } from '../skills/sync.js';
+import { getOrderedSkills, syncSkillsToProvider, syncSkillsToProject } from '../skills/sync.js';
+import { getSkillProviders } from '../skills/providers.js';
 import type { AppConfig } from '../types.js';
 import type { AuditStore } from '../audit/store.js';
 
@@ -10,7 +11,7 @@ export function createSkillsSyncRouter(getConfig: GetConfig, auditStore: AuditSt
 
   router.get('/targets', (_req: Request, res: Response) => {
     const config = getConfig();
-    const providers = SKILL_PROVIDERS.map((p) => ({ id: p.id, name: p.name, path: p.path }));
+    const providers = getSkillProviders(config).map((p) => ({ id: p.id, name: p.name, path: p.path }));
     const projects = (config.projectDirectories || []).map((pd) => ({
       id: pd.id,
       name: pd.name || pd.path,

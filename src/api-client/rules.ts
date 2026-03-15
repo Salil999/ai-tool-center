@@ -120,42 +120,18 @@ export async function syncRulesToProject(
   });
 }
 
-export interface RuleImportSource {
-  id: string;
-  name: string;
-  path: string;
-  exists: boolean;
-  hasContent: boolean;
-  error?: string;
-}
-
-export interface ProjectRuleSource {
-  id: string;
-  name: string;
-  path: string;
-  sources: RuleImportSource[];
-}
-
-export interface RuleImportSourcesResponse {
-  providers: RuleImportSource[];
-  projects: ProjectRuleSource[];
-}
+export type { RuleImportSource, ProjectRuleSource, RuleImportSourcesResponse, AgentImportSourcesResponse } from '@/types';
 
 export async function getRuleImportSources() {
   return fetchJSON<RuleImportSourcesResponse>(apiUrl('/rules/import/sources'));
 }
 
-/** Import from Cursor, Augment, Windsurf, or Continue into that provider's Rules section. */
+/** Import from Cursor, Augment, or Continue into that provider's Rules section. */
 export async function importRulesFromProvider(sourceId: string) {
   return fetchJSON<{ success: boolean; importedCount?: number }>(
     apiUrl(`/rules/import/${encodeURIComponent(sourceId)}/provider`),
     { method: 'POST' }
   );
-}
-
-export interface AgentImportSourcesResponse {
-  projects: ProjectRuleSource[];
-  agents: RuleImportSource[];
 }
 
 export async function getAgentImportSources() {
