@@ -10,10 +10,7 @@ import {
 } from '../rules/provider-rules.js';
 import { getRulesProviders, getRuleProviderPath } from '../rules/providers.js';
 import { lintProviderRule, lintRuleContent } from '../rules/lint.js';
-import type { AppConfig } from '../types.js';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
+import type { GetConfig, SaveConfig } from '../types.js';
 
 export function createRulesRouter(getConfig: GetConfig, saveConfig: SaveConfig) {
   const router = Router();

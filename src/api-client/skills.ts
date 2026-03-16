@@ -1,7 +1,7 @@
 import { fetchJSON, apiUrl } from './fetch';
-import type { LintReport, SkillhubSkill } from '@/types';
+import type { LintReport, SkillhubSkill, SkillImportSource, ProjectSkillSource, SkillImportSourcesResponse } from '@/types';
 
-export type { LintReport, SkillhubSkill };
+export type { LintReport, SkillhubSkill, SkillImportSource, ProjectSkillSource, SkillImportSourcesResponse };
 
 export async function getSkills() {
   return fetchJSON<Array<Record<string, unknown>>>(apiUrl('/skills'));
@@ -69,27 +69,6 @@ export async function syncSkillsTo(target: string) {
 
 export async function syncSkillsToProject(projectId: string) {
   return fetchJSON<{ path: string; success: boolean; syncedCount: number }>(apiUrl(`/skills/sync/project/${projectId}`), { method: 'POST' });
-}
-
-export interface SkillImportSource {
-  id: string;
-  name: string;
-  path: string;
-  exists: boolean;
-  skillCount: number;
-  error?: string;
-}
-
-export interface ProjectSkillSource {
-  id: string;
-  name: string;
-  path: string;
-  sources: SkillImportSource[];
-}
-
-export interface SkillImportSourcesResponse {
-  providers: SkillImportSource[];
-  projects: ProjectSkillSource[];
 }
 
 export async function getSkillImportSources() {

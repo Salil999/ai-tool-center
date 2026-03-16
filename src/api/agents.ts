@@ -2,10 +2,7 @@ import { Router, Request, Response } from '../router.js';
 import crypto from 'crypto';
 import { isPathSafe, resolvePath } from '../providers/utils.js';
 import { readAgentsForAgent, writeAgentsForAgent } from '../rules/sync.js';
-import type { AppConfig, AgentRule } from '../types.js';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
+import type { AgentRule, GetConfig, SaveConfig } from '../types.js';
 
 function generateId(): string {
   return crypto.randomBytes(8).toString('hex');

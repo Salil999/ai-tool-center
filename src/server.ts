@@ -2,39 +2,11 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { loadConfig, saveConfig, getConfigPath } from './config/loader.js';
-import { createServersRouter } from './api/servers.js';
-import { createSyncRouter } from './api/sync.js';
-import { createConfigRouter } from './api/config.js';
-import { createImportRouter } from './api/import.js';
-import { createOAuthRouter } from './api/oauth.js';
-import { createSkillsRouter } from './api/skills.js';
-import { createSkillsSyncRouter } from './api/skills-sync.js';
-import { createSkillsImportRouter } from './api/skills-import.js';
-import { createSkillsRegistryRouter } from './api/skills-registry.js';
-import { createRulesRouter } from './api/rules.js';
-import { createRulesSyncRouter } from './api/rules-sync.js';
-import { createRulesImportRouter } from './api/rules-import.js';
-import { createAgentsImportRouter } from './api/agents-import.js';
-import { createAgentsRouter } from './api/agents.js';
-import { createCustomRuleConfigsRouter } from './api/custom-rule-configs.js';
-import { createProjectDirectoriesRouter } from './api/project-directories.js';
-import { createProvidersRouter } from './api/providers.js';
-import { createCredentialsRouter } from './api/credentials.js';
-import { createSettingsRouter } from './api/settings.js';
-import { createHooksRouter } from './api/hooks.js';
-import { createPluginsRouter } from './api/plugins.js';
+import { createAllRoutes } from './api/routes.js';
 import { RouteResponse, matchRoute } from './router.js';
-import type { MountedRoute } from './router.js';
-import type { AppConfig } from './types.js';
+import type { AppConfig, SaveConfig } from './types.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export interface SaveConfigOptions {
-  action: string;
-  details?: Record<string, unknown>;
-}
-
-export type SaveConfig = (cfg: AppConfig, options?: SaveConfigOptions) => void;
 
 export interface CreateAppOptions {
   configPath?: string;
@@ -97,29 +69,7 @@ export function createApp(options: CreateAppOptions = {}) {
     saveConfig(configPath, cfg);
   };
 
-  const routes: MountedRoute[] = [
-    { prefix: '/api/servers', router: createServersRouter(getConfig, saveConfigFn, baseUrl) },
-    { prefix: '/api/sync', router: createSyncRouter(getConfig) },
-    { prefix: '/api/skills/sync', router: createSkillsSyncRouter(getConfig) },
-    { prefix: '/api/skills/import', router: createSkillsImportRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/skills/registry', router: createSkillsRegistryRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/skills', router: createSkillsRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/rules/sync', router: createRulesSyncRouter(getConfig) },
-    { prefix: '/api/rules/import', router: createRulesImportRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/rules/agents/import', router: createAgentsImportRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/rules/agents', router: createAgentsRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/rules/custom-configs', router: createCustomRuleConfigsRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/rules', router: createRulesRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/project-directories', router: createProjectDirectoriesRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/providers', router: createProvidersRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/credentials', router: createCredentialsRouter(getConfig) },
-    { prefix: '/api/hooks', router: createHooksRouter(getConfig) },
-    { prefix: '/api/plugins', router: createPluginsRouter() },
-    { prefix: '/api/config', router: createConfigRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/import', router: createImportRouter(getConfig, saveConfigFn) },
-    { prefix: '/api/settings', router: createSettingsRouter(getConfig, saveConfigFn) },
-    { prefix: '/oauth', router: createOAuthRouter(baseUrl) },
-  ];
+  const routes = createAllRoutes({ getConfig, saveConfig: saveConfigFn, baseUrl });
 
   const staticDir = resolveStaticDir();
 

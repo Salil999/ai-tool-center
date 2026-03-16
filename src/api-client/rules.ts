@@ -1,5 +1,5 @@
 import { fetchJSON, apiUrl } from './fetch';
-import type { ProviderRule, RuleLintReport } from '@/types';
+import type { ProviderRule, RuleLintReport, RuleImportSourcesResponse, AgentImportSourcesResponse } from '@/types';
 
 export type { ProviderRule, RuleLintReport };
 

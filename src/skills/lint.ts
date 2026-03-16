@@ -3,24 +3,9 @@ import fs from 'fs';
 import { parseSkillDir, parseSkillContent } from './parse.js';
 import type { SkillMetadata } from './parse.js';
 import { isPathSafe, resolvePath } from '../providers/utils.js';
+import type { LintFinding, LintReport } from '../types.js';
 
-export interface LintFinding {
-  field: string;
-  file: string;
-  fixable: boolean;
-  level: 'error' | 'warning' | 'info';
-  message: string;
-}
-
-export interface LintReport {
-  files: number;
-  findings: LintFinding[];
-  errors: number;
-  warnings: number;
-  infos: number;
-  fixed: number;
-  generatedAt: string;
-}
+export type { LintFinding, LintReport };
 
 /** Per https://agentskills.io/specification: lowercase letters, numbers, hyphens only */
 const NAME_REGEX = /^[a-z0-9]+(-[a-z0-9]+)*$/;

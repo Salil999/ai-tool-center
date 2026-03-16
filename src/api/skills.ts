@@ -7,10 +7,7 @@ import { lintSkill, lintSkillContent } from '../skills/lint.js';
 import { getOrderedSkills, copySkillInto, isDuplicateSkill, getManagedSkillsDir } from '../skills/sync.js';
 import { slugify, uniqueId } from '../utils/slugify.js';
 import { handleReorder, handleToggleEnabled } from './route-utils.js';
-import type { AppConfig, Skill } from '../types.js';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
+import type { Skill, GetConfig, SaveConfig } from '../types.js';
 
 export function createSkillsRouter(getConfig: GetConfig, saveConfig: SaveConfig) {
   const router = Router();

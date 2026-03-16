@@ -8,10 +8,7 @@ import {
 } from '../skills/registry.js';
 import { parseSkillContent } from '../skills/parse.js';
 import { isDuplicateSkill, getManagedSkillsDir } from '../skills/sync.js';
-import type { AppConfig, Skill } from '../types.js';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
+import type { Skill, GetConfig, SaveConfig } from '../types.js';
 
 function toSkillId(name: string): string {
   return (name || 'skill').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'skill';

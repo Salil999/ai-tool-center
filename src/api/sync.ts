@@ -9,9 +9,7 @@ import {
 import { exportToOpenCodeProjectScope } from '../providers/opencode.js';
 import { isPathSafe, resolvePath, getOrderedServers, exportToMcpPath } from '../providers/utils.js';
 import { isProviderEnabled } from '../providers/registry.js';
-import type { AppConfig } from '../types.js';
-
-type GetConfig = () => AppConfig;
+import type { GetConfig } from '../types.js';
 
 export function createSyncRouter(getConfig: GetConfig) {
   const router = Router();

@@ -12,9 +12,7 @@ import { slugify, uniqueId } from '../utils/slugify.js';
 import { getOrderedIds } from './route-utils.js';
 import { resolvePath } from '../providers/utils.js';
 import { lintRawHookConfig } from '../hooks/lint.js';
-import type { AppConfig, HookProviderDefinition } from '../types.js';
-
-type GetConfig = () => AppConfig;
+import type { HookProviderDefinition, GetConfig } from '../types.js';
 
 function resolveProjectPath(provider: HookProviderDefinition, projectPath: string): string {
   return provider.getProjectSettingsPath(resolvePath(projectPath));

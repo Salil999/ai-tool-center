@@ -1,9 +1,6 @@
 import type { Request, Response } from '../router.js';
 import { slugify, uniqueId } from '../utils/slugify.js';
-import type { AppConfig } from '../types.js';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
+import type { AppConfig, GetConfig, SaveConfig } from '../types.js';
 
 /**
  * Generate a unique ID from a body payload, avoiding collisions with existing IDs.

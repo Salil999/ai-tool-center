@@ -892,6 +892,28 @@ code {
   font-size: 0.75rem;
 }
 
+/* ── Subagent Lint ───────────────────────────────────────────────────────── */
+
+.subagent-lint-reports {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.subagent-lint-provider {
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+}
+
+.subagent-lint-provider-name {
+  margin: 0 0 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .rule-lint-inline {
   margin-top: 0.5rem;
   padding: 0.5rem;
