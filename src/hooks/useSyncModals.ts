@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type { SyncConfirmation } from './useSyncConfirmation';
 
 export interface SyncModals {
@@ -10,14 +10,10 @@ export interface SyncModals {
   closeModal: () => void;
   /** Handle a generic (non-provider-specific) sync via the confirm flow */
   handleSyncRequest: (target: string) => void;
-  /** Build a sync handler that resolves the sync target string from provider + scope */
-  createSyncHandler: (
-    target: string
-  ) => () => void;
-  /** Build a project sync handler that includes the project ID */
-  createProjectSyncHandler: (
-    targetPrefix: string
-  ) => (projectId: string) => void;
+  /** Stable sync handler that closes the modal and dispatches via confirm flow */
+  syncAndClose: (target: string) => void;
+  /** Stable project sync handler: closes modal, appends projectId, dispatches */
+  syncProjectAndClose: (targetPrefix: string, projectId: string) => void;
 }
 
 /**
@@ -29,6 +25,7 @@ export function useSyncModals(
   syncConfirm: SyncConfirmation
 ): SyncModals {
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const { requestSync } = syncConfirm;
 
   const openModal = useCallback((providerId: string) => {
     setActiveModal(providerId);
@@ -40,33 +37,33 @@ export function useSyncModals(
 
   const handleSyncRequest = useCallback(
     (target: string) => {
-      syncConfirm.requestSync(() => handleSync(target));
+      requestSync(() => handleSync(target));
     },
-    [handleSync, syncConfirm]
+    [handleSync, requestSync]
   );
 
-  const createSyncHandler = useCallback(
-    (target: string) => () => {
+  const syncAndClose = useCallback(
+    (target: string) => {
       setActiveModal(null);
-      syncConfirm.requestSync(() => handleSync(target));
+      requestSync(() => handleSync(target));
     },
-    [handleSync, syncConfirm]
+    [handleSync, requestSync]
   );
 
-  const createProjectSyncHandler = useCallback(
-    (targetPrefix: string) => (projectId: string) => {
+  const syncProjectAndClose = useCallback(
+    (targetPrefix: string, projectId: string) => {
       setActiveModal(null);
-      syncConfirm.requestSync(() => handleSync(`${targetPrefix}${projectId}`));
+      requestSync(() => handleSync(`${targetPrefix}${projectId}`));
     },
-    [handleSync, syncConfirm]
+    [handleSync, requestSync]
   );
 
-  return {
+  return useMemo(() => ({
     activeModal,
     openModal,
     closeModal,
     handleSyncRequest,
-    createSyncHandler,
-    createProjectSyncHandler,
-  };
+    syncAndClose,
+    syncProjectAndClose,
+  }), [activeModal, openModal, closeModal, handleSyncRequest, syncAndClose, syncProjectAndClose]);
 }

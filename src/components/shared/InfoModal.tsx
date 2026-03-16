@@ -1,6 +1,8 @@
+import type { TabId } from '@/App';
+
 interface InfoModalProps {
   onClose: () => void;
-  activeTab: 'mcp' | 'skills' | 'rules' | 'credentials' | 'hooks' | 'subagents' | 'plugins';
+  activeTab: TabId;
 }
 
 const TAB_TITLES: Record<InfoModalProps['activeTab'], string> = {

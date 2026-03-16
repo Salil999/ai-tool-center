@@ -23,7 +23,7 @@ import { useToast } from '@/contexts/ToastContext';
 
 // ── Tab registry ─────────────────────────────────────────────────
 
-type TabId = 'mcp' | 'skills' | 'rules' | 'credentials' | 'hooks' | 'subagents' | 'plugins';
+export type TabId = 'mcp' | 'skills' | 'rules' | 'credentials' | 'hooks' | 'subagents' | 'plugins';
 
 interface TabDef {
   id: TabId;
@@ -175,8 +175,8 @@ export default function App() {
         <Modal isOpen onClose={syncModals.closeModal} aria-labelledby="cursor-sync-modal-title">
           <CursorSyncModal
             onClose={syncModals.closeModal}
-            onSyncGlobal={syncModals.createSyncHandler('cursor')}
-            onSyncProject={syncModals.createProjectSyncHandler('cursor-project-')}
+            onSyncGlobal={() => syncModals.syncAndClose('cursor')}
+            onSyncProject={(projectId) => syncModals.syncProjectAndClose('cursor-project-', projectId)}
           />
         </Modal>
       )}
@@ -184,9 +184,9 @@ export default function App() {
         <Modal isOpen onClose={syncModals.closeModal} aria-labelledby="claude-sync-modal-title">
           <ClaudeSyncModal
             onClose={syncModals.closeModal}
-            onSyncUser={syncModals.createSyncHandler('claude')}
-            onSyncLocal={syncModals.createProjectSyncHandler('claude-local-')}
-            onSyncProject={syncModals.createProjectSyncHandler('claude-project-')}
+            onSyncUser={() => syncModals.syncAndClose('claude')}
+            onSyncLocal={(projectId) => syncModals.syncProjectAndClose('claude-local-', projectId)}
+            onSyncProject={(projectId) => syncModals.syncProjectAndClose('claude-project-', projectId)}
           />
         </Modal>
       )}
@@ -194,8 +194,8 @@ export default function App() {
         <Modal isOpen onClose={syncModals.closeModal} aria-labelledby="opencode-sync-modal-title">
           <OpenCodeSyncModal
             onClose={syncModals.closeModal}
-            onSyncGlobal={syncModals.createSyncHandler('opencode')}
-            onSyncProject={syncModals.createProjectSyncHandler('opencode-project-')}
+            onSyncGlobal={() => syncModals.syncAndClose('opencode')}
+            onSyncProject={(projectId) => syncModals.syncProjectAndClose('opencode-project-', projectId)}
           />
         </Modal>
       )}
