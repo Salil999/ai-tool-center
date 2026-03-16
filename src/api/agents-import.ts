@@ -11,10 +11,7 @@ import {
   discoverAgentSources,
 } from '../rules/import.js';
 import { writeAgentsForAgent } from '../rules/sync.js';
-import type { AppConfig, AgentRule } from '../types.js';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
+import type { AppConfig, AgentRule, GetConfig, SaveConfig } from '../types.js';
 
 function projectPathFromSourcePath(sourcePath: string, key: 'agents' | 'claude'): string {
   const resolved = path.resolve(sourcePath);

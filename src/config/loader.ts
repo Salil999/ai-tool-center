@@ -15,6 +15,8 @@ export const DEFAULT_CONFIG = {
   agentRules: [],
   customRuleConfigs: [],
   providerRuleOrder: {},
+  subagents: {},
+  subagentOrder: [],
 } satisfies AppConfig;
 
 function getDefaultConfigPath(): string {
@@ -35,6 +37,33 @@ function getDefaultConfigPath(): string {
       throw new Error(`Cannot create config directory: ${(e as Error).message}`);
     }
   }
+}
+
+/**
+ * Lightweight runtime validation for parsed config.
+ * Fixes obvious type mismatches (e.g. corrupt JSON edits) rather than throwing.
+ */
+function validateConfig(raw: unknown): AppConfig {
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ...DEFAULT_CONFIG };
+  }
+  const cfg = raw as Record<string, unknown>;
+
+  // Record<string, ...> fields — must be plain objects
+  for (const key of ['servers', 'skills', 'subagents', 'providerRuleOrder'] as const) {
+    if (cfg[key] != null && (typeof cfg[key] !== 'object' || Array.isArray(cfg[key]))) {
+      cfg[key] = DEFAULT_CONFIG[key];
+    }
+  }
+
+  // Array fields — must be arrays
+  for (const key of ['skillOrder', 'subagentOrder', 'serverOrder', 'projectDirectories', 'agentRules', 'customRuleConfigs', 'enabledProviders'] as const) {
+    if (cfg[key] != null && !Array.isArray(cfg[key])) {
+      cfg[key] = (DEFAULT_CONFIG as Record<string, unknown>)[key] ?? [];
+    }
+  }
+
+  return cfg as AppConfig;
 }
 
 /**
@@ -61,7 +90,7 @@ export function loadConfig(configPath?: string): AppConfig {
 
   try {
     const data = fs.readFileSync(resolvedPath, 'utf8');
-    const config = JSON.parse(data) as AppConfig;
+    const config = validateConfig(JSON.parse(data));
     const merged: AppConfig = {
       ...DEFAULT_CONFIG,
       ...config,
@@ -73,6 +102,8 @@ export function loadConfig(configPath?: string): AppConfig {
       agentRules: config.agentRules ?? [],
       customRuleConfigs: config.customRuleConfigs ?? [],
       providerRuleOrder: config.providerRuleOrder ?? {},
+      subagents: config.subagents || {},
+      subagentOrder: config.subagentOrder ?? [],
     };
     if (syncSkillsFromDisk(merged)) {
       saveConfig(resolvedPath, merged);

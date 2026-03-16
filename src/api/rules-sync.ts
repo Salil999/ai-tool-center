@@ -7,9 +7,7 @@ import {
 } from '../rules/sync.js';
 import { getRulesProviders, getRuleProviderPath } from '../rules/providers.js';
 import { syncProviderRulesToTarget } from '../rules/provider-rules.js';
-import type { AppConfig } from '../types.js';
-
-type GetConfig = () => AppConfig;
+import type { GetConfig } from '../types.js';
 
 const AGENTS_PROVIDERS = ['claude', 'opencode'];
 

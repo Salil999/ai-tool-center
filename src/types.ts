@@ -30,7 +30,21 @@ export interface AppConfig {
   customRuleConfigs: CustomRuleConfig[];
   /** Order of rule file IDs per provider (cursor, opencode, custom) for provider-specific rules */
   providerRuleOrder?: Record<string, string[]>;
+  /** Subagents (markdown files with YAML frontmatter) */
+  subagents: Record<string, Omit<Subagent, 'id'>>;
+  /** Optional order of subagent IDs for display and sync */
+  subagentOrder?: string[];
 }
+
+// ── Config function types (shared by all API routes) ──────────────
+
+export interface SaveConfigOptions {
+  action: string;
+  details?: Record<string, unknown>;
+}
+
+export type GetConfig = () => AppConfig;
+export type SaveConfig = (cfg: AppConfig, options?: SaveConfigOptions) => void;
 
 /** Provider rule file (e.g. .cursor/rules/*.mdc) */
 export interface ProviderRule {
@@ -101,61 +115,85 @@ export interface Credential {
   value: string;
 }
 
-/** Lint finding from skill lint API */
-export interface LintFinding {
+// ── Lint types (generic base + domain-specific extensions) ────────
+
+/** Base lint finding shared by all lint domains */
+export interface BaseLintFinding {
   field: string;
-  file: string;
-  fixable: boolean;
   level: 'error' | 'warning' | 'info';
   message: string;
+}
+
+/** Base lint report shared by all lint domains */
+export interface BaseLintReport<F extends BaseLintFinding = BaseLintFinding> {
+  findings: F[];
+  errors: number;
+  warnings: number;
+  infos: number;
+  generatedAt: string;
+}
+
+/** Lint finding from skill lint API */
+export interface LintFinding extends BaseLintFinding {
+  file: string;
+  fixable: boolean;
 }
 
 /** Lint report from skill lint API */
-export interface LintReport {
+export interface LintReport extends BaseLintReport<LintFinding> {
   files: number;
-  findings: LintFinding[];
-  errors: number;
-  warnings: number;
-  infos: number;
   fixed: number;
-  generatedAt: string;
 }
 
 /** Rule lint finding from rule lint API */
-export interface RuleLintFinding {
-  field: string;
+export interface RuleLintFinding extends BaseLintFinding {
   file: string;
   fixable: boolean;
-  level: 'error' | 'warning' | 'info';
-  message: string;
 }
 
 /** Rule lint report from rule lint API */
-export interface RuleLintReport {
-  findings: RuleLintFinding[];
-  errors: number;
-  warnings: number;
-  infos: number;
-  generatedAt: string;
+export type RuleLintReport = BaseLintReport<RuleLintFinding>;
+
+/** Subagent lint finding */
+export type SubagentLintFinding = BaseLintFinding;
+
+/** Subagent lint report */
+export type SubagentLintReport = BaseLintReport<SubagentLintFinding>;
+
+/** Hook lint finding from hook lint API */
+export interface HookLintFinding extends BaseLintFinding {
+  hookIndex?: number;
 }
 
-/** Rule import source (used by both backend discover and frontend client) */
-export interface RuleImportSource {
+/** Hook lint report from hook lint API */
+export type HookLintReport = BaseLintReport<HookLintFinding>;
+
+// ── Import source types (generic base + domain-specific) ─────────
+
+/** Base import source shared by all import domains */
+export interface BaseImportSource {
   id: string;
   name: string;
   path: string;
   exists: boolean;
-  hasContent: boolean;
   error?: string;
 }
 
-/** Project rule source with nested sources */
-export interface ProjectRuleSource {
+/** Base project source with nested import sources */
+export interface BaseProjectSource<S extends BaseImportSource = BaseImportSource> {
   id: string;
   name: string;
   path: string;
-  sources: RuleImportSource[];
+  sources: S[];
 }
+
+/** Rule import source (used by both backend discover and frontend client) */
+export interface RuleImportSource extends BaseImportSource {
+  hasContent: boolean;
+}
+
+/** Project rule source with nested sources */
+export type ProjectRuleSource = BaseProjectSource<RuleImportSource>;
 
 /** Response from rule import sources API */
 export interface RuleImportSourcesResponse {
@@ -170,22 +208,12 @@ export interface AgentImportSourcesResponse {
 }
 
 /** Skill import source (used by both backend discover and frontend client) */
-export interface SkillImportSource {
-  id: string;
-  name: string;
-  path: string;
-  exists: boolean;
+export interface SkillImportSource extends BaseImportSource {
   skillCount: number;
-  error?: string;
 }
 
 /** Project skill source with nested sources */
-export interface ProjectSkillSource {
-  id: string;
-  name: string;
-  path: string;
-  sources: SkillImportSource[];
-}
+export type ProjectSkillSource = BaseProjectSource<SkillImportSource>;
 
 /** Response from skill import sources API */
 export interface SkillImportSourcesResponse {
@@ -258,23 +286,6 @@ export interface Plugin {
   name: string;
 }
 
-/** Hook lint finding from hook lint API */
-export interface HookLintFinding {
-  field: string;
-  level: 'error' | 'warning' | 'info';
-  message: string;
-  hookIndex?: number;
-}
-
-/** Hook lint report from hook lint API */
-export interface HookLintReport {
-  findings: HookLintFinding[];
-  errors: number;
-  warnings: number;
-  infos: number;
-  generatedAt: string;
-}
-
 /** Provider capability descriptor for hooks */
 export interface HookProviderInfo {
   id: string;
@@ -294,13 +305,31 @@ export interface PluginProviderInfo {
 }
 
 /** MCP discover source (used by import/discover) */
-export interface DiscoverSource {
-  id: string;
-  name: string;
-  path: string;
-  exists: boolean;
+export interface DiscoverSource extends BaseImportSource {
   serverCount: number;
-  error?: string;
+}
+
+/** Subagent definition (markdown file with YAML frontmatter) */
+export interface Subagent {
+  id?: string;
+  name: string;
+  description?: string;
+  path: string;
+  enabled: boolean;
+}
+
+/** Subagent import source */
+export interface SubagentImportSource extends BaseImportSource {
+  agentCount: number;
+}
+
+/** Project subagent source with nested sources */
+export type ProjectSubagentSource = BaseProjectSource<SubagentImportSource>;
+
+/** Response from subagent import sources API */
+export interface SubagentImportSourcesResponse {
+  providers: SubagentImportSource[];
+  projects: ProjectSubagentSource[];
 }
 
 /** Skillhub registry search result item */

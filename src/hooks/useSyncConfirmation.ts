@@ -5,6 +5,8 @@ import { useState, useCallback } from 'react';
  * Eliminates the duplicated syncConfirmOpen + pendingSyncAction pattern
  * across App.tsx, SkillsTab, and RulesTab.
  */
+export type SyncConfirmation = ReturnType<typeof useSyncConfirmation>;
+
 export function useSyncConfirmation() {
   const [isOpen, setIsOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<() => Promise<void>>(

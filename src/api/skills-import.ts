@@ -6,10 +6,7 @@ import {
   importFromSkillSource,
   resolveProjectSourcePath,
 } from '../skills/import.js';
-import type { AppConfig } from '../types.js';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
+import type { GetConfig, SaveConfig } from '../types.js';
 
 export function createSkillsImportRouter(getConfig: GetConfig, saveConfig: SaveConfig) {
   const router = Router();

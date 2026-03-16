@@ -3,22 +3,9 @@
  * Based on Anthropic's hook linter logic translated to TypeScript.
  */
 
-import type { HookItem, HookProviderDefinition } from '../types.js';
+import type { HookItem, HookProviderDefinition, HookLintFinding, HookLintReport } from '../types.js';
 
-export interface HookLintFinding {
-  field: string;
-  level: 'error' | 'warning' | 'info';
-  message: string;
-  hookIndex?: number;
-}
-
-export interface HookLintReport {
-  findings: HookLintFinding[];
-  errors: number;
-  warnings: number;
-  infos: number;
-  generatedAt: string;
-}
+export type { HookLintFinding, HookLintReport };
 
 function addFinding(
   findings: HookLintFinding[],

@@ -24,7 +24,14 @@ export function getOrderedServers(config: AppConfig): Record<string, Omit<Server
 }
 
 export function isPathSafe(targetPath: string): boolean {
-  const resolved = path.resolve(targetPath);
+  let resolved: string;
+  try {
+    // Use realpathSync to resolve symlinks, preventing symlink traversal attacks
+    resolved = fs.realpathSync(targetPath);
+  } catch {
+    // File may not exist yet (e.g. new config); fall back to path.resolve
+    resolved = path.resolve(targetPath);
+  }
   const homeResolved = path.resolve(HOME);
   return resolved.startsWith(homeResolved) || resolved.startsWith(path.resolve(process.cwd()));
 }

@@ -10,10 +10,7 @@ import {
   PROJECT_RULE_SUBDIRS,
 } from '../rules/import.js';
 import { findOrCreateAgentForProjectPath } from './agents-import.js';
-import type { AppConfig } from '../types.js';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
+import type { GetConfig, SaveConfig } from '../types.js';
 
 const PROVIDER_RULES_IMPORT_IDS = ['cursor'];
 

@@ -2,9 +2,7 @@ import { Router, Request, Response } from '../router.js';
 import { loadCreds, saveCreds } from '../credentials/store.js';
 import { slugify, uniqueId } from '../utils/slugify.js';
 import { getOrderedIds } from './route-utils.js';
-import type { AppConfig } from '../types.js';
-
-type GetConfig = () => AppConfig;
+import type { GetConfig } from '../types.js';
 
 export function createCredentialsRouter(_getConfig: GetConfig) {
   const router = Router();

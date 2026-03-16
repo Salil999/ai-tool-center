@@ -10,3 +10,4 @@ export * from './project-directories';
 export * from './providers';
 export * from './credentials';
 export * from './settings';
+export * from './subagents';

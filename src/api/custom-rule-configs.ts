@@ -1,10 +1,7 @@
 import { Router, Request, Response } from '../router.js';
 import crypto from 'crypto';
 import { isPathSafe, resolvePath } from '../providers/utils.js';
-import type { AppConfig, CustomRuleConfig } from '../types.js';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
+import type { CustomRuleConfig, GetConfig, SaveConfig } from '../types.js';
 
 function generateId(): string {
   return crypto.randomBytes(8).toString('hex');

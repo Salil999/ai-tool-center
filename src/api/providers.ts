@@ -1,9 +1,6 @@
 import { Router, Request, Response } from '../router.js';
 import { PROVIDER_CAPABILITIES, getEnabledProviderIds } from '../providers/registry.js';
-import type { AppConfig } from '../types.js';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
+import type { GetConfig, SaveConfig } from '../types.js';
 
 export function createProvidersRouter(getConfig: GetConfig, saveConfig: SaveConfig) {
   const router = Router();

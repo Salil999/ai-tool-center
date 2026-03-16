@@ -1,12 +1,8 @@
 /**
  * Test helpers for creating app with in-memory config.
  */
-import { createServersRouter } from '../api/servers.js';
-import { createSyncRouter } from '../api/sync.js';
-import { createConfigRouter } from '../api/config.js';
-import { createImportRouter } from '../api/import.js';
+import { createAllRoutes } from '../api/routes.js';
 import { RouteResponse, matchRoute } from '../router.js';
-import type { MountedRoute } from '../router.js';
 import type { AppConfig } from '../types.js';
 
 export interface CreateTestAppOptions {
@@ -27,12 +23,7 @@ export function createTestApp(options: CreateTestAppOptions = {}): TestApp {
   };
   const baseUrl = options.baseUrl || 'http://localhost:3847';
 
-  const routes: MountedRoute[] = [
-    { prefix: '/api/servers', router: createServersRouter(getConfig, saveConfig, baseUrl) },
-    { prefix: '/api/sync', router: createSyncRouter(getConfig) },
-    { prefix: '/api/config', router: createConfigRouter(getConfig, saveConfig) },
-    { prefix: '/api/import', router: createImportRouter(getConfig, saveConfig) },
-  ];
+  const routes = createAllRoutes({ getConfig, saveConfig, baseUrl });
 
   async function fetch(req: globalThis.Request): Promise<globalThis.Response> {
     const url = new URL(req.url);

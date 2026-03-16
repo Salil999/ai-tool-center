@@ -5,8 +5,7 @@ import { SettingsModal } from '@/components/settings/SettingsModal';
 import { Toast } from '@/components/shared/Toast';
 import { Modal } from '@/components/shared/Modal';
 import { useToast } from '@/contexts/ToastContext';
-
-type TabId = 'mcp' | 'skills' | 'rules' | 'credentials' | 'hooks' | 'subagents' | 'plugins';
+import type { TabId } from '@/App';
 
 type SettingsTabId = 'general' | 'projects' | 'providers';
 

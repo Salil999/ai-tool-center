@@ -2,22 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { isPathSafe } from '../providers/utils.js';
+import type { RuleLintFinding, RuleLintReport } from '../types.js';
 
-export interface RuleLintFinding {
-  field: string;
-  file: string;
-  fixable: boolean;
-  level: 'error' | 'warning' | 'info';
-  message: string;
-}
-
-export interface RuleLintReport {
-  findings: RuleLintFinding[];
-  errors: number;
-  warnings: number;
-  infos: number;
-  generatedAt: string;
-}
+export type { RuleLintFinding, RuleLintReport };
 
 /** Known Cursor .mdc frontmatter fields */
 const KNOWN_CURSOR_FIELDS = new Set([

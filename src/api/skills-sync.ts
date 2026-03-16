@@ -1,9 +1,7 @@
 import { Router, Request, Response } from '../router.js';
 import { getOrderedSkills, syncSkillsToProvider, syncSkillsToProject } from '../skills/sync.js';
 import { getSkillProviders } from '../skills/providers.js';
-import type { AppConfig } from '../types.js';
-
-type GetConfig = () => AppConfig;
+import type { GetConfig } from '../types.js';
 
 export function createSkillsSyncRouter(getConfig: GetConfig) {
   const router = Router();

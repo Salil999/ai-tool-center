@@ -11,7 +11,7 @@ import {
   type MultiFileRuleProviderId,
 } from '../rules/provider-rules.js';
 import { isPathSafe, mergeServers } from '../providers/utils.js';
-import type { AppConfig } from '../types.js';
+import type { AppConfig, GetConfig, SaveConfig } from '../types.js';
 
 function getRulesBase(): string {
   return process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(getConfigBaseDir(), 'rules');
@@ -30,9 +30,6 @@ function getProviderRulesDir(providerId: string): string {
 }
 
 const SETTINGS_FILENAME = 'settings.json';
-
-type GetConfig = () => AppConfig;
-type SaveConfig = (cfg: AppConfig, options?: { action: string; details?: Record<string, unknown> }) => void;
 
 function getSettingsPath(): string {
   return path.join(getConfigBaseDir(), SETTINGS_FILENAME);

@@ -17,27 +17,49 @@ import { OpenCodeSyncModal } from '@/components/mcp/OpenCodeSyncModal';
 import { Modal } from '@/components/shared/Modal';
 import { useMcpServers } from '@/hooks/useMcpServers';
 import { useSyncConfirmation } from '@/hooks/useSyncConfirmation';
+import { useSyncModals } from '@/hooks/useSyncModals';
 import { useOAuthCallback } from '@/hooks/useOAuthCallback';
 import { useToast } from '@/contexts/ToastContext';
 
-type TabId = 'mcp' | 'skills' | 'rules' | 'credentials' | 'hooks' | 'subagents' | 'plugins';
+// ── Tab registry ─────────────────────────────────────────────────
 
-const INFO_BUTTON_LABELS: Record<TabId, string> = {
-  mcp: 'MCP Servers — User Guide',
-  skills: 'Skills — User Guide',
-  rules: 'Rules & AGENTS.md — User Guide',
-  credentials: 'API Credentials — User Guide',
-  hooks: 'Hooks — User Guide',
-  subagents: 'Subagents — User Guide',
-  plugins: 'Plugins — User Guide',
-};
+export type TabId = 'mcp' | 'skills' | 'rules' | 'credentials' | 'hooks' | 'subagents' | 'plugins';
+
+interface TabDef {
+  id: TabId;
+  label: string;
+  infoLabel: string;
+}
+
+const TABS: TabDef[] = [
+  { id: 'mcp', label: 'MCP Servers', infoLabel: 'MCP Servers — User Guide' },
+  { id: 'skills', label: 'Skills', infoLabel: 'Skills — User Guide' },
+  { id: 'rules', label: 'Rules', infoLabel: 'Rules & AGENTS.md — User Guide' },
+  { id: 'hooks', label: 'Hooks', infoLabel: 'Hooks — User Guide' },
+  { id: 'subagents', label: 'Subagents', infoLabel: 'Subagents — User Guide' },
+  { id: 'plugins', label: 'Plugins', infoLabel: 'Plugins — User Guide' },
+  { id: 'credentials', label: 'API Credentials', infoLabel: 'API Credentials — User Guide' },
+];
+
+const VALID_TAB_IDS = new Set<string>(TABS.map((t) => t.id));
 
 function tabFromHash(): TabId {
   const hash = window.location.hash.slice(1).toLowerCase();
-  if (hash === 'skills' || hash === 'rules' || hash === 'credentials' || hash === 'hooks' || hash === 'subagents' || hash === 'plugins') return hash;
+  if (VALID_TAB_IDS.has(hash)) return hash as TabId;
   if (hash === 'agents') return 'rules';
   return 'mcp';
 }
+
+// ── Tab content components (keyed by id) ─────────────────────────
+
+const TAB_COMPONENTS: Record<string, React.FC> = {
+  skills: SkillsTab,
+  rules: RulesTab,
+  credentials: CredentialsTab,
+  hooks: HooksTab,
+  subagents: SubagentsTab,
+  plugins: PluginsTab,
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>(tabFromHash);
@@ -58,9 +80,6 @@ export default function App() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<'general' | 'projects' | 'providers'>('general');
-  const [cursorSyncModalOpen, setCursorSyncModalOpen] = useState(false);
-  const [claudeSyncModalOpen, setClaudeSyncModalOpen] = useState(false);
-  const [openCodeSyncModalOpen, setOpenCodeSyncModalOpen] = useState(false);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -133,75 +152,15 @@ export default function App() {
     [mcp, showToast]
   );
 
-  const handleSyncRequest = useCallback(
-    (target: string) => {
-      syncConfirm.requestSync(() => handleSync(target));
-    },
-    [handleSync, syncConfirm]
-  );
-
-  const handleCursorSyncRequest = useCallback(() => {
-    setCursorSyncModalOpen(true);
-  }, []);
-
-  const handleCursorSyncGlobal = useCallback(() => {
-    setCursorSyncModalOpen(false);
-    syncConfirm.requestSync(() => handleSync('cursor'));
-  }, [handleSync, syncConfirm]);
-
-  const handleCursorSyncProject = useCallback(
-    (projectId: string) => {
-      setCursorSyncModalOpen(false);
-      syncConfirm.requestSync(() => handleSync(`cursor-project-${projectId}`));
-    },
-    [handleSync, syncConfirm]
-  );
-
-  const handleClaudeSyncRequest = useCallback(() => {
-    setClaudeSyncModalOpen(true);
-  }, []);
-
-  const handleClaudeSyncUser = useCallback(() => {
-    setClaudeSyncModalOpen(false);
-    syncConfirm.requestSync(() => handleSync('claude'));
-  }, [handleSync, syncConfirm]);
-
-  const handleClaudeSyncLocal = useCallback(
-    (projectId: string) => {
-      setClaudeSyncModalOpen(false);
-      syncConfirm.requestSync(() => handleSync(`claude-local-${projectId}`));
-    },
-    [handleSync, syncConfirm]
-  );
-
-  const handleClaudeSyncProject = useCallback(
-    (projectId: string) => {
-      setClaudeSyncModalOpen(false);
-      syncConfirm.requestSync(() => handleSync(`claude-project-${projectId}`));
-    },
-    [handleSync, syncConfirm]
-  );
-
-  const handleOpenCodeSyncRequest = useCallback(() => {
-    setOpenCodeSyncModalOpen(true);
-  }, []);
-
-  const handleOpenCodeSyncGlobal = useCallback(() => {
-    setOpenCodeSyncModalOpen(false);
-    syncConfirm.requestSync(() => handleSync('opencode'));
-  }, [handleSync, syncConfirm]);
-
-  const handleOpenCodeSyncProject = useCallback(
-    (projectId: string) => {
-      setOpenCodeSyncModalOpen(false);
-      syncConfirm.requestSync(() => handleSync(`opencode-project-${projectId}`));
-    },
-    [handleSync, syncConfirm]
-  );
+  // Sync modals (provider-specific scope selection)
+  const syncModals = useSyncModals(handleSync, syncConfirm);
 
   const handleEdit = (id: string | undefined) => setEditServerId(id ?? '');
   const handleCloseEdit = () => setEditServerId(null);
   const handleAddServer = () => setEditServerId('new');
+
+  // Resolve the info label for the active tab
+  const activeTabDef = TABS.find((t) => t.id === activeTab) ?? TABS[0];
 
   return (
     <div className="app">
@@ -212,31 +171,31 @@ export default function App() {
           onConfirm={syncConfirm.confirm}
         />
       )}
-      {cursorSyncModalOpen && (
-        <Modal isOpen onClose={() => setCursorSyncModalOpen(false)} aria-labelledby="cursor-sync-modal-title">
+      {syncModals.activeModal === 'cursor' && (
+        <Modal isOpen onClose={syncModals.closeModal} aria-labelledby="cursor-sync-modal-title">
           <CursorSyncModal
-            onClose={() => setCursorSyncModalOpen(false)}
-            onSyncGlobal={handleCursorSyncGlobal}
-            onSyncProject={handleCursorSyncProject}
+            onClose={syncModals.closeModal}
+            onSyncGlobal={() => syncModals.syncAndClose('cursor')}
+            onSyncProject={(projectId) => syncModals.syncProjectAndClose('cursor-project-', projectId)}
           />
         </Modal>
       )}
-      {claudeSyncModalOpen && (
-        <Modal isOpen onClose={() => setClaudeSyncModalOpen(false)} aria-labelledby="claude-sync-modal-title">
+      {syncModals.activeModal === 'claude' && (
+        <Modal isOpen onClose={syncModals.closeModal} aria-labelledby="claude-sync-modal-title">
           <ClaudeSyncModal
-            onClose={() => setClaudeSyncModalOpen(false)}
-            onSyncUser={handleClaudeSyncUser}
-            onSyncLocal={handleClaudeSyncLocal}
-            onSyncProject={handleClaudeSyncProject}
+            onClose={syncModals.closeModal}
+            onSyncUser={() => syncModals.syncAndClose('claude')}
+            onSyncLocal={(projectId) => syncModals.syncProjectAndClose('claude-local-', projectId)}
+            onSyncProject={(projectId) => syncModals.syncProjectAndClose('claude-project-', projectId)}
           />
         </Modal>
       )}
-      {openCodeSyncModalOpen && (
-        <Modal isOpen onClose={() => setOpenCodeSyncModalOpen(false)} aria-labelledby="opencode-sync-modal-title">
+      {syncModals.activeModal === 'opencode' && (
+        <Modal isOpen onClose={syncModals.closeModal} aria-labelledby="opencode-sync-modal-title">
           <OpenCodeSyncModal
-            onClose={() => setOpenCodeSyncModalOpen(false)}
-            onSyncGlobal={handleOpenCodeSyncGlobal}
-            onSyncProject={handleOpenCodeSyncProject}
+            onClose={syncModals.closeModal}
+            onSyncGlobal={() => syncModals.syncAndClose('opencode')}
+            onSyncProject={(projectId) => syncModals.syncProjectAndClose('opencode-project-', projectId)}
           />
         </Modal>
       )}
@@ -274,55 +233,16 @@ export default function App() {
 
       <main className="main">
         <div className="tabs">
-          <button
-            type="button"
-            className={`tab ${activeTab === 'mcp' ? 'active' : ''}`}
-            onClick={() => handleTabChange('mcp')}
-          >
-            MCP Servers
-          </button>
-          <button
-            type="button"
-            className={`tab ${activeTab === 'skills' ? 'active' : ''}`}
-            onClick={() => handleTabChange('skills')}
-          >
-            Skills
-          </button>
-          <button
-            type="button"
-            className={`tab ${activeTab === 'rules' ? 'active' : ''}`}
-            onClick={() => handleTabChange('rules')}
-          >
-            Rules
-          </button>
-          <button
-            type="button"
-            className={`tab ${activeTab === 'hooks' ? 'active' : ''}`}
-            onClick={() => handleTabChange('hooks')}
-          >
-            Hooks
-          </button>
-          <button
-            type="button"
-            className={`tab ${activeTab === 'subagents' ? 'active' : ''}`}
-            onClick={() => handleTabChange('subagents')}
-          >
-            Subagents
-          </button>
-          <button
-            type="button"
-            className={`tab ${activeTab === 'plugins' ? 'active' : ''}`}
-            onClick={() => handleTabChange('plugins')}
-          >
-            Plugins
-          </button>
-          <button
-            type="button"
-            className={`tab ${activeTab === 'credentials' ? 'active' : ''}`}
-            onClick={() => handleTabChange('credentials')}
-          >
-            API Credentials
-          </button>
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => handleTabChange(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {activeTab === 'mcp' && (
@@ -331,10 +251,10 @@ export default function App() {
               <h2>MCP Servers</h2>
               <div className="header-actions">
                 <SyncSection
-                  onSync={handleSyncRequest}
-                  onCursorSync={handleCursorSyncRequest}
-                  onClaudeSync={handleClaudeSyncRequest}
-                  onOpenCodeSync={handleOpenCodeSyncRequest}
+                  onSync={syncModals.handleSyncRequest}
+                  onCursorSync={() => syncModals.openModal('cursor')}
+                  onClaudeSync={() => syncModals.openModal('claude')}
+                  onOpenCodeSync={() => syncModals.openModal('opencode')}
                 />
                 <button type="button" className="btn" onClick={() => setImportOpen(true)}>
                   Import
@@ -354,39 +274,12 @@ export default function App() {
           </section>
         )}
 
-        {activeTab === 'skills' && (
+        {activeTab !== 'mcp' && TAB_COMPONENTS[activeTab] && (
           <section className="servers-section">
-            <SkillsTab />
-          </section>
-        )}
-
-        {activeTab === 'rules' && (
-          <section className="servers-section">
-            <RulesTab />
-          </section>
-        )}
-
-        {activeTab === 'credentials' && (
-          <section className="servers-section">
-            <CredentialsTab />
-          </section>
-        )}
-
-        {activeTab === 'hooks' && (
-          <section className="servers-section">
-            <HooksTab />
-          </section>
-        )}
-
-        {activeTab === 'subagents' && (
-          <section className="servers-section">
-            <SubagentsTab />
-          </section>
-        )}
-
-        {activeTab === 'plugins' && (
-          <section className="servers-section">
-            <PluginsTab />
+            {(() => {
+              const Component = TAB_COMPONENTS[activeTab];
+              return <Component />;
+            })()}
           </section>
         )}
       </main>
@@ -397,7 +290,7 @@ export default function App() {
           className="btn btn-sm"
           onClick={() => setInfoOpen(true)}
         >
-          {INFO_BUTTON_LABELS[activeTab]}
+          {activeTabDef.infoLabel}
         </button>
       </footer>
 

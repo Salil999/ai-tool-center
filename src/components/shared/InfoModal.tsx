@@ -1,6 +1,8 @@
+import type { TabId } from '@/App';
+
 interface InfoModalProps {
   onClose: () => void;
-  activeTab: 'mcp' | 'skills' | 'rules' | 'credentials' | 'hooks' | 'subagents' | 'plugins';
+  activeTab: TabId;
 }
 
 const TAB_TITLES: Record<InfoModalProps['activeTab'], string> = {
@@ -481,6 +483,70 @@ function SubagentsInfoContent() {
           <strong>Subagents</strong> are specialized agents that can be invoked to handle specific
           tasks. They extend the capabilities of your main AI assistant by delegating work to
           purpose-built agents for code review, exploration, shell operations, and more.
+        </p>
+        <p>
+          Subagents are defined as markdown files with YAML frontmatter. The frontmatter configures
+          the agent (name, model, tools, etc.) and the markdown body becomes the system prompt.
+        </p>
+      </section>
+
+      <section>
+        <h3>Supported Tools</h3>
+        <dl className="info-dl">
+          <dt>Claude Code</dt>
+          <dd>
+            Stored in <code>.claude/agents/</code> (project) or <code>~/.claude/agents/</code>{' '}
+            (global). Required fields: <code>name</code> (lowercase + hyphens),{' '}
+            <code>description</code>. Optional: <code>model</code> (sonnet, opus, haiku, inherit),{' '}
+            <code>tools</code>, <code>disallowedTools</code>, <code>permissionMode</code>,{' '}
+            <code>maxTurns</code>, <code>skills</code>, <code>mcpServers</code>,{' '}
+            <code>hooks</code>, <code>memory</code>, <code>background</code>,{' '}
+            <code>isolation</code>.
+          </dd>
+          <dt>Cursor</dt>
+          <dd>
+            Stored in <code>.cursor/agents/</code> (project) or <code>~/.cursor/agents/</code>{' '}
+            (global). All fields optional. <code>name</code> defaults to the filename.{' '}
+            <code>model</code> accepts <code>fast</code>, <code>inherit</code>, or a specific
+            model ID. Supports <code>readonly</code> and <code>background</code> booleans.
+          </dd>
+          <dt>OpenCode</dt>
+          <dd>
+            Stored in <code>.opencode/agents/</code> (project) or{' '}
+            <code>~/.config/opencode/agents/</code> (global). Required:{' '}
+            <code>description</code>. Optional: <code>mode</code> (subagent, primary, all),{' '}
+            <code>model</code> (provider/model-id format), <code>temperature</code>,{' '}
+            <code>top_p</code>, <code>steps</code>, <code>disable</code>, <code>hidden</code>,{' '}
+            <code>permission</code> (ask/allow/deny or object), <code>color</code>,{' '}
+            <code>tools</code> (object format).
+          </dd>
+          <dt>VS Code (Copilot)</dt>
+          <dd>
+            Stored in <code>.github/agents/</code> (workspace) or{' '}
+            <code>~/.copilot/agents</code> (user profile). Uses <code>.agent.md</code> or{' '}
+            <code>.md</code> extension. All fields optional. Supports{' '}
+            <code>tools</code> (array), <code>agents</code> (subagent allowlist),{' '}
+            <code>model</code> (string or prioritized array), <code>user-invocable</code>,{' '}
+            <code>disable-model-invocation</code>, <code>target</code> (vscode or
+            github-copilot), <code>argument-hint</code>, <code>handoffs</code>.
+          </dd>
+        </dl>
+      </section>
+
+      <section>
+        <h3>Validation</h3>
+        <p>
+          Each subagent is validated against all supported provider rules. Expanding a subagent
+          card shows provider-specific validation status. Use the Validate button in the editor to
+          check before saving.
+        </p>
+      </section>
+
+      <section>
+        <h3>Data Storage</h3>
+        <p>
+          Subagent files are stored centrally in <code>~/.ai_tools_manager/subagents/</code>.
+          Use Sync to copy enabled subagents to provider agent directories.
         </p>
       </section>
     </>
