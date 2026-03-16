@@ -1,0 +1,52 @@
+{
+  "name": "ai-tools-manager",
+  "version": "1.0.0",
+  "description": "Manage MCP server configurations and sync to AI tools",
+  "type": "module",
+  "main": "src/index.ts",
+  "bin": {
+    "mcp-manager": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "bun ./src/cli.ts",
+    "dev": "bun run build && bun --hot ./src/cli.ts --port 3847",
+    "build": "bun scripts/build-frontend.ts",
+    "compile": "bun run build && bun build --compile --minify ./src/cli.ts --outfile ai-tools-manager",
+    "test": "bun run vitest run",
+    "test:watch": "bun run vitest"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "ai-tools"
+  ],
+  "license": "GPL-3.0",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "dependencies": {
+    "@codemirror/lang-json": "^6.0.2",
+    "@codemirror/lint": "^6.9.5",
+    "@iarna/toml": "^2.2.5",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@uiw/react-codemirror": "^4.25.8",
+    "commander": "^12.1.0",
+    "diff": "^8.0.3",
+    "fuse.js": "^7.1.0",
+    "gray-matter": "^4.0.3",
+    "marked": "^17.0.4",
+    "open": "^11.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^28.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
+  }
+}

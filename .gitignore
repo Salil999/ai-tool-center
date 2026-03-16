@@ -1,0 +1,11 @@
+node_modules/
+dist/
+tmp-*
+tmp-test-*.json
+mcp-manager
+mcp-manager.exe
+ai-tools-manager
+ai-tools-manager.exe
+.ai_tools_manager/
+*.log
+.DS_Store
