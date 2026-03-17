@@ -11,11 +11,11 @@ describe('config/loader', () => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-loader-test-'));
     configPath = path.join(tmpDir, 'config.json');
     // Use empty skills dir so sync doesn't pick up user's real skills
-    process.env.AI_TOOLS_MANAGER_SKILLS_DIR = path.join(tmpDir, 'skills');
+    process.env.AI_TOOL_CENTER_SKILLS_DIR = path.join(tmpDir, 'skills');
   });
 
   afterEach(() => {
-    delete process.env.AI_TOOLS_MANAGER_SKILLS_DIR;
+    delete process.env.AI_TOOL_CENTER_SKILLS_DIR;
     try {
       fs.rmSync(tmpDir, { recursive: true });
     } catch {
@@ -88,12 +88,12 @@ describe('config/loader', () => {
       }
     });
 
-    it('default path is under .ai_tools_manager/mcp/', () => {
+    it('default path is under .ai_tool_center/mcp/', () => {
       const orig = process.env.MCP_MANAGER_CONFIG;
       delete process.env.MCP_MANAGER_CONFIG;
       try {
         const defaultPath = getConfigPath();
-        expect(defaultPath).toMatch(/[\\/]\.ai_tools_manager[\\/]mcp[\\/]config\.json$/);
+        expect(defaultPath).toMatch(/[\\/]\.ai_tool_center[\\/]mcp[\\/]config\.json$/);
       } finally {
         if (orig !== undefined) process.env.MCP_MANAGER_CONFIG = orig;
       }

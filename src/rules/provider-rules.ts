@@ -6,7 +6,7 @@ import { slugify } from '../utils/slugify.js';
 import type { AppConfig, ProviderRule } from '../types.js';
 
 function getRulesBase(): string {
-  return process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(os.homedir(), '.ai_tools_manager', 'rules');
+  return process.env.AI_TOOL_CENTER_RULES_DIR || path.join(os.homedir(), '.ai_tool_center', 'rules');
 }
 
 /** Providers that support multiple rule files (directory of .md/.mdc) */

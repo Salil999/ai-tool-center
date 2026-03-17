@@ -24,7 +24,7 @@ export interface AppConfig {
   skillOrder?: string[];
   /** Saved project directories for skill sync */
   projectDirectories: ProjectDirectory[];
-  /** AGENTS.md rules (source of truth in ~/.ai_tools_manager, synced to project paths) */
+  /** AGENTS.md rules (source of truth in ~/.ai_tool_center, synced to project paths) */
   agentRules: AgentRule[];
   /** Custom rule configurations (user-defined paths) */
   customRuleConfigs: CustomRuleConfig[];
@@ -92,7 +92,7 @@ export interface ProjectDirectory {
   name?: string;
 }
 
-/** AGENTS.md rule stored in ~/.ai_tools_manager, synced to project path */
+/** AGENTS.md rule stored in ~/.ai_tool_center, synced to project path */
 export interface AgentRule {
   id: string;
   projectPath: string;

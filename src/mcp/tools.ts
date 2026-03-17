@@ -81,7 +81,7 @@ export async function fetchToolsFromServer(
   }
 
   const client = new Client(
-    { name: 'ai-tools-manager', version: '1.0.0' },
+    { name: 'ai-tool-center', version: '1.0.0' },
     { capabilities: {} }
   );
 

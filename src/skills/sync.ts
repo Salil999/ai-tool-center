@@ -8,7 +8,7 @@ import { slugify } from '../utils/slugify.js';
 import type { AppConfig, Skill } from '../types.js';
 
 function getManagedSkillsDir(): string {
-  return process.env.AI_TOOLS_MANAGER_SKILLS_DIR || path.join(os.homedir(), '.ai_tools_manager', 'skills');
+  return process.env.AI_TOOL_CENTER_SKILLS_DIR || path.join(os.homedir(), '.ai_tool_center', 'skills');
 }
 
 export { getManagedSkillsDir };
@@ -34,7 +34,7 @@ function listManagedSkillDirs(): string[] {
 }
 
 /**
- * Sync config.skills with ~/.ai_tools_manager/skills/ directory.
+ * Sync config.skills with ~/.ai_tool_center/skills/ directory.
  * - Adds skills from disk that aren't in config
  * - Removes config entries for skills no longer on disk
  * - Preserves enabled state and order from config for existing skills

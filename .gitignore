@@ -2,10 +2,8 @@ node_modules/
 dist/
 tmp-*
 tmp-test-*.json
-mcp-manager
-mcp-manager.exe
-ai-tools-manager
-ai-tools-manager.exe
-.ai_tools_manager/
+ai-tool-center
+ai-tool-center.exe
+.ai_tool_center/
 *.log
 .DS_Store

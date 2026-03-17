@@ -1,5 +1,5 @@
 /**
- * Central hook store under ~/.ai_tools_manager/hooks/{providerId}/.
+ * Central hook store under ~/.ai_tool_center/hooks/{providerId}/.
  *
  * Each provider+scope pair has its own file:
  *   user/global  → {providerId}/global.json
@@ -13,7 +13,7 @@ import type { HookItem } from '../types.js';
 
 export type { HookItem };
 
-export const HOOKS_DIR = path.join(os.homedir(), '.ai_tools_manager', 'hooks');
+export const HOOKS_DIR = path.join(os.homedir(), '.ai_tool_center', 'hooks');
 
 export interface HooksData {
   order: string[];

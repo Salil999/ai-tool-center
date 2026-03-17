@@ -144,7 +144,7 @@ export async function getRuleImportSources() {
   return fetchJSON<RuleImportSourcesResponse>(apiUrl('/rules/import/sources'));
 }
 
-/** Import from Cursor, Augment, or Continue into that provider's Rules section. */
+/** Import from Cursor, VS Code, or OpenCode into that provider's Rules section. */
 export async function importRulesFromProvider(sourceId: string) {
   return fetchJSON<{ success: boolean; importedCount?: number }>(
     apiUrl(`/rules/import/${encodeURIComponent(sourceId)}/provider`),

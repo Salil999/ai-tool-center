@@ -343,7 +343,7 @@ export function importFromProjectSourceToAgent(
 }
 
 /**
- * Import rules from a source into a target agent's AGENTS.md (stored in ~/.ai_tools_manager).
+ * Import rules from a source into a target agent's AGENTS.md (stored in ~/.ai_tool_center).
  */
 export function importFromRuleSource(
   sourceId: string,
@@ -423,7 +423,7 @@ export function importFromProjectSourceToProvider(
   providerId: string,
   config: AppConfig
 ): { success: boolean; importedCount: number } {
-  const rulesBase = process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(os.homedir(), '.ai_tools_manager', 'rules');
+  const rulesBase = process.env.AI_TOOL_CENTER_RULES_DIR || path.join(os.homedir(), '.ai_tool_center', 'rules');
   const destDir = path.join(rulesBase, providerId);
   const ext = providerId === 'cursor' ? '.mdc' : '.md';
   const srcResolved = path.resolve(sourcePath);
@@ -460,7 +460,7 @@ export function importFromProjectSourceToProvider(
 
 /**
  * Import rules from a provider's directory (e.g. ~/.cursor/rules) into the app's Rules section
- * (~/.ai_tools_manager/rules/{providerId}). Use when the user has rules in Cursor or Augment
+ * (~/.ai_tool_center/rules/{providerId}). Use when the user has rules in Cursor
  * and wants to bring them into the app for central management.
  */
 export function importFromProviderToRules(
@@ -476,7 +476,7 @@ export function importFromProviderToRules(
     throw new Error(`Provider ${providerId} is not a directory-based rules source`);
   }
 
-  const rulesBase = process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(os.homedir(), '.ai_tools_manager', 'rules');
+  const rulesBase = process.env.AI_TOOL_CENTER_RULES_DIR || path.join(os.homedir(), '.ai_tool_center', 'rules');
   const destDir = path.join(rulesBase, providerId);
   const ext = providerId === 'cursor' ? '.mdc' : '.md';
   const srcDir = path.resolve(provider.path);

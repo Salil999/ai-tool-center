@@ -6,7 +6,7 @@ import { isPathSafe, resolvePath } from '../providers/utils.js';
 import { SUBAGENT_PROVIDERS } from './providers.js';
 import type { AppConfig, Subagent, SubagentImportSource, ProjectSubagentSource } from '../types.js';
 
-const MANAGED_DIR = path.join(os.homedir(), '.ai_tools_manager', 'subagents');
+const MANAGED_DIR = path.join(os.homedir(), '.ai_tool_center', 'subagents');
 
 /** Get the central managed subagents directory. */
 export function getManagedSubagentsDir(): string {

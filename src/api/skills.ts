@@ -204,7 +204,7 @@ export function createSkillsRouter(getConfig: GetConfig, saveConfig: SaveConfig)
 
     if (body.path !== undefined) {
       return res.status(400).json({
-        error: 'Path cannot be changed. Skills are stored in ~/.ai_tools_manager/skills/',
+        error: 'Path cannot be changed. Skills are stored in ~/.ai_tool_center/skills/',
       });
     }
     if (body.enabled !== undefined) {

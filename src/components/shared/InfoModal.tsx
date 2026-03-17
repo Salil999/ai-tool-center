@@ -66,7 +66,7 @@ function MCPInfoContent() {
             <dt>Sync</dt>
             <dd>
               A dropdown that syncs your current server list to an AI tool&apos;s config file. Click it to see
-              targets (Cursor, VS Code, Claude, OpenCode, Gemini CLI, Augment). Choosing a target overwrites that tool&apos;s MCP config with your servers. Use
+              targets (Cursor, VS Code, Claude Code, OpenCode). Choosing a target overwrites that tool&apos;s MCP config with your servers. Use
               <strong> Custom…</strong> to specify a file path and config key (e.g. <code>mcpServers</code>) for
               tools not in the list. A confirmation appears before syncing: whatever is displayed on the page is the source of truth, and it&apos;s strongly recommended to import before syncing.
             </dd>
@@ -170,9 +170,7 @@ function MCPInfoContent() {
             <li><strong>Cursor</strong> — <code>~/.cursor/mcp.json</code></li>
             <li><strong>VS Code</strong> — <code>~/Library/Application Support/Code/User/mcp.json</code> (macOS)</li>
             <li><strong>Claude Code</strong> — <code>~/.claude.json</code></li>
-            <li><strong>Claude Desktop</strong> — <code>~/Library/Application Support/Claude/claude_desktop_config.json</code> (macOS)</li>
             <li><strong>OpenCode</strong> — <code>~/.config/opencode/opencode.json</code></li>
-            <li><strong>Gemini CLI</strong> — <code>~/.gemini/settings.json</code></li>
           </ul>
           <p>
             <strong>Custom…</strong> lets you specify any file path and config key for tools not listed.
@@ -191,8 +189,8 @@ function MCPInfoContent() {
         <section>
           <h3>Data Storage</h3>
           <p>
-            Your server configuration is stored in <code>~/.ai_tools_manager/mcp/config.json</code>. OAuth tokens for
-            HTTP servers are stored separately in <code>~/.ai_tools_manager/mcp/oauth-{'{serverId}'}.json</code>. Keep these
+            Your server configuration is stored in <code>~/.ai_tool_center/mcp/config.json</code>. OAuth tokens for
+            HTTP servers are stored separately in <code>~/.ai_tool_center/mcp/oauth-{'{serverId}'}.json</code>. Keep these
             files private and do not share them.
           </p>
         </section>
@@ -228,7 +226,7 @@ function SkillsInfoContent() {
             <dt>Import</dt>
             <dd>
               Opens a modal to import skills from provider directories or project directories. Skills are
-              copied into the central store at <code>~/.ai_tools_manager/skills/</code>. Duplicate skills
+              copied into the central store at <code>~/.ai_tool_center/skills/</code>. Duplicate skills
               (same name) are skipped. You can also import from a custom directory path. Importing is useful
               for validating and editing skills even if you don&apos;t plan to sync them.
             </dd>
@@ -313,7 +311,7 @@ function SkillsInfoContent() {
         <section>
           <h3>Data Storage</h3>
           <p>
-            Skills are stored in <code>~/.ai_tools_manager/skills/</code>. Each skill is a subdirectory
+            Skills are stored in <code>~/.ai_tool_center/skills/</code>. Each skill is a subdirectory
             containing its <code>SKILL.md</code> and any supporting files. Keep this directory private if
             your skills contain sensitive information.
           </p>
@@ -351,7 +349,7 @@ function RulesInfoContent() {
             <dt>Add AGENTS.md</dt>
             <dd>
               Creates a new AGENTS.md for a project. Pick a project path and edit the markdown content.
-              Content is stored in <code>~/.ai_tools_manager/agents/</code> and can be synced to the project path.
+              Content is stored in <code>~/.ai_tool_center/agents/</code> and can be synced to the project path.
             </dd>
           </dl>
         </section>
@@ -402,8 +400,8 @@ function RulesInfoContent() {
         <section>
           <h3>Data Storage</h3>
           <p>
-            Provider rules are stored in <code>~/.ai_tools_manager/rules/</code>. AGENTS.md content is stored in{' '}
-            <code>~/.ai_tools_manager/agents/</code>.
+            Provider rules are stored in <code>~/.ai_tool_center/rules/</code>. AGENTS.md content is stored in{' '}
+            <code>~/.ai_tool_center/agents/</code>.
           </p>
         </section>
     </>
@@ -545,7 +543,7 @@ function SubagentsInfoContent() {
       <section>
         <h3>Data Storage</h3>
         <p>
-          Subagent files are stored centrally in <code>~/.ai_tools_manager/subagents/</code>.
+          Subagent files are stored centrally in <code>~/.ai_tool_center/subagents/</code>.
           Use Sync to copy enabled subagents to provider agent directories.
         </p>
       </section>
@@ -669,9 +667,9 @@ function CredentialsInfoContent() {
         <section>
           <h3>Data Storage &amp; Sync</h3>
           <p>
-            Credentials are stored in <code>~/.ai_tools_manager/creds/creds.json</code>. The file is
+            Credentials are stored in <code>~/.ai_tool_center/creds/creds.json</code>. The file is
             read and written on every action, so changes sync immediately to disk. If you use cloud
-            sync (e.g. iCloud, Dropbox) for <code>~/.ai_tools_manager/</code>, your credentials will
+            sync (e.g. iCloud, Dropbox) for <code>~/.ai_tool_center/</code>, your credentials will
             sync across devices. <strong>Keep this directory private</strong>—never commit it to version
             control or share it.
           </p>

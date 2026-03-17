@@ -27,7 +27,7 @@ export function createRulesImportRouter(getConfig: GetConfig, saveConfig: SaveCo
     }
   });
 
-  /** Import from provider (cursor, augment, etc.) or project provider path into Rules section. */
+  /** Import from provider (cursor, vscode, etc.) or project provider path into Rules section. */
   router.post('/:source/provider', (req: Request, res: Response) => {
     const config = getConfig();
     const sourceId = String(req.params.source ?? '');
@@ -108,7 +108,7 @@ export function createRulesImportRouter(getConfig: GetConfig, saveConfig: SaveCo
     let totalRulesImported = 0;
     let agentsImported = false;
 
-    // Import provider rules (cursor, augment, continue)
+    // Import provider rules (cursor, vscode, opencode)
     for (const { key, subdir } of PROJECT_RULE_SUBDIRS) {
       const fullPath = path.join(projectPath, ...subdir.split('/'));
 

@@ -1,97 +1,98 @@
-# AI Tools Manager
+# AI Tool Center
 
-A local web app to manage MCP (Model Context Protocol) server configurations and sync them to AI tools like Cursor, VS Code, Claude Code, and more.
+A local web app for managing AI coding tool configurations. Manage MCP servers, agent skills, rules, subagents, hooks, and API credentials—all in one place—and sync them to Claude Code, Cursor, VS Code, and OpenCode.
 
 ## Features
 
-- **View** MCP server configurations
-- **Edit** server configs (stdio, http, sse)
-- **Enable/disable** servers
-- **View terminal output** for stdio servers (start/stop and stream output)
-- **Sync** to Cursor, VS Code, Claude Code, OpenCode, and more with one click
-- **Custom sync** to any config file path
-- **API Credentials** tab for storing API keys and secrets (masked with reveal toggle)
+- **MCP Servers** — Add, edit, enable/disable, and sync MCP server configs to supported tools
+- **Agent Skills** — Create and manage SKILL.md skills; sync to provider skill directories or projects
+- **Rules** — Manage AGENTS.md rules and Cursor `.mdc` rules; sync to provider rule paths
+- **Subagents** — Define and sync subagent markdown files across tools
+- **Hooks** — Configure event-driven automations for Claude Code
+- **Plugins** — Manage OpenCode plugins
+- **API Credentials** — Store API keys and secrets locally, masked with reveal toggle
+- **Settings** — Export/import config, reset to defaults
+
+## Supported Providers
+
+| Provider | MCP Config | Rules |
+|----------|-----------|-------|
+| Claude Code | `~/.claude.json` | AGENTS.md |
+| Cursor | `~/.cursor/mcp.json` | `.cursor/rules/*.mdc` |
+| VS Code | `~/Library/Application Support/Code/User/mcp.json` (macOS) | — |
+| OpenCode | `~/.config/opencode/opencode.json` | AGENTS.md |
 
 ## Installation
 
-Requires [Bun](https://bun.sh) (recommended) or Node.js 18+.
+Requires [Bun](https://bun.sh) 1.0+.
 
 ```bash
+git clone https://github.com/Salil999/ai-tool-center.git
+cd ai-tool-center
 bun install
-# or: npm install
 ```
-
-Use `bun start` or `npm run start:node` if you prefer Node.
 
 ## Usage
 
-**Development** (React hot reload + API):
+**Development:**
 
 ```bash
-npm run dev
+bun run dev
 ```
 
-Opens Vite on http://localhost:5173 (proxies `/api` to backend on 3847).
+Builds the frontend and starts the server with hot reload on `http://localhost:3847`.
 
-**Production**:
+**Production:**
 
 ```bash
-npm run build
-npm start
+bun run build
+bun start
 ```
 
-Then open http://localhost:3847 in your browser.
-
-**CLI options**:
+**CLI options:**
 
 ```bash
-bun start -- --port 3000              # Custom port
-bun start -- --config ~/my-config.json # Custom config
+bun start -- --port 3000               # Custom port
+bun start -- --config ~/my-config.json  # Custom config path
 ```
 
-**Standalone executable** (Bun only):
+**Compile standalone executable:**
 
 ```bash
 bun run compile
 ```
 
-Produces `./ai-tools-manager` (or `ai-tools-manager.exe` on Windows). Run from the project root so it can find the `dist/` folder. For a fully self-contained single-file binary with embedded frontend, see [Bun's compile docs](https://bun.com/docs/bundler/executables).
+Produces `./ai-tool-center` (or `ai-tool-center.exe` on Windows). The executable must be run from a directory containing the `dist/` folder.
+
+## Data Storage
+
+All data is stored in `~/.ai_tool_center/`:
+
+| Path | Contents |
+|------|----------|
+| `~/.ai_tool_center/mcp/config.json` | Server configurations |
+| `~/.ai_tool_center/mcp/oauth-*.json` | OAuth tokens for HTTP servers |
+| `~/.ai_tool_center/skills/` | Agent skill files |
+| `~/.ai_tool_center/rules/` | Provider rule files |
+| `~/.ai_tool_center/agents/` | AGENTS.md content |
+| `~/.ai_tool_center/subagents/` | Subagent definitions |
+| `~/.ai_tool_center/hooks/` | Hook configurations |
+| `~/.ai_tool_center/creds/creds.json` | API credentials |
+
+Override the config path with `--config <path>` or the `MCP_MANAGER_CONFIG` env var.
 
 ## Releases
 
-Releases are built automatically when you push a tag that follows [semantic versioning](https://semver.org/) (e.g. `v1.0.0`, `v2.1.3`, `v1.0.0-beta.1`):
+Pre-built binaries for Linux (x64), macOS (x64 and Apple Silicon), and Windows (x64) are available on the [Releases page](https://github.com/Salil999/ai-tool-center/releases).
+
+Releases are created automatically when a semver tag is pushed:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-This triggers a GitHub Action that builds cross-platform executables for:
-
-- **Linux** (x64)
-- **macOS** (x64 and Apple Silicon arm64)
-- **Windows** (x64)
-
-Each release includes a `.tar.gz` archive containing the executable and `dist/` folder. Extract and run from the extracted directory.
-
-## Config
-
-- **Default config**: `~/.ai_tools_manager/mcp/config.json`
-- **API credentials**: `~/.ai_tools_manager/creds/creds.json`
-- **Override**: `--config <path>` or `MCP_MANAGER_CONFIG` env var
-
-On first run, if `~/.cursor/mcp.json` exists, it will be imported as the initial config.
-
-## Sync Targets
-
-| Target | Config Path |
-|--------|-------------|
-| Cursor | `~/.cursor/mcp.json` |
-| VS Code | macOS: `~/Library/Application Support/Code/User/mcp.json` · Windows: `%APPDATA%\Code\User\mcp.json` · Linux: `~/.config/Code/User/mcp.json` |
-| Claude Code | `~/.claude.json` |
-| Claude Desktop | macOS: `~/Library/Application Support/Claude/claude_desktop_config.json` · Windows: `%APPDATA%\Claude\claude_desktop_config.json` · Linux: `~/.config/Claude/claude_desktop_config.json` |
-| OpenCode | `~/.config/opencode/opencode.json` |
-| Gemini CLI | `~/.gemini/settings.json` |
+Each release includes a `.tar.gz` archive with the executable and `dist/` folder. Extract and run from the same directory.
 
 ## License
 

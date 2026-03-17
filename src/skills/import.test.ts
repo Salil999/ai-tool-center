@@ -15,11 +15,11 @@ describe('skills/import', () => {
     tmpDir = fs.mkdtempSync(path.join(os.homedir(), '.skills-import-test-'));
     skillsDir = path.join(tmpDir, 'skills');
     fs.mkdirSync(skillsDir, { recursive: true });
-    process.env.AI_TOOLS_MANAGER_SKILLS_DIR = path.join(tmpDir, 'managed');
+    process.env.AI_TOOL_CENTER_SKILLS_DIR = path.join(tmpDir, 'managed');
   });
 
   afterEach(() => {
-    delete process.env.AI_TOOLS_MANAGER_SKILLS_DIR;
+    delete process.env.AI_TOOL_CENTER_SKILLS_DIR;
     try {
       fs.rmSync(tmpDir, { recursive: true });
     } catch {

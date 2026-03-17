@@ -14,11 +14,11 @@ import { isPathSafe, mergeServers } from '../providers/utils.js';
 import type { AppConfig, GetConfig, SaveConfig } from '../types.js';
 
 function getRulesBase(): string {
-  return process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(getConfigBaseDir(), 'rules');
+  return process.env.AI_TOOL_CENTER_RULES_DIR || path.join(getConfigBaseDir(), 'rules');
 }
 
 function getAgentsBase(): string {
-  return process.env.AI_TOOLS_MANAGER_AGENTS_DIR || path.join(getConfigBaseDir(), 'agents');
+  return process.env.AI_TOOL_CENTER_AGENTS_DIR || path.join(getConfigBaseDir(), 'agents');
 }
 
 function getProviderRulesDir(providerId: string): string {
@@ -233,7 +233,7 @@ export function createSettingsRouter(getConfig: GetConfig, saveConfigFn: SaveCon
         rules,
       };
 
-      const filename = `ai-tools-manager-export-${new Date().toISOString().slice(0, 10)}.json`;
+      const filename = `ai-tool-center-export-${new Date().toISOString().slice(0, 10)}.json`;
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.send(JSON.stringify(exportPayload, null, 2));

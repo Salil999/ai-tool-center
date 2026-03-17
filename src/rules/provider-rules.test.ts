@@ -11,7 +11,7 @@ import {
   deleteProviderRule,
 } from './provider-rules.js';
 
-const RULES_BASE = process.env.AI_TOOLS_MANAGER_RULES_DIR || path.join(os.homedir(), '.ai_tools_manager', 'rules');
+const RULES_BASE = process.env.AI_TOOL_CENTER_RULES_DIR || path.join(os.homedir(), '.ai_tool_center', 'rules');
 
 describe('rules/provider-rules', () => {
   let tmpDir: string;
@@ -20,11 +20,11 @@ describe('rules/provider-rules', () => {
   beforeEach(() => {
     // Use path under HOME so isPathSafe allows read/write
     tmpDir = fs.mkdtempSync(path.join(os.homedir(), '.rules-test-'));
-    process.env.AI_TOOLS_MANAGER_RULES_DIR = tmpDir;
+    process.env.AI_TOOL_CENTER_RULES_DIR = tmpDir;
   });
 
   afterEach(() => {
-    delete process.env.AI_TOOLS_MANAGER_RULES_DIR;
+    delete process.env.AI_TOOL_CENTER_RULES_DIR;
     try {
       fs.rmSync(tmpDir, { recursive: true });
     } catch {

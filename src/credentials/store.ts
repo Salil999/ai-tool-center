@@ -15,14 +15,14 @@ export interface CredentialsData {
 }
 
 function getDefaultCredsDir(): string {
-  return path.join(os.homedir(), '.ai_tools_manager', 'creds');
+  return path.join(os.homedir(), '.ai_tool_center', 'creds');
 }
 
 function getCredsPath(dir: string): string {
   return path.join(dir, CREDS_FILENAME);
 }
 
-/** File-backed credential store at ~/.ai_tools_manager/creds/creds.json */
+/** File-backed credential store at ~/.ai_tool_center/creds/creds.json */
 export function getCredsDir(override?: string): string {
   return override ?? getDefaultCredsDir();
 }

@@ -6,10 +6,10 @@ import { RULES_PROVIDERS, getRuleProviderPath } from './providers.js';
 import type { AppConfig } from '../types.js';
 
 const AGENTS_BASE =
-  process.env.AI_TOOLS_MANAGER_AGENTS_DIR || path.join(os.homedir(), '.ai_tools_manager', 'agents');
+  process.env.AI_TOOL_CENTER_AGENTS_DIR || path.join(os.homedir(), '.ai_tool_center', 'agents');
 
 /**
- * Get path to AGENTS.md for an agent rule (stored in ~/.ai_tools_manager/agents/{id}/).
+ * Get path to AGENTS.md for an agent rule (stored in ~/.ai_tool_center/agents/{id}/).
  */
 export function getAgentsPathForAgent(agentId: string): string {
   return path.join(AGENTS_BASE, agentId, 'AGENTS.md');

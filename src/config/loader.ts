@@ -4,8 +4,8 @@ import os from 'os';
 import { syncSkillsFromDisk } from '../skills/sync.js';
 import type { AppConfig } from '../types.js';
 
-/** MCP config and OAuth storage: ~/.ai_tools_manager/mcp/ */
-const MCP_DIR = path.join(os.homedir(), '.ai_tools_manager', 'mcp');
+/** MCP config and OAuth storage: ~/.ai_tool_center/mcp/ */
+const MCP_DIR = path.join(os.homedir(), '.ai_tool_center', 'mcp');
 
 export const DEFAULT_CONFIG = {
   servers: {},
@@ -27,7 +27,7 @@ function getDefaultConfigPath(): string {
     }
     return homeConfig;
   } catch {
-    const cwdDir = path.join(process.cwd(), '.ai_tools_manager', 'mcp');
+    const cwdDir = path.join(process.cwd(), '.ai_tool_center', 'mcp');
     try {
       if (!fs.existsSync(cwdDir)) {
         fs.mkdirSync(cwdDir, { recursive: true });
@@ -126,7 +126,7 @@ export function getConfigPath(override?: string): string {
   return override || process.env.MCP_MANAGER_CONFIG || getDefaultConfigPath();
 }
 
-/** Base directory for config (~/.ai_tools_manager). Used for Reset/Export/Import. */
+/** Base directory for config (~/.ai_tool_center). Used for Reset/Export/Import. */
 export function getConfigBaseDir(): string {
-  return path.join(os.homedir(), '.ai_tools_manager');
+  return path.join(os.homedir(), '.ai_tool_center');
 }

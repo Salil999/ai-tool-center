@@ -26,7 +26,7 @@ describe('credentials/store', () => {
 
     it('returns default dir when no override', () => {
       const dir = getCredsDir();
-      expect(dir).toContain('.ai_tools_manager');
+      expect(dir).toContain('.ai_tool_center');
       expect(dir).toContain('creds');
     });
   });

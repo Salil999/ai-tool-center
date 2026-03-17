@@ -85,7 +85,7 @@ export function ImportSubagentModal({ onClose, onImport, onError }: ImportSubage
       <div className="modal-body">
         <p className="import-intro">
           Import subagent definitions from provider directories (Claude Code, Cursor) or project directories.
-          Files are copied into the central store at ~/.ai_tools_manager/subagents/
+          Files are copied into the central store at ~/.ai_tool_center/subagents/
         </p>
 
         {loading ? (

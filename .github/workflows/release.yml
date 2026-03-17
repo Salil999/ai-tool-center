@@ -17,19 +17,19 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             arch: x64
-            artifact_name: ai-tools-manager-linux-x64
+            artifact_name: ai-tool-center-linux-x64
           - os: macos-latest
             platform: darwin
             arch: x64
-            artifact_name: ai-tools-manager-darwin-x64
+            artifact_name: ai-tool-center-darwin-x64
           - os: macos-14
             platform: darwin
             arch: arm64
-            artifact_name: ai-tools-manager-darwin-arm64
+            artifact_name: ai-tool-center-darwin-arm64
           - os: windows-latest
             platform: windows
             arch: x64
-            artifact_name: ai-tools-manager-windows-x64
+            artifact_name: ai-tool-center-windows-x64
 
     runs-on: ${{ matrix.os }}
 
@@ -55,9 +55,9 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.platform }}" = "windows" ]; then
-            EXE=ai-tools-manager.exe
+            EXE=ai-tool-center.exe
           else
-            EXE=ai-tools-manager
+            EXE=ai-tool-center
           fi
           mkdir -p release
           cp "$EXE" release/

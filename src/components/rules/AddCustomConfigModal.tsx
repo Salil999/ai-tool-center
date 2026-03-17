@@ -49,7 +49,7 @@ export function AddCustomConfigModal({ onClose, onSaved }: AddCustomConfigModalP
       </div>
       <form className="modal-body" onSubmit={handleSubmit}>
         <p className="skill-editor-desc">
-          Add a custom rules configuration. Rules are stored in ~/.ai_tools_manager and synced to your specified path.
+          Add a custom rules configuration. Rules are stored in ~/.ai_tool_center and synced to your specified path.
         </p>
 
         <div className="form-group">

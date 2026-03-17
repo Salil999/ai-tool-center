@@ -32,13 +32,13 @@ describe('integration: MCP server add/remove flow', () => {
       JSON.stringify({ servers: {}, skills: {}, skillOrder: [], projectDirectories: [] }),
       'utf8'
     );
-    process.env.AI_TOOLS_MANAGER_SKILLS_DIR = path.join(tmpDir, 'skills');
+    process.env.AI_TOOL_CENTER_SKILLS_DIR = path.join(tmpDir, 'skills');
     fs.mkdirSync(path.join(tmpDir, 'skills'), { recursive: true });
     app = createApp({ configPath });
   });
 
   afterEach(() => {
-    delete process.env.AI_TOOLS_MANAGER_SKILLS_DIR;
+    delete process.env.AI_TOOL_CENTER_SKILLS_DIR;
     try {
       fs.rmSync(tmpDir, { recursive: true });
     } catch {

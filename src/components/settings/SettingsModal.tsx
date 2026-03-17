@@ -89,7 +89,7 @@ export function SettingsModal({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `ai-tools-manager-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `ai-tool-center-export-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
       onSuccess?.('Config exported successfully.');

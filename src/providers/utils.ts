@@ -202,7 +202,7 @@ export function canonicalToNative(
   return { [wrapperKey]: result };
 }
 
-/** Standard mcpServers format preset (Cursor, Augment, Claude Desktop, Custom). */
+/** Standard mcpServers format preset (Cursor, VS Code, Custom). */
 export const FORMAT_STANDARD: NativeFormatOptions = {};
 
 /** Claude Code format preset: always includes type, args, env. */

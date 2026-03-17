@@ -129,8 +129,8 @@ export function ImportSkillModal({ onClose, onImport, onError }: ImportSkillModa
       </div>
       <div className="modal-body">
         <p className="import-intro">
-          Import skills from provider directories (Cursor, Claude, Gemini CLI, etc.) or project directories.
-          Skills are copied into the central store at ~/.ai_tools_manager/skills/
+          Import skills from provider directories (Cursor, Claude Code, etc.) or project directories.
+          Skills are copied into the central store at ~/.ai_tool_center/skills/
         </p>
 
         {loading ? (

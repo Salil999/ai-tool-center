@@ -24,7 +24,7 @@ export function createOAuthProvider(serverId: string, serverUrl: string, baseUrl
     get clientMetadata() {
       return {
         redirect_uris: [redirectUrl],
-        client_name: 'ai-tools-manager',
+        client_name: 'ai-tool-center',
         scope: 'openid',
       };
     },

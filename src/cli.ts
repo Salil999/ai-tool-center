@@ -5,7 +5,7 @@ import path from 'path';
 import { createApp } from './index.js';
 
 program
-  .name('ai-tools-manager')
+  .name('ai-tool-center')
   .description('Manage MCP server configurations and sync to AI tools')
   .option('-p, --port <number>', 'Port to run the server on', '3847')
   .option('-c, --config <path>', 'Path to config file', process.env.MCP_MANAGER_CONFIG)
