@@ -20,72 +20,11 @@ A local web app for managing AI coding tool configurations. Manage MCP servers, 
 - VS Code
 - OpenCode
 
-## Installation
-
-Requires [Bun](https://bun.sh) 1.0+.
-
-```bash
-git clone https://github.com/Salil999/ai-tool-center.git
-cd ai-tool-center
-bun install
-```
-
-## Usage
-
-**Development:**
-
-```bash
-bun run dev
-```
-
-Builds the frontend and starts the server with hot reload on `http://localhost:3847`.
-
-**Production:**
-
-```bash
-bun run build
-bun start
-```
-
-**CLI options:**
-
-```bash
-bun start -- --port 3000               # Custom port
-bun start -- --config ~/my-config.json  # Custom config path
-```
-
-**Compile standalone executable:**
-
-```bash
-bun run compile
-```
-
-Produces `./ai-tool-center` (or `ai-tool-center.exe` on Windows). The executable must be run from a directory containing the `dist/` folder.
-
-## Data Storage
-
-All data is stored in `~/.ai_tool_center/`:
-
-| Path | Contents |
-|------|----------|
-| `~/.ai_tool_center/mcp/config.json` | Server configurations |
-| `~/.ai_tool_center/mcp/oauth-*.json` | OAuth tokens for HTTP servers |
-| `~/.ai_tool_center/skills/` | Agent skill files |
-| `~/.ai_tool_center/rules/` | Provider rule files |
-| `~/.ai_tool_center/agents/` | AGENTS.md content |
-| `~/.ai_tool_center/subagents/` | Subagent definitions |
-| `~/.ai_tool_center/hooks/` | Hook configurations |
-| `~/.ai_tool_center/creds/creds.json` | API credentials |
-
-Override the config path with `--config <path>` or the `MCP_MANAGER_CONFIG` env var.
-
-## Releases
+## Download
 
 Pre-built binaries for Linux (x64), macOS (x64 and Apple Silicon), and Windows (x64) are available on the [Releases page](https://github.com/Salil999/ai-tool-center/releases).
 
 Each release includes a `.tar.gz` archive with the executable and `dist/` folder.
-
-**Download and run:**
 
 1. Download the archive for your platform from the [Releases page](https://github.com/Salil999/ai-tool-center/releases)
 2. Extract it:
@@ -115,6 +54,67 @@ The app will be available at `http://localhost:3847`.
 ./ai-tool-center --port 3000               # Custom port
 ./ai-tool-center --config ~/my-config.json  # Custom config path
 ```
+
+## Data Storage
+
+All data is stored in `~/.ai_tool_center/`:
+
+| Path | Contents |
+|------|----------|
+| `~/.ai_tool_center/mcp/config.json` | Server configurations |
+| `~/.ai_tool_center/mcp/oauth-*.json` | OAuth tokens for HTTP servers |
+| `~/.ai_tool_center/skills/` | Agent skill files |
+| `~/.ai_tool_center/rules/` | Provider rule files |
+| `~/.ai_tool_center/agents/` | AGENTS.md content |
+| `~/.ai_tool_center/subagents/` | Subagent definitions |
+| `~/.ai_tool_center/hooks/` | Hook configurations |
+| `~/.ai_tool_center/creds/creds.json` | API credentials |
+
+Override the config path with `--config <path>` or the `MCP_MANAGER_CONFIG` env var.
+
+---
+
+## Development
+
+### Installation
+
+Requires [Bun](https://bun.sh) 1.0+.
+
+```bash
+git clone https://github.com/Salil999/ai-tool-center.git
+cd ai-tool-center
+bun install
+```
+
+### Running locally
+
+```bash
+bun run dev
+```
+
+Builds the frontend and starts the server with hot reload on `http://localhost:3847`.
+
+### Production build
+
+```bash
+bun run build
+bun start
+```
+
+```bash
+bun start -- --port 3000               # Custom port
+bun start -- --config ~/my-config.json  # Custom config path
+```
+
+### Compile standalone executable
+
+```bash
+bun run compile
+```
+
+Produces `./ai-tool-center` (or `ai-tool-center.exe` on Windows). The executable must be run from a directory containing the `dist/` folder.
+
+### Creating a release
 
 Releases are created automatically when a semver tag is pushed:
 
