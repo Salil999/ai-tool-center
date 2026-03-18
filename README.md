@@ -1,6 +1,6 @@
 # AI Tool Center
 
-A local web app for managing AI coding tool configurations. Manage MCP servers, agent skills, rules, subagents, hooks, and API credentials—all in one place—and sync them to Claude Code, Cursor, VS Code, and OpenCode.
+A local web app for managing AI coding tool configurations. Manage MCP servers, agent skills, rules, subagents, hooks, and API credentials all in one place. Sync them to the supported AI providers.
 
 ## Features
 
@@ -15,12 +15,10 @@ A local web app for managing AI coding tool configurations. Manage MCP servers, 
 
 ## Supported Providers
 
-| Provider | MCP Config | Rules |
-|----------|-----------|-------|
-| Claude Code | `~/.claude.json` | AGENTS.md |
-| Cursor | `~/.cursor/mcp.json` | `.cursor/rules/*.mdc` |
-| VS Code | `~/Library/Application Support/Code/User/mcp.json` (macOS) | — |
-| OpenCode | `~/.config/opencode/opencode.json` | AGENTS.md |
+- Claude Code
+- Cursor
+- VS Code
+- OpenCode
 
 ## Installation
 
@@ -85,14 +83,45 @@ Override the config path with `--config <path>` or the `MCP_MANAGER_CONFIG` env 
 
 Pre-built binaries for Linux (x64), macOS (x64 and Apple Silicon), and Windows (x64) are available on the [Releases page](https://github.com/Salil999/ai-tool-center/releases).
 
+Each release includes a `.tar.gz` archive with the executable and `dist/` folder.
+
+**Download and run:**
+
+1. Download the archive for your platform from the [Releases page](https://github.com/Salil999/ai-tool-center/releases)
+2. Extract it:
+   ```bash
+   tar xzvf ai-tool-center-<platform>.tar.gz
+   ```
+3. On macOS, remove the quarantine attribute that macOS adds to downloaded files:
+   ```bash
+   xattr -dr com.apple.quarantine ./ai-tool-center
+   ```
+4. Make the binary executable (Linux/macOS):
+   ```bash
+   chmod +x ./ai-tool-center
+   ```
+5. Run it:
+   ```bash
+   ./ai-tool-center
+   ```
+
+The app will be available at `http://localhost:3847`.
+
+> **Note:** The executable must be run from the directory where you extracted the archive, as it requires the `dist/` folder to be present alongside it.
+
+**CLI options:**
+
+```bash
+./ai-tool-center --port 3000               # Custom port
+./ai-tool-center --config ~/my-config.json  # Custom config path
+```
+
 Releases are created automatically when a semver tag is pushed:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
-
-Each release includes a `.tar.gz` archive with the executable and `dist/` folder. Extract and run from the same directory.
 
 ## License
 
