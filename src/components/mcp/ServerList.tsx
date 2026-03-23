@@ -6,7 +6,6 @@ interface ServerListProps {
   servers: Server[];
   onEdit: (id: string | undefined) => void;
   onDelete: (id: string) => void;
-  onToggle: (id: string, enabled: boolean) => void;
   onReorder: (order: string[]) => void;
 }
 
@@ -14,7 +13,6 @@ export function ServerList({
   servers,
   onEdit,
   onDelete,
-  onToggle,
   onReorder,
 }: ServerListProps) {
   const ids = servers.map((s) => s.id!);
@@ -38,7 +36,6 @@ export function ServerList({
           isDropTarget={drag.dropTargetId === server.id}
           onEdit={onEdit}
           onDelete={onDelete}
-          onToggle={onToggle}
           onDragStart={() => drag.handleDragStart(server.id!)}
           onDragOver={(e) => drag.handleDragOver(e, server.id!)}
           onDragLeave={drag.handleDragLeave}

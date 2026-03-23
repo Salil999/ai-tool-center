@@ -13,6 +13,19 @@ if (fs.existsSync(outdir)) {
 }
 fs.mkdirSync(outdir, { recursive: true });
 
+// Process Tailwind CSS before bundling
+console.log('Processing Tailwind CSS...');
+const tailwind = Bun.spawnSync({
+  cmd: ['bunx', '--bun', 'tailwindcss', '-i', './src/styles.css', '-o', './src/tailwind.css', '--minify'],
+  stdout: 'inherit',
+  stderr: 'inherit',
+});
+if (tailwind.exitCode !== 0) {
+  console.error('Tailwind CSS processing failed');
+  process.exit(1);
+}
+console.log('Tailwind CSS processed.');
+
 // Bundle the React app
 const result = await Bun.build({
   entrypoints: ['./src/main.tsx'],

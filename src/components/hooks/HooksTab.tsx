@@ -35,7 +35,7 @@ function scopeKey(providerId: string, scope: HookScope): string {
   return `${providerId}:project:${scope.projectId}`;
 }
 
-export function HooksTab() {
+export function HooksTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () => void } = {}) {
   const { showToast } = useToast();
   const [providers, setProviders] = useState<HooksTabProvider[]>([]);
   const [projects, setProjects] = useState<ProjectDirectory[]>([]);
@@ -207,6 +207,10 @@ export function HooksTab() {
     <>
       <div className="servers-section-header">
         <h2>Hooks</h2>
+        <div className="header-actions">
+          {onSync && <button type="button" className="btn" onClick={onSync}>Sync</button>}
+          {onHelp && <button type="button" className="btn btn-sm" onClick={onHelp} aria-label="Open user guide">?</button>}
+        </div>
       </div>
 
       {providers.length === 0 && (

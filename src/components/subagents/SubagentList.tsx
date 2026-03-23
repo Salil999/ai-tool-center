@@ -7,7 +7,6 @@ interface SubagentListProps {
   lintRefreshKey?: number;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  onToggle: (id: string, enabled: boolean) => void;
   onReorder: (order: string[]) => void;
 }
 
@@ -16,7 +15,6 @@ export function SubagentList({
   lintRefreshKey = 0,
   onEdit,
   onDelete,
-  onToggle,
   onReorder,
 }: SubagentListProps) {
   const ids = subagents.map((s) => s.id);
@@ -41,7 +39,6 @@ export function SubagentList({
           isDropTarget={drag.dropTargetId === subagent.id}
           onEdit={onEdit}
           onDelete={onDelete}
-          onToggle={onToggle}
           onDragStart={() => drag.handleDragStart(subagent.id)}
           onDragOver={(e) => drag.handleDragOver(e, subagent.id)}
           onDragLeave={drag.handleDragLeave}

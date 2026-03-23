@@ -28,7 +28,7 @@ interface AgentRuleItem {
 const RULES_TAB_OPEN_KEY = 'rules-tab-open-section';
 const RULES_SECTION_ORDER_KEY = 'rules-section-order';
 
-export function RulesTab() {
+export function RulesTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () => void } = {}) {
   const { showToast } = useToast();
   const [addAgentsForSection, setAddAgentsForSection] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectDirectory[]>([]);
@@ -246,6 +246,10 @@ export function RulesTab() {
       )}
       <div className="servers-section-header">
         <h2>Rules</h2>
+        <div className="header-actions">
+          {onSync && <button type="button" className="btn" onClick={onSync}>Sync</button>}
+          {onHelp && <button type="button" className="btn btn-sm" onClick={onHelp} aria-label="Open user guide">?</button>}
+        </div>
       </div>
 
       <div className="rules-tab-sections">

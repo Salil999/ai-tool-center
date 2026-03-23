@@ -7,7 +7,7 @@ import type { Credential } from '../../types';
 import { useToast } from '@/contexts/ToastContext';
 import { Modal } from '@/components/shared/Modal';
 
-export function CredentialsTab() {
+export function CredentialsTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () => void } = {}) {
   const { showToast } = useToast();
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -47,13 +47,13 @@ export function CredentialsTab() {
       <div className="servers-section-header">
         <h2>API Credentials</h2>
         <div className="header-actions">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setAddModalOpen(true)}
-          >
+          {onSync && <button type="button" className="btn" onClick={onSync}>Sync</button>}
+          <button type="button" className="btn btn-primary" onClick={() => setAddModalOpen(true)}>
             Add Credential
           </button>
+          {onHelp && (
+            <button type="button" className="btn btn-sm" onClick={onHelp} aria-label="Open user guide">?</button>
+          )}
         </div>
       </div>
       <CredentialList

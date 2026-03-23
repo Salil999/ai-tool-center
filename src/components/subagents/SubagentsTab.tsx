@@ -8,7 +8,6 @@ import {
   getSubagents,
   deleteSubagent,
   reorderSubagents,
-  setSubagentEnabled,
   syncSubagentsTo,
 } from '../../api-client';
 import type { Subagent } from '../../types';
@@ -17,7 +16,7 @@ import { useSyncConfirmation } from '@/hooks/useSyncConfirmation';
 import { Modal } from '@/components/shared/Modal';
 import { SyncConfirmModal } from '@/components/shared/SyncConfirmModal';
 
-export function SubagentsTab() {
+export function SubagentsTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () => void } = {}) {
   const { showToast } = useToast();
   const [subagents, setSubagents] = useState<(Subagent & { id: string })[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -41,16 +40,6 @@ export function SubagentsTab() {
     try {
       await deleteSubagent(id);
       showToast('Subagent removed');
-      loadSubagents();
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
-  const handleToggle = async (id: string, enabled: boolean) => {
-    try {
-      await setSubagentEnabled(id, enabled);
-      showToast(enabled ? 'Subagent enabled' : 'Subagent disabled');
       loadSubagents();
     } catch (err) {
       showToast((err as Error).message, 'error');
@@ -94,16 +83,16 @@ export function SubagentsTab() {
       <div className="servers-section-header">
         <h2>Subagents</h2>
         <div className="header-actions">
-          <SubagentSyncSection
-            onSyncToProvider={handleSyncRequest}
-            onSyncToProject={handleSyncRequest}
-          />
+          {onSync && <button type="button" className="btn" onClick={onSync}>Sync</button>}
           <button type="button" className="btn" onClick={() => setImportModalOpen(true)}>
             Import
           </button>
           <button type="button" className="btn btn-primary" onClick={() => setAddModalOpen(true)}>
             Add Subagent
           </button>
+          {onHelp && (
+            <button type="button" className="btn btn-sm" onClick={onHelp} aria-label="Open user guide">?</button>
+          )}
         </div>
       </div>
       <SubagentList
@@ -111,7 +100,6 @@ export function SubagentsTab() {
         lintRefreshKey={lintRefreshKey}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        onToggle={handleToggle}
         onReorder={handleReorder}
       />
 

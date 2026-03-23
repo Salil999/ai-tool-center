@@ -6,6 +6,7 @@ interface InfoModalProps {
 }
 
 const TAB_TITLES: Record<InfoModalProps['activeTab'], string> = {
+  home: 'Home — User Guide',
   mcp: 'MCP Servers — User Guide',
   skills: 'Skills — User Guide',
   rules: 'Rules & AGENTS.md — User Guide',
@@ -13,6 +14,7 @@ const TAB_TITLES: Record<InfoModalProps['activeTab'], string> = {
   hooks: 'Hooks — User Guide',
   subagents: 'Subagents — User Guide',
   plugins: 'Plugins — User Guide',
+  settings: 'Settings — User Guide',
 };
 
 export function InfoModal({ onClose, activeTab }: InfoModalProps) {
@@ -25,6 +27,7 @@ export function InfoModal({ onClose, activeTab }: InfoModalProps) {
         </button>
       </div>
       <div className="modal-body info-modal-body">
+        {activeTab === 'home' && <HomeInfoContent />}
         {activeTab === 'mcp' && <MCPInfoContent />}
         {activeTab === 'skills' && <SkillsInfoContent />}
         {activeTab === 'rules' && <RulesInfoContent />}
@@ -32,6 +35,7 @@ export function InfoModal({ onClose, activeTab }: InfoModalProps) {
         {activeTab === 'hooks' && <HooksInfoContent />}
         {activeTab === 'subagents' && <SubagentsInfoContent />}
         {activeTab === 'plugins' && <PluginsInfoContent />}
+        {activeTab === 'settings' && <SettingsInfoContent />}
         <div className="modal-actions">
           <button type="button" className="btn btn-primary" onClick={onClose}>
             Close
@@ -39,6 +43,32 @@ export function InfoModal({ onClose, activeTab }: InfoModalProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+function HomeInfoContent() {
+  return (
+    <section>
+      <h3>Home Dashboard</h3>
+      <p>
+        The Home page shows which AI tools are currently installed on your system and which are not.
+        Tools with a config file present are marked <strong>Installed</strong>; those without are
+        marked <strong>Not Installed</strong>. Use the links on each card to navigate to the relevant
+        configuration section.
+      </p>
+    </section>
+  );
+}
+
+function SettingsInfoContent() {
+  return (
+    <section>
+      <h3>Settings</h3>
+      <p>
+        Manage global preferences including theme, data export/import, project directories, and
+        enabled providers. Changes take effect immediately.
+      </p>
+    </section>
   );
 }
 

@@ -12,7 +12,6 @@ interface SubagentCardProps {
   isDropTarget?: boolean;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  onToggle: (id: string, enabled: boolean) => void;
   onDragStart?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: () => void;
@@ -27,7 +26,6 @@ export function SubagentCard({
   isDropTarget,
   onEdit,
   onDelete,
-  onToggle,
   onDragStart,
   onDragOver,
   onDragLeave,
@@ -65,9 +63,6 @@ export function SubagentCard({
         if (confirm('Remove this subagent?')) {
           await onDelete(subagent.id);
         }
-        break;
-      case 'toggle':
-        await onToggle(subagent.id, !subagent.enabled);
         break;
     }
   };
@@ -118,9 +113,6 @@ export function SubagentCard({
           <div className="server-info skill-card-info">
             <div className="skill-name-row">
               <span className="server-name">{subagent.name || subagent.id}</span>
-              <span className={`server-status ${subagent.enabled ? 'enabled' : 'disabled'}`}>
-                {subagent.enabled ? 'Enabled' : 'Disabled'}
-              </span>
             </div>
             {truncated && (
               <span className="server-meta">{truncated}</span>
@@ -128,9 +120,6 @@ export function SubagentCard({
           </div>
         </button>
         <div className="server-actions">
-          <button type="button" className="btn btn-sm" onClick={() => handleAction('toggle')}>
-            {subagent.enabled ? 'Disable' : 'Enable'}
-          </button>
           <button type="button" className="btn btn-sm" onClick={() => handleAction('edit')}>
             Edit
           </button>

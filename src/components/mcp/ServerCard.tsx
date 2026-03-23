@@ -8,7 +8,6 @@ interface ServerCardProps {
   isDropTarget?: boolean;
   onEdit: (id: string | undefined) => void;
   onDelete: (id: string) => void;
-  onToggle: (id: string, enabled: boolean) => void;
   onDragStart?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: () => void;
@@ -22,7 +21,6 @@ export function ServerCard({
   isDropTarget,
   onEdit,
   onDelete,
-  onToggle,
   onDragStart,
   onDragOver,
   onDragLeave,
@@ -62,7 +60,7 @@ export function ServerCard({
     fetchTools();
   }, [expanded, fetchTools]);
 
-  const handleAction = async (action: 'edit' | 'delete' | 'toggle') => {
+  const handleAction = async (action: 'edit' | 'delete') => {
     try {
       switch (action) {
         case 'edit':
@@ -72,9 +70,6 @@ export function ServerCard({
           if (confirm('Delete this server?')) {
             await onDelete(server.id!);
           }
-          break;
-        case 'toggle':
-          await onToggle(server.id!, !server.enabled);
           break;
       }
     } catch (err) {
@@ -125,9 +120,6 @@ export function ServerCard({
           <div className="server-info server-card-info">
             <div className="skill-name-row">
               <span className="server-name">{server.name || server.id}</span>
-              <span className={`server-status ${server.enabled ? 'enabled' : 'disabled'}`}>
-                {server.enabled ? 'Enabled' : 'Disabled'}
-              </span>
             </div>
             <span className="server-meta">
               {server.type}
@@ -137,13 +129,6 @@ export function ServerCard({
           </div>
         </button>
         <div className="server-actions">
-        <button
-          type="button"
-          className="btn btn-sm"
-          onClick={() => handleAction('toggle')}
-        >
-          {server.enabled ? 'Disable' : 'Enable'}
-        </button>
         <button
           type="button"
           className="btn btn-sm"

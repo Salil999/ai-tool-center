@@ -4,7 +4,6 @@ import {
   createServer,
   updateServer,
   deleteServer,
-  setServerEnabled,
   reorderServers,
   syncTo,
 } from '../api-client';
@@ -47,15 +46,6 @@ export function useMcpServers() {
     [loadServers, showToast]
   );
 
-  const handleToggle = useCallback(
-    async (id: string, enabled: boolean) => {
-      await setServerEnabled(id, enabled);
-      showToast(enabled ? 'Server enabled' : 'Server disabled');
-      await loadServers();
-    },
-    [loadServers, showToast]
-  );
-
   const handleReorder = useCallback(
     async (order: string[]) => {
       await reorderServers(order);
@@ -78,7 +68,6 @@ export function useMcpServers() {
     loadServers,
     handleSave,
     handleDelete,
-    handleToggle,
     handleReorder,
     handleSync,
   };

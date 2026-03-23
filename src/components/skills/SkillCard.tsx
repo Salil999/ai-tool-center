@@ -9,7 +9,6 @@ interface SkillCardProps {
   isDropTarget?: boolean;
   onEdit: (id: string | undefined) => void;
   onDelete: (id: string) => void;
-  onToggle: (id: string, enabled: boolean) => void;
   onDragStart?: () => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDragLeave?: () => void;
@@ -24,7 +23,6 @@ export function SkillCard({
   isDropTarget,
   onEdit,
   onDelete,
-  onToggle,
   onDragStart,
   onDragOver,
   onDragLeave,
@@ -62,9 +60,6 @@ export function SkillCard({
         if (confirm('Remove this skill from the list?')) {
           await onDelete(skill.id);
         }
-        break;
-      case 'toggle':
-        await onToggle(skill.id, !skill.enabled);
         break;
     }
   };
@@ -115,9 +110,6 @@ export function SkillCard({
           <div className="server-info skill-card-info">
             <div className="skill-name-row">
               <span className="server-name">{skill.name || skill.id}</span>
-              <span className={`server-status ${skill.enabled ? 'enabled' : 'disabled'}`}>
-                {skill.enabled ? 'Enabled' : 'Disabled'}
-              </span>
             </div>
             {truncated && (
               <span className="server-meta">{truncated}</span>
@@ -125,13 +117,6 @@ export function SkillCard({
           </div>
         </button>
         <div className="server-actions">
-          <button
-            type="button"
-            className="btn btn-sm"
-            onClick={() => handleAction('toggle')}
-          >
-            {skill.enabled ? 'Disable' : 'Enable'}
-          </button>
           <button
             type="button"
             className="btn btn-sm"
