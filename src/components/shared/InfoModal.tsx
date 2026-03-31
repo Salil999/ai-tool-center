@@ -13,7 +13,6 @@ const TAB_TITLES: Record<InfoModalProps['activeTab'], string> = {
   credentials: 'API Credentials — User Guide',
   hooks: 'Hooks — User Guide',
   subagents: 'Subagents — User Guide',
-  plugins: 'Plugins — User Guide',
   settings: 'Settings — User Guide',
 };
 
@@ -34,7 +33,6 @@ export function InfoModal({ onClose, activeTab }: InfoModalProps) {
         {activeTab === 'credentials' && <CredentialsInfoContent />}
         {activeTab === 'hooks' && <HooksInfoContent />}
         {activeTab === 'subagents' && <SubagentsInfoContent />}
-        {activeTab === 'plugins' && <PluginsInfoContent />}
         {activeTab === 'settings' && <SettingsInfoContent />}
         <div className="modal-actions">
           <button type="button" className="btn btn-primary" onClick={onClose}>
@@ -581,70 +579,6 @@ function SubagentsInfoContent() {
   );
 }
 
-function PluginsInfoContent() {
-  return (
-    <>
-      <section>
-        <h3>What are Plugins?</h3>
-        <p>
-          <strong>Plugins</strong> are installable extensions that add new capabilities to an AI
-          tool—custom commands, integrations, UI enhancements, or additional context providers.
-          Unlike MCP servers (which expose tools via a protocol), plugins are typically npm packages
-          that are loaded directly into the tool at startup.
-        </p>
-      </section>
-
-      <section>
-        <h3>Supported Tools</h3>
-        <dl className="info-dl">
-          <dt>OpenCode</dt>
-          <dd>
-            Plugins are npm packages listed in the <code>plugin</code> array of{' '}
-            <code>~/.config/opencode/opencode.json</code>. OpenCode installs them automatically
-            using Bun at startup; packages are cached in{' '}
-            <code>~/.cache/opencode/node_modules/</code>. Scoped packages (e.g.{' '}
-            <code>@my-org/plugin</code>) are supported. For local plugins that don&apos;t need to
-            be published to npm, place <code>.js</code> or <code>.ts</code> files in{' '}
-            <code>~/.config/opencode/plugins/</code> (global) or{' '}
-            <code>.opencode/plugins/</code> (project-level)—those load automatically without a
-            config entry. See{' '}
-            <a href="https://opencode.ai/docs" target="_blank" rel="noopener noreferrer">
-              OpenCode documentation
-            </a>
-            {' '}for details.
-          </dd>
-        </dl>
-      </section>
-
-      <section>
-        <h3>Adding Plugins</h3>
-        <p>
-          Click <strong>Add Plugin</strong> inside the provider section and enter the npm package
-          name (e.g. <code>opencode-helicone-session</code> or <code>opencode-wakatime</code>). The
-          package name is added to the provider&apos;s config file immediately. The tool will fetch
-          and install it the next time it starts.
-        </p>
-      </section>
-
-      <section>
-        <h3>Removing Plugins</h3>
-        <p>
-          Click <strong>Remove</strong> on a plugin card to remove it from the config. The tool
-          will no longer load the plugin after the next restart. The cached package in{' '}
-          <code>~/.cache/opencode/node_modules/</code> is not deleted automatically.
-        </p>
-      </section>
-
-      <section>
-        <h3>Data Storage</h3>
-        <p>
-          Plugin lists are stored directly in each tool&apos;s config file. No separate storage is
-          used. Changes take effect at next tool startup.
-        </p>
-      </section>
-    </>
-  );
-}
 
 function CredentialsInfoContent() {
   return (

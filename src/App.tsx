@@ -6,7 +6,7 @@ import { RulesTab } from '@/components/rules/RulesTab';
 import { CredentialsTab } from '@/components/credentials/CredentialsTab';
 import { HooksTab } from '@/components/hooks/HooksTab';
 import { SubagentsTab } from '@/components/subagents/SubagentsTab';
-import { PluginsTab } from '@/components/plugins/PluginsTab';
+
 import { HomeTab } from '@/components/HomeTab';
 import { SettingsPage } from '@/components/settings/SettingsPage';
 import { ProviderDetailTab } from '@/components/providers/ProviderDetailTab';
@@ -28,7 +28,6 @@ export type TabId =
   | 'credentials'
   | 'hooks'
   | 'subagents'
-  | 'plugins'
   | 'settings'
   | 'provider-cursor'
   | 'provider-claude'
@@ -55,7 +54,6 @@ const TABS: TabDef[] = [
   { id: 'rules', label: 'Rules', infoLabel: 'Rules & AGENTS.md — User Guide' },
   { id: 'hooks', label: 'Hooks', infoLabel: 'Hooks — User Guide' },
   { id: 'subagents', label: 'Subagents', infoLabel: 'Subagents — User Guide' },
-  { id: 'plugins', label: 'Plugins', infoLabel: 'Plugins — User Guide' },
   { id: 'credentials', label: 'API Credentials', infoLabel: 'API Credentials — User Guide' },
   { id: 'settings', label: 'Settings', infoLabel: 'Settings — User Guide' },
 ];
@@ -147,7 +145,7 @@ export default function App() {
   const activeTabDef = TABS.find((t) => t.id === activeTab) ?? TABS[0];
 
   // Show "?" info button only for tabs that have guide content
-  const showInfoButton = ['mcp', 'skills', 'rules', 'credentials', 'hooks', 'subagents', 'plugins'].includes(activeTab);
+  const showInfoButton = ['mcp', 'skills', 'rules', 'credentials', 'hooks', 'subagents'].includes(activeTab);
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
@@ -228,8 +226,7 @@ export default function App() {
           {activeTab === 'rules' && <section className="servers-section"><RulesTab onHelp={() => setInfoOpen(true)} onSync={() => setSyncWizardOpen(true)} /></section>}
           {activeTab === 'hooks' && <section className="servers-section"><HooksTab onHelp={() => setInfoOpen(true)} onSync={() => setSyncWizardOpen(true)} /></section>}
           {activeTab === 'subagents' && <section className="servers-section"><SubagentsTab onHelp={() => setInfoOpen(true)} onSync={() => setSyncWizardOpen(true)} /></section>}
-          {activeTab === 'plugins' && <section className="servers-section"><PluginsTab onHelp={() => setInfoOpen(true)} onSync={() => setSyncWizardOpen(true)} /></section>}
-          {activeTab === 'credentials' && <section className="servers-section"><CredentialsTab onHelp={() => setInfoOpen(true)} onSync={() => setSyncWizardOpen(true)} /></section>}
+{activeTab === 'credentials' && <section className="servers-section"><CredentialsTab onHelp={() => setInfoOpen(true)} onSync={() => setSyncWizardOpen(true)} /></section>}
 
           {/* Settings page */}
           {activeTab === 'settings' && (

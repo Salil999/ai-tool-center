@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { getImportSources } from '@/api-client';
+import { useState } from 'react';
+import { useInstalledProviders } from '@/contexts/InstalledProvidersContext';
 import {
   House,
   Server,
@@ -7,7 +7,6 @@ import {
   FileText,
   Workflow,
   Bot,
-  Plug,
   Key,
   Settings,
   ChevronLeft,
@@ -84,7 +83,6 @@ const TOOL_ITEMS: NavItem[] = [
   { id: 'rules', label: 'Rules', icon: FileText },
   { id: 'hooks', label: 'Hooks', icon: Workflow },
   { id: 'subagents', label: 'Subagents', icon: Bot },
-  { id: 'plugins', label: 'Plugins', icon: Plug },
   { id: 'credentials', label: 'API Credentials', icon: Key },
 ];
 
@@ -100,18 +98,11 @@ interface SidebarProps {
 export function Sidebar({ activeTab, onNavigate, collapsed, onToggle }: SidebarProps) {
   const [aiAssistantsOpen, setAiAssistantsOpen] = useState(true);
   const [aiToolsOpen, setAiToolsOpen] = useState(true);
-  const [assistantItems, setAssistantItems] = useState<NavItem[]>(PROVIDER_NAV_ITEMS);
-
-  useEffect(() => {
-    getImportSources()
-      .then((sources) => {
-        const installedIds = new Set(
-          sources.filter((s: { exists: boolean }) => s.exists).map((s: { id: string }) => s.id)
-        );
-        setAssistantItems(PROVIDER_NAV_ITEMS.filter((item) => installedIds.has(item.id.replace('provider-', ''))));
-      })
-      .catch(() => {});
-  }, []);
+  const { installedProviderIds } = useInstalledProviders();
+  const assistantItems = PROVIDER_NAV_ITEMS.filter((item) => {
+    const id = item.id.replace('provider-', '');
+    return installedProviderIds.size === 0 || installedProviderIds.has(id);
+  });
 
   return (
     <aside

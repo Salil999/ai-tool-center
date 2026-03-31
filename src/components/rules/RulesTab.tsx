@@ -15,6 +15,7 @@ import {
   autoImportGlobalRules,
 } from '../../api-client';
 import { useToast } from '@/contexts/ToastContext';
+import { useInstalledProviders } from '@/contexts/InstalledProvidersContext';
 import { useDragReorder } from '@/hooks/useDragReorder';
 import { Modal } from '@/components/shared/Modal';
 import type { ProjectDirectory } from '@/types';
@@ -30,6 +31,7 @@ const RULES_SECTION_ORDER_KEY = 'rules-section-order';
 
 export function RulesTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () => void } = {}) {
   const { showToast } = useToast();
+  const { installedProviderIds } = useInstalledProviders();
   const [addAgentsForSection, setAddAgentsForSection] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectDirectory[]>([]);
   const [rulesRefreshTrigger, setRulesRefreshTrigger] = useState(0);
@@ -355,7 +357,8 @@ export function RulesTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
 
                   <section className="rules-section rules-section-providers">
                     {ruleProviders
-                      .filter((p) => !p.id.startsWith('custom-'))
+                      .filter((p) => !p.id.startsWith('custom-') &&
+                        (installedProviderIds.size === 0 || installedProviderIds.has(p.id)))
                       .map((p) => (
                         <ProviderRulesSection
                           key={p.id}

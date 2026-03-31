@@ -13,7 +13,7 @@ import {
   type HookProviderMeta,
 } from '../../api-client/hooks';
 import { getProjectDirectories } from '../../api-client/project-directories';
-import { getProviders } from '../../api-client/providers';
+import { useInstalledProviders } from '@/contexts/InstalledProvidersContext';
 import type { HookItem, ProjectDirectory } from '../../types';
 import { useToast } from '@/contexts/ToastContext';
 import { Modal } from '@/components/shared/Modal';
@@ -24,7 +24,7 @@ interface ScopeHooks {
   [key: string]: Hook[];
 }
 
-/** Provider shown in Hooks tab: either a real hook provider or OpenCode (plugins-only). */
+/** Provider shown in Hooks tab: either a real hook provider or OpenCode (listed for visibility). */
 type HooksTabProvider = HookProviderMeta | { id: 'opencode'; name: string };
 
 const HOOKS_TAB_EXPANDED_KEY = 'hooks-tab-expanded-providers';
@@ -37,6 +37,7 @@ function scopeKey(providerId: string, scope: HookScope): string {
 
 export function HooksTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () => void } = {}) {
   const { showToast } = useToast();
+  const { installedProviderIds } = useInstalledProviders();
   const [providers, setProviders] = useState<HooksTabProvider[]>([]);
   const [projects, setProjects] = useState<ProjectDirectory[]>([]);
   const [hooksByScope, setHooksByScope] = useState<ScopeHooks>({});
@@ -57,20 +58,18 @@ export function HooksTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
   } | null>(null);
 
   const loadAll = useCallback(async () => {
-    const [allProviders, projectList, providersMeta] = await Promise.all([
-      getProviders(),
+    const [projectList, providersMeta] = await Promise.all([
       getProjectDirectories(),
       getHookProvidersMeta(),
     ]);
 
-    const enabledIds = new Set(
-      allProviders.builtin.filter((p) => p.enabled).map((p) => p.id)
+    const enabledHookProviders = providersMeta.filter(
+      (p) => installedProviderIds.size === 0 || installedProviderIds.has(p.id)
     );
-    const enabledHookProviders = providersMeta.filter((p) => enabledIds.has(p.id));
 
-    const openCodeEnabled = allProviders.builtin.some((p) => p.id === 'opencode' && p.enabled);
+    const openCodeInstalled = installedProviderIds.has('opencode') || installedProviderIds.size === 0;
     const providersList: HooksTabProvider[] = [...enabledHookProviders];
-    if (openCodeEnabled) {
+    if (openCodeInstalled) {
       providersList.push({ id: 'opencode', name: 'OpenCode' });
     }
     setProviders(providersList);
@@ -105,7 +104,7 @@ export function HooksTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
     const byScope: ScopeHooks = {};
     fetches.forEach(({ key }, i) => { byScope[key] = results[i]; });
     setHooksByScope(byScope);
-  }, []);
+  }, [installedProviderIds]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
@@ -245,13 +244,7 @@ export function HooksTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
                 {provider.id === 'opencode' ? (
                   <div className="hooks-opencode-info">
                     <p>
-                      OpenCode does not support hooks. Instead, it uses <strong>plugins</strong> for
-                      similar automation and extensibility. Plugins are npm packages that OpenCode
-                      installs automatically at startup.
-                    </p>
-                    <p>
-                      To manage OpenCode plugins, go to the{' '}
-                      <a href="#plugins">Plugins</a> tab.
+                      OpenCode does not support hooks.
                     </p>
                   </div>
                 ) : (
