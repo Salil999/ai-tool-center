@@ -7,7 +7,6 @@ interface SkillListProps {
   lintRefreshKey?: number;
   onEdit: (id: string | undefined) => void;
   onDelete: (id: string) => void;
-  onToggle: (id: string, enabled: boolean) => void;
   onReorder: (order: string[]) => void;
 }
 
@@ -16,7 +15,6 @@ export function SkillList({
   lintRefreshKey = 0,
   onEdit,
   onDelete,
-  onToggle,
   onReorder,
 }: SkillListProps) {
   const ids = skills.map((s) => s.id);
@@ -41,7 +39,6 @@ export function SkillList({
           isDropTarget={drag.dropTargetId === skill.id}
           onEdit={onEdit}
           onDelete={onDelete}
-          onToggle={onToggle}
           onDragStart={() => drag.handleDragStart(skill.id)}
           onDragOver={(e) => drag.handleDragOver(e, skill.id)}
           onDragLeave={drag.handleDragLeave}

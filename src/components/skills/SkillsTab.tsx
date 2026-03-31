@@ -8,7 +8,6 @@ import {
   getSkills,
   deleteSkill,
   reorderSkills,
-  setSkillEnabled,
   syncSkillsTo,
   syncSkillsToProject,
 } from '../../api-client';
@@ -18,7 +17,7 @@ import { useSyncConfirmation } from '@/hooks/useSyncConfirmation';
 import { Modal } from '@/components/shared/Modal';
 import { SyncConfirmModal } from '@/components/shared/SyncConfirmModal';
 
-export function SkillsTab() {
+export function SkillsTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () => void } = {}) {
   const { showToast } = useToast();
   const [skills, setSkills] = useState<(Skill & { id: string })[]>([]);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -42,16 +41,6 @@ export function SkillsTab() {
     try {
       await deleteSkill(id, true);
       showToast('Skill removed');
-      loadSkills();
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
-  const handleToggle = async (id: string, enabled: boolean) => {
-    try {
-      await setSkillEnabled(id, enabled);
-      showToast(enabled ? 'Skill enabled' : 'Skill disabled');
       loadSkills();
     } catch (err) {
       showToast((err as Error).message, 'error');
@@ -108,16 +97,16 @@ export function SkillsTab() {
       <div className="servers-section-header">
         <h2>Skills</h2>
         <div className="header-actions">
-          <SkillSyncSection
-            onSyncToProvider={handleSyncToProviderRequest}
-            onSyncToProject={handleSyncToProjectRequest}
-          />
+          {onSync && <button type="button" className="btn" onClick={onSync}>Sync</button>}
           <button type="button" className="btn" onClick={() => setImportModalOpen(true)}>
             Import
           </button>
           <button type="button" className="btn btn-primary" onClick={() => setAddModalOpen(true)}>
             Add Skill
           </button>
+          {onHelp && (
+            <button type="button" className="btn btn-sm" onClick={onHelp} aria-label="Open user guide">?</button>
+          )}
         </div>
       </div>
       <SkillList
@@ -125,7 +114,6 @@ export function SkillsTab() {
         lintRefreshKey={lintRefreshKey}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        onToggle={handleToggle}
         onReorder={handleReorder}
       />
 

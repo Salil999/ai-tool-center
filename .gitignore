@@ -7,3 +7,4 @@ ai-tool-center.exe
 .ai_tool_center/
 *.log
 .DS_Store
+src/tailwind.css

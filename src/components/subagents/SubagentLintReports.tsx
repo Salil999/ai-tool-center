@@ -1,5 +1,6 @@
 import type { SubagentLintReport } from '../../types';
 import type { SubagentLintReports as LintReportsMap, SubagentProviderInfo } from '../../api-client/subagents';
+import { useInstalledProviders } from '@/contexts/InstalledProvidersContext';
 
 /** Default display names when provider list hasn't loaded yet. */
 const FALLBACK_NAMES: Record<string, string> = {
@@ -57,9 +58,13 @@ interface SubagentLintReportsViewProps {
 }
 
 export function SubagentLintReportsView({ reports, providers }: SubagentLintReportsViewProps) {
+  const { installedProviderIds } = useInstalledProviders();
+  const visibleEntries = Object.entries(reports).filter(
+    ([id]) => installedProviderIds.size === 0 || installedProviderIds.has(id)
+  );
   return (
     <div className="subagent-lint-reports">
-      {Object.entries(reports).map(([id, report]) =>
+      {visibleEntries.map(([id, report]) =>
         renderReport(displayName(id, providers), report)
       )}
     </div>
