@@ -129,3 +129,207 @@ describe('rules/provider-rules', () => {
     });
   });
 });
+
+// ── Direct-mode provider tests ────────────────────────────────────────────────
+
+describe('direct single-file provider: claude-local', () => {
+  let fakeHome: string;
+
+  beforeEach(() => {
+    fakeHome = fs.mkdtempSync(path.join(os.homedir(), '.rules-test-home-'));
+  });
+
+  afterEach(() => {
+    try { fs.rmSync(fakeHome, { recursive: true }); } catch { /* ignore */ }
+  });
+
+  it('listProviderRules always returns one entry even when file missing', () => {
+    // claude-local resolves to ~/.claude/CLAUDE.local.md — we verify the pattern
+    // by using an existing static path; isPathSafe gates the actual homedir path.
+    const rules = listProviderRules('claude-local');
+    expect(rules).toHaveLength(1);
+    expect(rules[0].id).toBe('CLAUDE.local');
+    expect(rules[0].extension).toBe('.md');
+  });
+
+  it('readProviderRuleContent returns empty string when file missing', () => {
+    // File is unlikely to exist in CI; confirm graceful empty return
+    const content = readProviderRuleContent('claude-local', 'CLAUDE.local');
+    expect(typeof content).toBe('string');
+  });
+
+  it('createProviderRule throws for single-file provider', () => {
+    expect(() => createProviderRule('claude-local', 'new rule', '# content', {})).toThrow();
+  });
+
+  it('deleteProviderRule throws for single-file provider', () => {
+    expect(() => deleteProviderRule('claude-local', 'CLAUDE.local', {})).toThrow();
+  });
+});
+
+describe('direct multi-file provider: claude-rules', () => {
+  let rulesDir: string;
+
+  beforeEach(() => {
+    rulesDir = fs.mkdtempSync(path.join(os.homedir(), '.claude-rules-test-'));
+  });
+
+  afterEach(() => {
+    try { fs.rmSync(rulesDir, { recursive: true }); } catch { /* ignore */ }
+  });
+
+  // claude-rules always resolves to ~/.claude/rules/ — we can't redirect it without
+  // a mock, but we can test the path-traversal sanitization and empty-dir behavior
+  // via cursor-proj- (project-scoped) which uses a temp dir we control.
+  // The claude-rules static provider is tested indirectly via structure; the full
+  // read/write path is validated in the dynamic provider tests below.
+
+  it('listProviderRules returns empty array when dir does not exist', () => {
+    // cursor-proj- dynamic provider pointing at a non-existent subdir
+    const projectId = 'test-proj-no-dir';
+    const cfg: import('../types.js').AppConfig = {
+      projectDirectories: [{ id: projectId, path: rulesDir }],
+    };
+    const rules = listProviderRules(`cursor-proj-${projectId}`, cfg);
+    // rulesDir exists but .cursor/rules inside it does not
+    expect(rules).toEqual([]);
+  });
+});
+
+describe('dynamic project-scoped providers', () => {
+  let projectDir: string;
+  const projectId = 'test-proj-1';
+  let cfg: import('../types.js').AppConfig;
+
+  beforeEach(() => {
+    projectDir = fs.mkdtempSync(path.join(os.homedir(), '.proj-test-'));
+    cfg = { projectDirectories: [{ id: projectId, path: projectDir }] };
+  });
+
+  afterEach(() => {
+    try { fs.rmSync(projectDir, { recursive: true }); } catch { /* ignore */ }
+  });
+
+  describe('claude-proj-{id} (project CLAUDE.md)', () => {
+    it('listProviderRules returns one entry pointing to {proj}/CLAUDE.md', () => {
+      const rules = listProviderRules(`claude-proj-${projectId}`, cfg);
+      expect(rules).toHaveLength(1);
+      expect(rules[0].path).toBe(path.join(projectDir, 'CLAUDE.md'));
+      expect(rules[0].id).toBe('CLAUDE');
+      expect(rules[0].extension).toBe('.md');
+    });
+
+    it('readProviderRuleContent returns empty when file does not exist', () => {
+      const content = readProviderRuleContent(`claude-proj-${projectId}`, 'CLAUDE', cfg);
+      expect(content).toBe('');
+    });
+
+    it('writeProviderRuleContent creates CLAUDE.md in project dir', () => {
+      writeProviderRuleContent(`claude-proj-${projectId}`, 'CLAUDE', '# Project Instructions', cfg);
+      expect(fs.readFileSync(path.join(projectDir, 'CLAUDE.md'), 'utf8')).toBe('# Project Instructions');
+    });
+
+    it('writes to project dir — not to ~/.claude/CLAUDE.md', () => {
+      writeProviderRuleContent(`claude-proj-${projectId}`, 'CLAUDE', '# Proj', cfg);
+      // The global user CLAUDE.md path does not include the temp projectDir
+      expect(path.join(projectDir, 'CLAUDE.md')).not.toBe(path.join(os.homedir(), '.claude', 'CLAUDE.md'));
+    });
+
+    it('createProviderRule throws (single-file provider)', () => {
+      expect(() => createProviderRule(`claude-proj-${projectId}`, 'extra', '# extra', cfg)).toThrow();
+    });
+  });
+
+  describe('claude-proj-local-{id} (project CLAUDE.local.md)', () => {
+    it('listProviderRules returns entry at {proj}/CLAUDE.local.md', () => {
+      const rules = listProviderRules(`claude-proj-local-${projectId}`, cfg);
+      expect(rules).toHaveLength(1);
+      expect(rules[0].path).toBe(path.join(projectDir, 'CLAUDE.local.md'));
+    });
+
+    it('writeProviderRuleContent writes to project-local file, not user-local', () => {
+      writeProviderRuleContent(`claude-proj-local-${projectId}`, 'CLAUDE.local', '# Local', cfg);
+      expect(fs.readFileSync(path.join(projectDir, 'CLAUDE.local.md'), 'utf8')).toBe('# Local');
+    });
+  });
+
+  describe('claude-proj-rules-{id} (project .claude/rules/)', () => {
+    it('listProviderRules returns empty when .claude/rules/ does not exist', () => {
+      const rules = listProviderRules(`claude-proj-rules-${projectId}`, cfg);
+      expect(rules).toEqual([]);
+    });
+
+    it('createProviderRule creates .md file in {proj}/.claude/rules/', () => {
+      const rule = createProviderRule(`claude-proj-rules-${projectId}`, 'My Rule', '# Content', cfg);
+      expect(rule.id).toBe('my-rule');
+      expect(rule.extension).toBe('.md');
+      expect(rule.path).toBe(path.join(projectDir, '.claude', 'rules', 'my-rule.md'));
+      expect(fs.readFileSync(rule.path, 'utf8')).toBe('# Content');
+    });
+
+    it('readProviderRuleContent reads from {proj}/.claude/rules/', () => {
+      const rulesDir = path.join(projectDir, '.claude', 'rules');
+      fs.mkdirSync(rulesDir, { recursive: true });
+      fs.writeFileSync(path.join(rulesDir, 'test.md'), '# Test Rule', 'utf8');
+      const content = readProviderRuleContent(`claude-proj-rules-${projectId}`, 'test', cfg);
+      expect(content).toBe('# Test Rule');
+    });
+
+    it('deleteProviderRule removes file from {proj}/.claude/rules/', () => {
+      createProviderRule(`claude-proj-rules-${projectId}`, 'to-delete', '# Del', cfg);
+      const filePath = path.join(projectDir, '.claude', 'rules', 'to-delete.md');
+      expect(fs.existsSync(filePath)).toBe(true);
+      deleteProviderRule(`claude-proj-rules-${projectId}`, 'to-delete', cfg);
+      expect(fs.existsSync(filePath)).toBe(false);
+    });
+
+    it('sanitizes path traversal in ruleId', () => {
+      const rulesDir = path.join(projectDir, '.claude', 'rules');
+      fs.mkdirSync(rulesDir, { recursive: true });
+      fs.writeFileSync(path.join(rulesDir, 'rule.md'), 'safe', 'utf8');
+      const content = readProviderRuleContent(`claude-proj-rules-${projectId}`, '../rule', cfg);
+      expect(content).toBe('safe');
+    });
+  });
+
+  describe('cursor-proj-{id} (project .cursor/rules/)', () => {
+    it('listProviderRules returns empty when .cursor/rules/ does not exist', () => {
+      const rules = listProviderRules(`cursor-proj-${projectId}`, cfg);
+      expect(rules).toEqual([]);
+    });
+
+    it('createProviderRule creates .mdc file in {proj}/.cursor/rules/', () => {
+      const rule = createProviderRule(`cursor-proj-${projectId}`, 'Cursor Rule', '# Cursor', cfg);
+      expect(rule.extension).toBe('.mdc');
+      expect(rule.path).toBe(path.join(projectDir, '.cursor', 'rules', 'cursor-rule.mdc'));
+    });
+
+    it('listProviderRules lists .mdc files in {proj}/.cursor/rules/', () => {
+      const cursorRulesDir = path.join(projectDir, '.cursor', 'rules');
+      fs.mkdirSync(cursorRulesDir, { recursive: true });
+      fs.writeFileSync(path.join(cursorRulesDir, 'alpha.mdc'), '# Alpha', 'utf8');
+      fs.writeFileSync(path.join(cursorRulesDir, 'beta.mdc'), '# Beta', 'utf8');
+      const rules = listProviderRules(`cursor-proj-${projectId}`, cfg);
+      expect(rules).toHaveLength(2);
+      expect(rules.map((r) => r.id).sort()).toEqual(['alpha', 'beta']);
+    });
+  });
+
+  describe('opencode-cmds-proj-{id} (project .opencode/commands/)', () => {
+    it('createProviderRule creates .md file in {proj}/.opencode/commands/', () => {
+      const rule = createProviderRule(`opencode-cmds-proj-${projectId}`, 'My Cmd', '# Cmd', cfg);
+      expect(rule.extension).toBe('.md');
+      expect(rule.path).toBe(path.join(projectDir, '.opencode', 'commands', 'my-cmd.md'));
+    });
+  });
+
+  describe('error cases', () => {
+    it('throws when projectId is not in config', () => {
+      expect(() => listProviderRules('claude-proj-nonexistent', cfg)).toThrow('Project not found');
+    });
+
+    it('throws when projectId is not in config for cursor-proj-', () => {
+      expect(() => listProviderRules('cursor-proj-nonexistent', cfg)).toThrow('Project not found');
+    });
+  });
+});

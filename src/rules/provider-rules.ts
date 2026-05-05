@@ -9,7 +9,7 @@ function getRulesBase(): string {
   return process.env.AI_TOOL_CENTER_RULES_DIR || path.join(os.homedir(), '.ai_tool_center', 'rules');
 }
 
-/** Providers that support multiple rule files (directory of .md/.mdc) */
+/** Providers that support multiple rule files (directory of .md/.mdc) in the central store */
 export const MULTI_FILE_RULE_PROVIDERS = ['cursor'] as const;
 
 /** All provider rule types */
@@ -17,6 +17,40 @@ export const ALL_RULE_PROVIDERS = [...MULTI_FILE_RULE_PROVIDERS] as const;
 
 export type MultiFileRuleProviderId = (typeof MULTI_FILE_RULE_PROVIDERS)[number];
 export type RuleProviderId = (typeof ALL_RULE_PROVIDERS)[number];
+
+// ── Direct-mode descriptor types ─────────────────────────────────────────────
+
+/**
+ * Direct single-file provider: reads/writes a single file at a fixed path.
+ * No staging area or sync step needed.
+ */
+interface DirectSingleFileDescriptor {
+  mode: 'single-file';
+  filePath: string;
+  extension: '.md';
+}
+
+/**
+ * Direct multi-file provider: reads/writes files in a directory at a fixed path.
+ * No staging area or sync step needed.
+ */
+interface DirectMultiFileDescriptor {
+  mode: 'multi-file';
+  dir: string;
+  extension: '.md' | '.mdc';
+}
+
+type DirectDescriptor = DirectSingleFileDescriptor | DirectMultiFileDescriptor;
+
+/**
+ * Legacy single-file providers that live at a fixed path.
+ * New providers use resolveDirectProvider instead.
+ */
+const SINGLE_FILE_RULE_PROVIDERS: Record<string, { filePath: string; displayName: string }> = {
+  claude: { filePath: path.join(os.homedir(), '.claude', 'CLAUDE.md'), displayName: 'CLAUDE.md' },
+};
+
+// ── Path helpers ──────────────────────────────────────────────────────────────
 
 function getProviderRulesDir(providerId: string): string {
   const base = getRulesBase();
@@ -26,7 +60,88 @@ function getProviderRulesDir(providerId: string): string {
   return path.join(base, providerId);
 }
 
+/**
+ * Resolve a projectId to an absolute project path via config.projectDirectories.
+ */
+function resolveProjectPath(projectId: string, config?: AppConfig): string {
+  const project = (config?.projectDirectories ?? []).find((pd) => pd.id === projectId);
+  if (!project) throw new Error(`Project not found: ${projectId}`);
+  const expanded = project.path.startsWith('~')
+    ? path.join(os.homedir(), project.path.slice(1))
+    : project.path;
+  return path.resolve(expanded);
+}
+
+/**
+ * Resolve a providerId to a DirectDescriptor, or null for central-store providers.
+ *
+ * Static providers (no project context):
+ *   claude         → ~/.claude/CLAUDE.md (single-file, existing)
+ *   claude-local   → ~/.claude/CLAUDE.local.md (single-file)
+ *   claude-rules   → ~/.claude/rules/ (multi-file .md)
+ *   opencode-commands → ~/.config/opencode/commands/ (multi-file .md)
+ *
+ * Dynamic project-scoped providers (projectId resolved via config):
+ *   claude-proj-local-{id}   → {project}/CLAUDE.local.md
+ *   claude-proj-rules-{id}   → {project}/.claude/rules/
+ *   claude-proj-{id}         → {project}/CLAUDE.md
+ *   cursor-proj-{id}         → {project}/.cursor/rules/
+ *   opencode-cmds-proj-{id}  → {project}/.opencode/commands/
+ *
+ * Note: prefixes are checked longest-first to prevent claude-proj- consuming claude-proj-local-.
+ */
+function resolveDirectProvider(providerId: string, config?: AppConfig): DirectDescriptor | null {
+  const HOME = os.homedir();
+
+  // Existing single-file providers (claude → ~/.claude/CLAUDE.md)
+  if (providerId in SINGLE_FILE_RULE_PROVIDERS) {
+    const { filePath } = SINGLE_FILE_RULE_PROVIDERS[providerId];
+    return { mode: 'single-file', filePath, extension: '.md' };
+  }
+
+  // Static direct providers
+  if (providerId === 'claude-local')
+    return { mode: 'single-file', filePath: path.join(HOME, '.claude', 'CLAUDE.local.md'), extension: '.md' };
+
+  if (providerId === 'claude-rules')
+    return { mode: 'multi-file', dir: path.join(HOME, '.claude', 'rules'), extension: '.md' };
+
+  if (providerId === 'opencode-commands')
+    return { mode: 'multi-file', dir: path.join(HOME, '.config', 'opencode', 'commands'), extension: '.md' };
+
+  // Dynamic project-scoped providers — longest prefix first to avoid early match
+  if (providerId.startsWith('claude-proj-local-')) {
+    const pp = resolveProjectPath(providerId.slice('claude-proj-local-'.length), config);
+    return { mode: 'single-file', filePath: path.join(pp, 'CLAUDE.local.md'), extension: '.md' };
+  }
+  if (providerId.startsWith('claude-proj-rules-')) {
+    const pp = resolveProjectPath(providerId.slice('claude-proj-rules-'.length), config);
+    return { mode: 'multi-file', dir: path.join(pp, '.claude', 'rules'), extension: '.md' };
+  }
+  if (providerId.startsWith('claude-proj-')) {
+    const pp = resolveProjectPath(providerId.slice('claude-proj-'.length), config);
+    return { mode: 'single-file', filePath: path.join(pp, 'CLAUDE.md'), extension: '.md' };
+  }
+  if (providerId.startsWith('cursor-proj-')) {
+    const pp = resolveProjectPath(providerId.slice('cursor-proj-'.length), config);
+    return { mode: 'multi-file', dir: path.join(pp, '.cursor', 'rules'), extension: '.mdc' };
+  }
+  if (providerId.startsWith('opencode-cmds-proj-')) {
+    const pp = resolveProjectPath(providerId.slice('opencode-cmds-proj-'.length), config);
+    return { mode: 'multi-file', dir: path.join(pp, '.opencode', 'commands'), extension: '.md' };
+  }
+
+  return null; // central-store provider (cursor, custom-*)
+}
+
+/** Sanitize a ruleId to strip path traversal characters. */
+function sanitizeRuleId(ruleId: string): string {
+  return (ruleId || 'rule').replace(/\.\./g, '').replace(/[/\\]/g, '');
+}
+
 function getRuleExtension(providerId: string, config?: AppConfig): '.md' | '.mdc' {
+  const desc = resolveDirectProvider(providerId, config);
+  if (desc) return desc.extension;
   if (providerId.startsWith('custom-')) {
     const customId = providerId.replace('custom-', '');
     const custom = (config?.customRuleConfigs || []).find((c) => c.id === customId);
@@ -62,9 +177,40 @@ function scanRuleDir(dir: string, ext: '.md' | '.mdc'): ProviderRule[] {
 }
 
 /**
+ * Ensure the resolved file path stays under the base directory (prevents path traversal via ruleId).
+ */
+function ensurePathUnderDir(filePath: string, baseDir: string): void {
+  const resolved = path.resolve(filePath);
+  const baseResolved = path.resolve(baseDir);
+  if (!resolved.startsWith(baseResolved + path.sep) && resolved !== baseResolved) {
+    throw new Error('Path is not allowed');
+  }
+}
+
+/**
  * List rule files for a provider from disk.
+ * Dispatches to: direct-mode (single/multi-file), custom-*, or central-store (cursor).
  */
 export function listProviderRules(providerId: string, config?: AppConfig): ProviderRule[] {
+  // Direct-mode providers (single-file and multi-file)
+  const desc = resolveDirectProvider(providerId, config);
+  if (desc) {
+    if (desc.mode === 'single-file') {
+      if (!isPathSafe(desc.filePath)) return [];
+      // Always return one entry so Edit button is visible even when file doesn't exist yet.
+      return [{
+        id: path.basename(desc.filePath, desc.extension),
+        name: path.basename(desc.filePath),
+        path: desc.filePath,
+        extension: desc.extension,
+      }];
+    }
+    // multi-file direct
+    if (!isPathSafe(desc.dir)) return [];
+    return scanRuleDir(desc.dir, desc.extension);
+  }
+
+  // Custom providers
   if (providerId.startsWith('custom-')) {
     const customId = providerId.replace('custom-', '');
     const custom = (config?.customRuleConfigs || []).find((c) => c.id === customId);
@@ -81,6 +227,8 @@ export function listProviderRules(providerId: string, config?: AppConfig): Provi
     }
     return scanRuleDir(dir, ext);
   }
+
+  // Central-store providers (cursor)
   if (!MULTI_FILE_RULE_PROVIDERS.includes(providerId as MultiFileRuleProviderId)) {
     return [];
   }
@@ -104,34 +252,33 @@ export function getOrderedProviderRules(
 }
 
 /**
- * Ensure the resolved file path stays under the base directory (prevents path traversal via ruleId).
- */
-function ensurePathUnderDir(filePath: string, baseDir: string): void {
-  const resolved = path.resolve(filePath);
-  const baseResolved = path.resolve(baseDir);
-  if (!resolved.startsWith(baseResolved + path.sep) && resolved !== baseResolved) {
-    throw new Error('Path is not allowed');
-  }
-}
-
-/**
  * Read rule file content.
  */
 export function readProviderRuleContent(providerId: string, ruleId: string, config?: AppConfig): string {
+  const desc = resolveDirectProvider(providerId, config);
+  if (desc) {
+    if (desc.mode === 'single-file') {
+      if (!isPathSafe(desc.filePath)) throw new Error('Path is not allowed');
+      return fs.existsSync(desc.filePath) ? fs.readFileSync(desc.filePath, 'utf8') : '';
+    }
+    // multi-file direct
+    if (!isPathSafe(desc.dir)) throw new Error('Path is not allowed');
+    const safeId = sanitizeRuleId(ruleId);
+    if (!safeId) throw new Error(`Rule not found: ${ruleId}`);
+    const filePath = path.join(desc.dir, `${safeId}${desc.extension}`);
+    ensurePathUnderDir(filePath, desc.dir);
+    return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
+  }
+
+  // Custom + central-store
   const dir = getProviderRulesDir(providerId);
   const ext = getRuleExtension(providerId, config);
-  // Sanitize ruleId: disallow path traversal (.., /, \)
-  const safeId = (ruleId || 'rule').replace(/\.\./g, '').replace(/[/\\]/g, '');
+  const safeId = sanitizeRuleId(ruleId);
   if (!safeId) throw new Error(`Rule not found: ${ruleId}`);
   const filePath = path.join(dir, `${safeId}${ext}`);
-  if (!isPathSafe(filePath)) {
-    throw new Error('Path is not allowed');
-  }
+  if (!isPathSafe(filePath)) throw new Error('Path is not allowed');
   ensurePathUnderDir(filePath, dir);
-  if (!fs.existsSync(filePath)) {
-    return '';
-  }
-  return fs.readFileSync(filePath, 'utf8');
+  return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
 }
 
 /**
@@ -143,21 +290,39 @@ export function writeProviderRuleContent(
   content: string,
   config?: AppConfig
 ): void {
+  const desc = resolveDirectProvider(providerId, config);
+  if (desc) {
+    if (desc.mode === 'single-file') {
+      if (!isPathSafe(desc.filePath)) throw new Error('Path is not allowed');
+      fs.mkdirSync(path.dirname(desc.filePath), { recursive: true });
+      fs.writeFileSync(desc.filePath, content, 'utf8');
+      return;
+    }
+    // multi-file direct
+    if (!isPathSafe(desc.dir)) throw new Error('Path is not allowed');
+    const safeId = sanitizeRuleId(ruleId);
+    if (!safeId) throw new Error('Invalid rule id');
+    const filePath = path.join(desc.dir, `${safeId}${desc.extension}`);
+    ensurePathUnderDir(filePath, desc.dir);
+    fs.mkdirSync(desc.dir, { recursive: true });
+    fs.writeFileSync(filePath, content, 'utf8');
+    return;
+  }
+
+  // Custom + central-store
   const dir = getProviderRulesDir(providerId);
   const ext = getRuleExtension(providerId, config);
-  const safeId = (ruleId || 'rule').replace(/\.\./g, '').replace(/[/\\]/g, '');
+  const safeId = sanitizeRuleId(ruleId);
   if (!safeId) throw new Error('Invalid rule id');
   const filePath = path.join(dir, `${safeId}${ext}`);
-  if (!isPathSafe(filePath)) {
-    throw new Error('Path is not allowed');
-  }
+  if (!isPathSafe(filePath)) throw new Error('Path is not allowed');
   ensurePathUnderDir(filePath, dir);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
 /**
- * Create a new rule file.
+ * Create a new rule file. Only supported for multi-file providers.
  */
 export function createProviderRule(
   providerId: string,
@@ -165,6 +330,28 @@ export function createProviderRule(
   content: string,
   config?: AppConfig
 ): ProviderRule {
+  const desc = resolveDirectProvider(providerId, config);
+  if (desc) {
+    if (desc.mode === 'single-file') {
+      throw new Error(`Provider ${providerId} does not support multiple rule files`);
+    }
+    // multi-file direct — write to the resolved directory
+    const id = toFileId(name);
+    const existing = scanRuleDir(desc.dir, desc.extension);
+    let finalId = id;
+    let n = 1;
+    while (existing.some((r) => r.id === finalId)) {
+      finalId = `${id}-${n++}`;
+    }
+    if (!isPathSafe(desc.dir)) throw new Error('Path is not allowed');
+    const filePath = path.join(desc.dir, `${finalId}${desc.extension}`);
+    ensurePathUnderDir(filePath, desc.dir);
+    fs.mkdirSync(desc.dir, { recursive: true });
+    fs.writeFileSync(filePath, content, 'utf8');
+    return { id: finalId, name: finalId.replace(/-/g, ' '), path: filePath, extension: desc.extension };
+  }
+
+  // Custom + central-store
   const dir = getProviderRulesDir(providerId);
   const ext = getRuleExtension(providerId, config);
   if (!MULTI_FILE_RULE_PROVIDERS.includes(providerId as MultiFileRuleProviderId) && !providerId.startsWith('custom-')) {
@@ -178,40 +365,46 @@ export function createProviderRule(
     finalId = `${id}-${n++}`;
   }
   const filePath = path.join(dir, `${finalId}${ext}`);
-  if (!isPathSafe(filePath)) {
-    throw new Error('Path is not allowed');
-  }
+  if (!isPathSafe(filePath)) throw new Error('Path is not allowed');
   ensurePathUnderDir(filePath, dir);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(filePath, content, 'utf8');
-  return {
-    id: finalId,
-    name: finalId.replace(/-/g, ' '),
-    path: filePath,
-    extension: ext,
-  };
+  return { id: finalId, name: finalId.replace(/-/g, ' '), path: filePath, extension: ext };
 }
 
 /**
- * Delete a rule file.
+ * Delete a rule file. Only supported for multi-file providers.
  */
 export function deleteProviderRule(providerId: string, ruleId: string, config?: AppConfig): void {
+  const desc = resolveDirectProvider(providerId, config);
+  if (desc) {
+    if (desc.mode === 'single-file') {
+      throw new Error(`Cannot delete a single-file provider rule`);
+    }
+    // multi-file direct
+    const safeId = sanitizeRuleId(ruleId);
+    if (!safeId) return;
+    if (!isPathSafe(desc.dir)) throw new Error('Path is not allowed');
+    const filePath = path.join(desc.dir, `${safeId}${desc.extension}`);
+    ensurePathUnderDir(filePath, desc.dir);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    return;
+  }
+
+  // Custom + central-store
   const dir = getProviderRulesDir(providerId);
   const ext = getRuleExtension(providerId, config);
-  const safeId = (ruleId || 'rule').replace(/\.\./g, '').replace(/[/\\]/g, '');
+  const safeId = sanitizeRuleId(ruleId);
   if (!safeId) return;
   const filePath = path.join(dir, `${safeId}${ext}`);
-  if (!isPathSafe(filePath)) {
-    throw new Error('Path is not allowed');
-  }
+  if (!isPathSafe(filePath)) throw new Error('Path is not allowed');
   ensurePathUnderDir(filePath, dir);
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
-  }
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 }
 
 /**
  * Copy ordered rules from the provider's rules dir to a target directory.
+ * Only used for central-store providers (cursor, custom-*).
  */
 function copyRulesToDir(
   providerId: string,
@@ -232,7 +425,8 @@ function copyRulesToDir(
 }
 
 /**
- * Sync provider rules to provider path (e.g. ~/.cursor/rules).
+ * Sync central-store provider rules to a target path (e.g. ~/.cursor/rules).
+ * Only applicable to central-store providers (cursor, custom-*).
  */
 export function syncProviderRulesToTarget(
   providerId: string,

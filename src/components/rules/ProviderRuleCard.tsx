@@ -6,6 +6,7 @@ interface ProviderRuleCardProps {
   rule: ProviderRule;
   providerId: string;
   lintRefreshKey?: number;
+  allowDelete?: boolean;
   isDragging?: boolean;
   isDropTarget?: boolean;
   onEdit: (id: string) => void;
@@ -23,6 +24,7 @@ export function ProviderRuleCard({
   rule,
   providerId,
   lintRefreshKey = 0,
+  allowDelete = true,
   isDragging,
   isDropTarget,
   onEdit,
@@ -138,9 +140,11 @@ export function ProviderRuleCard({
           <button type="button" className="btn btn-sm" onClick={() => onEdit(rule.id)}>
             Edit
           </button>
-          <button type="button" className="btn btn-sm" onClick={handleDelete}>
-            Delete
-          </button>
+          {allowDelete && (
+            <button type="button" className="btn btn-sm" onClick={handleDelete}>
+              Delete
+            </button>
+          )}
         </div>
       </div>
 

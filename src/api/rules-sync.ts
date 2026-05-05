@@ -112,13 +112,14 @@ export function createRulesSyncRouter(getConfig: GetConfig) {
       }
 
       if (!sourceAgentId) {
-        return res.status(400).json({ error: 'sourceAgentId required to copy AGENTS.md to project' });
+        return res.status(400).json({ error: 'sourceAgentId required to copy rules file to project' });
       }
       const sourceAgent = (config.agentRules || []).find((a) => a.id === sourceAgentId);
       if (!sourceAgent) {
         return res.status(404).json({ error: 'Source agent rule not found' });
       }
-      const result = copyAgentsBetweenAgents(sourceAgentId, targetPath);
+      const filename = providerId === 'claude' ? 'CLAUDE.md' : 'AGENTS.md';
+      const result = copyAgentsBetweenAgents(sourceAgentId, targetPath, filename);
       return res.json(result);
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });

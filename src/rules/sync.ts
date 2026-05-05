@@ -39,10 +39,14 @@ export function writeAgentsForAgent(agentId: string, content: string): void {
 /**
  * Sync AGENTS.md from agent store to a project path.
  */
-export function syncAgentsToProject(agentId: string, projectPath: string): { path: string; success: boolean } {
+export function syncAgentsToProject(
+  agentId: string,
+  projectPath: string,
+  filename: string = 'AGENTS.md'
+): { path: string; success: boolean } {
   const content = readAgentsForAgent(agentId);
   const resolved = resolvePath(projectPath);
-  const writePath = path.join(resolved, 'AGENTS.md');
+  const writePath = path.join(resolved, filename);
   if (!isPathSafe(writePath)) {
     throw new Error('Project path is not allowed');
   }
@@ -85,13 +89,15 @@ export function syncAgentsFromAgentToProvider(
 }
 
 /**
- * Copy AGENTS.md from one agent to another agent's project path (or same agent to different path).
+ * Copy rules file from one agent to another agent's project path.
+ * filename controls whether to write AGENTS.md or CLAUDE.md.
  */
 export function copyAgentsBetweenAgents(
   sourceAgentId: string,
-  targetProjectPath: string
+  targetProjectPath: string,
+  filename: string = 'AGENTS.md'
 ): { path: string; success: boolean } {
-  return syncAgentsToProject(sourceAgentId, targetProjectPath);
+  return syncAgentsToProject(sourceAgentId, targetProjectPath, filename);
 }
 
 /** @deprecated Use readAgentsForAgent + agent store. Kept for import from disk. */

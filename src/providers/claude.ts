@@ -12,10 +12,12 @@ import {
 import type { Server } from '../types.js';
 
 const CONFIG_PATH = path.join(HOME, '.claude.json');
+const SKILLS_PATH = path.join(HOME, '.claude', 'skills');
 const baseProvider = createMcpProvider({
   id: 'claude',
   name: 'Claude Code',
   getMcpPath: () => CONFIG_PATH,
+  getSkillsPath: () => SKILLS_PATH,
 });
 
 /**

@@ -196,17 +196,20 @@ export function syncSkillsToProvider(
 }
 
 /**
- * Sync enabled skills to a project directory (.agents/skills/).
+ * Sync enabled skills to a project directory.
+ * subdir controls where skills land: '.agents/skills' for generic agents,
+ * '.claude/skills' for Claude Code.
  */
 export function syncSkillsToProject(
   projectPath: string,
-  skillPaths: string[]
+  skillPaths: string[],
+  subdir: string = '.agents/skills'
 ): { path: string; success: boolean; syncedCount: number } {
   const resolved = resolvePath(projectPath);
   if (!isPathSafe(resolved)) {
     throw new Error('Project path is not allowed');
   }
-  const skillsDir = path.join(resolved, '.agents', 'skills');
+  const skillsDir = path.join(resolved, subdir);
   fs.mkdirSync(skillsDir, { recursive: true });
   let syncedCount = 0;
   for (const skillPath of skillPaths) {

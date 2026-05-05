@@ -39,13 +39,16 @@ export function createSkillsSyncRouter(getConfig: GetConfig) {
     const project = (config.projectDirectories || []).find((pd) => pd.id === projectId);
     if (!project) return res.status(404).json({ error: 'Project directory not found' });
 
+    const providerId = String(req.query.providerId ?? req.body?.providerId ?? '');
+    const subdir = providerId === 'claude' ? '.claude/skills' : '.agents/skills';
+
     const skills = getOrderedSkills(config);
     const skillPaths = Object.values(skills)
       .filter((s) => s.enabled)
       .map((s) => s.path);
 
     try {
-      const result = syncSkillsToProject(project.path, skillPaths);
+      const result = syncSkillsToProject(project.path, skillPaths, subdir);
       res.json(result);
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });

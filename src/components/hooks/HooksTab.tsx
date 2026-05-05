@@ -27,7 +27,6 @@ interface ScopeHooks {
 /** Provider shown in Hooks tab: either a real hook provider or OpenCode (listed for visibility). */
 type HooksTabProvider = HookProviderMeta | { id: 'opencode'; name: string };
 
-const HOOKS_TAB_EXPANDED_KEY = 'hooks-tab-expanded-providers';
 
 function scopeKey(providerId: string, scope: HookScope): string {
   if (scope.type === 'global') return `${providerId}:global`;
@@ -41,16 +40,7 @@ export function HooksTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
   const [providers, setProviders] = useState<HooksTabProvider[]>([]);
   const [projects, setProjects] = useState<ProjectDirectory[]>([]);
   const [hooksByScope, setHooksByScope] = useState<ScopeHooks>({});
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
-    try {
-      const v = localStorage.getItem(HOOKS_TAB_EXPANDED_KEY);
-      if (!v) return new Set<string>();
-      const arr = JSON.parse(v);
-      return Array.isArray(arr) ? new Set(arr) : new Set<string>();
-    } catch {
-      return new Set<string>();
-    }
-  });
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [editState, setEditState] = useState<{
     providerId: string;
     scope: HookScope;
@@ -115,11 +105,6 @@ export function HooksTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
     setExpandedIds((prev) => {
       const filtered = [...prev].filter((id) => validIds.has(id));
       if (filtered.length === prev.size) return prev;
-      try {
-        localStorage.setItem(HOOKS_TAB_EXPANDED_KEY, JSON.stringify(filtered));
-      } catch {
-        /* ignore */
-      }
       return new Set(filtered);
     });
   }, [providers]);
@@ -128,11 +113,6 @@ export function HooksTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
     setExpandedIds((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
-      try {
-        localStorage.setItem(HOOKS_TAB_EXPANDED_KEY, JSON.stringify([...next]));
-      } catch {
-        /* ignore */
-      }
       return next;
     });
   }, []);

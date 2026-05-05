@@ -36,7 +36,6 @@ interface ImportSkillModalProps {
   onError?: (msg: string) => void;
 }
 
-const IMPORT_SKILL_OPEN_KEY = 'import-skill-modal-open';
 
 export function ImportSkillModal({ onClose, onImport, onError }: ImportSkillModalProps) {
   const [sources, setSources] = useState<{ providers: SkillImportSource[]; projects: ProjectSkillSource[] } | null>(null);
@@ -45,25 +44,10 @@ export function ImportSkillModal({ onClose, onImport, onError }: ImportSkillModa
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [importing, setImporting] = useState<string | null>(null);
   const [customPath, setCustomPath] = useState('');
-  const [openSectionId, setOpenSectionId] = useState<string | null>(() => {
-    try {
-      const v = localStorage.getItem(IMPORT_SKILL_OPEN_KEY);
-      return v || null;
-    } catch {
-      return null;
-    }
-  });
+  const [openSectionId, setOpenSectionId] = useState<string | null>(null);
 
   const toggleSection = (id: string) => {
-    setOpenSectionId((prev) => {
-      const next = prev === id ? null : id;
-      try {
-        localStorage.setItem(IMPORT_SKILL_OPEN_KEY, next || '');
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+    setOpenSectionId((prev) => (prev === id ? null : id));
   };
 
   useEffect(() => {

@@ -24,3 +24,33 @@ export async function updateEnabledProviders(enabledProviders: string[]): Promis
   });
 }
 
+export interface McpServerSummary { name: string; type: string }
+export interface SkillSummary { name: string }
+export interface HookSummary { event: string; type: string; command?: string }
+export interface ClaudeMdSummary { exists: boolean; path: string; preview: string }
+
+export interface ClaudeProjectStatus {
+  id: string;
+  name: string;
+  path: string;
+  mcpServers: McpServerSummary[];
+  localMcpServers?: McpServerSummary[];
+  skills: SkillSummary[];
+  hooks: HookSummary[];
+  claudeMd: ClaudeMdSummary;
+}
+
+export interface ClaudeStatus {
+  user: {
+    mcpServers: McpServerSummary[];
+    skills: SkillSummary[];
+    hooks: HookSummary[];
+    claudeMd: ClaudeMdSummary;
+  };
+  projects: ClaudeProjectStatus[];
+}
+
+export async function getClaudeStatus(): Promise<ClaudeStatus> {
+  return fetchJSON<ClaudeStatus>(apiUrl('/providers/claude/status'));
+}
+

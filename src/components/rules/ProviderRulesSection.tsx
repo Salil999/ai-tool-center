@@ -15,17 +15,23 @@ import { Modal } from '@/components/shared/Modal';
 interface ProviderRulesSectionProps {
   providerId: string;
   providerName: string;
+  /** Single-file providers (e.g. Claude's CLAUDE.md) cannot add/delete rules */
+  singleFile?: boolean;
   /** When provided, shows a Sync button that syncs this provider's rules to its target path */
   onSync?: (providerId: string) => void | Promise<void>;
   /** When this changes, rules are reloaded (e.g. after import) */
   refreshTrigger?: number;
+  /** Optional description shown below the provider name */
+  description?: string;
 }
 
 export function ProviderRulesSection({
   providerId,
   providerName,
+  singleFile,
   onSync,
   refreshTrigger,
+  description,
 }: ProviderRulesSectionProps) {
   const { showToast } = useToast();
   const [rules, setRules] = useState<ProviderRule[]>([]);
@@ -80,8 +86,7 @@ export function ProviderRulesSection({
     <div className="provider-rules-section">
       <div className="provider-rules-header">
         <h3>{providerName}</h3>
-        <p className="provider-rules-desc">
-        </p>
+        {description && <p className="provider-rules-desc">{description}</p>}
         <div className="provider-rules-header-actions">
           {onSync && (
             <button
@@ -93,15 +98,18 @@ export function ProviderRulesSection({
               {syncing ? 'Syncing…' : 'Sync'}
             </button>
           )}
-          <button type="button" className="btn btn-sm btn-primary" onClick={() => setAddModalOpen(true)}>
-            Add Rule
-          </button>
+          {!singleFile && (
+            <button type="button" className="btn btn-sm btn-primary" onClick={() => setAddModalOpen(true)}>
+              Add Rule
+            </button>
+          )}
         </div>
       </div>
       <ProviderRuleList
         rules={rules}
         providerId={providerId}
         lintRefreshKey={lintRefreshKey}
+        allowDelete={!singleFile}
         onEdit={(id) => setEditRuleId(id)}
         onDelete={handleDelete}
         onReorder={handleReorder}

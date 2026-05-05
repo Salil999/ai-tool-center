@@ -19,6 +19,7 @@ import { createAgentsRouter } from './agents.js';
 import { createCustomRuleConfigsRouter } from './custom-rule-configs.js';
 import { createProjectDirectoriesRouter } from './project-directories.js';
 import { createProvidersRouter } from './providers.js';
+import { createClaudeStatusRouter } from './claude-status.js';
 import { createCredentialsRouter } from './credentials.js';
 import { createSettingsRouter } from './settings.js';
 import { createHooksRouter } from './hooks.js';
@@ -52,6 +53,7 @@ export function createAllRoutes(options: CreateRoutesOptions): MountedRoute[] {
     { prefix: '/api/rules/custom-configs', router: createCustomRuleConfigsRouter(getConfig, saveConfig) },
     { prefix: '/api/rules', router: createRulesRouter(getConfig, saveConfig) },
     { prefix: '/api/project-directories', router: createProjectDirectoriesRouter(getConfig, saveConfig) },
+    { prefix: '/api/providers/claude', router: createClaudeStatusRouter(getConfig) },
     { prefix: '/api/providers', router: createProvidersRouter(getConfig, saveConfig) },
     { prefix: '/api/credentials', router: createCredentialsRouter(getConfig) },
     { prefix: '/api/hooks', router: createHooksRouter(getConfig) },

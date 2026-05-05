@@ -18,7 +18,7 @@ export interface RuleSyncTarget {
  */
 const EXTRA_AGENTS_MD_TARGETS: RuleSyncTarget[] = [
   { id: 'opencode', name: 'OpenCode (AGENTS.md)', path: path.join(HOME, '.config', 'opencode', 'AGENTS.md'), type: 'file' },
-  { id: 'claude', name: 'Claude Code (AGENTS.md)', path: path.join(HOME, '.claude', 'AGENTS.md'), type: 'file' },
+  { id: 'claude', name: 'Claude Code (CLAUDE.md)', path: path.join(HOME, '.claude', 'CLAUDE.md'), type: 'file' },
 ];
 
 /** Rule sync targets: derived from registry + extra AGENTS.md targets. */

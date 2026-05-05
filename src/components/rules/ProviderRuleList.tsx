@@ -6,12 +6,13 @@ interface ProviderRuleListProps {
   rules: ProviderRule[];
   providerId: string;
   lintRefreshKey?: number;
+  allowDelete?: boolean;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onReorder: (order: string[]) => void;
 }
 
-export function ProviderRuleList({ rules, providerId, lintRefreshKey, onEdit, onDelete, onReorder }: ProviderRuleListProps) {
+export function ProviderRuleList({ rules, providerId, lintRefreshKey, allowDelete = true, onEdit, onDelete, onReorder }: ProviderRuleListProps) {
   const ids = rules.map((r) => r.id);
   const drag = useDragReorder(ids, onReorder);
 
@@ -31,6 +32,7 @@ export function ProviderRuleList({ rules, providerId, lintRefreshKey, onEdit, on
           rule={rule}
           providerId={providerId}
           lintRefreshKey={lintRefreshKey}
+          allowDelete={allowDelete}
           isDragging={drag.draggedId === rule.id}
           isDropTarget={drag.dropTargetId === rule.id}
           onEdit={onEdit}

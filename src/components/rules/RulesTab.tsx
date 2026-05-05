@@ -8,14 +8,12 @@ import {
   syncRulesToProject,
   getProjectDirectories,
   reorderProjectDirectories,
-  getRuleProviders,
   getAgentRules,
   deleteAgentRule,
   autoImportProjectRules,
   autoImportGlobalRules,
 } from '../../api-client';
 import { useToast } from '@/contexts/ToastContext';
-import { useInstalledProviders } from '@/contexts/InstalledProvidersContext';
 import { useDragReorder } from '@/hooks/useDragReorder';
 import { Modal } from '@/components/shared/Modal';
 import type { ProjectDirectory } from '@/types';
@@ -26,24 +24,14 @@ interface AgentRuleItem {
   name?: string;
 }
 
-const RULES_TAB_OPEN_KEY = 'rules-tab-open-section';
 const RULES_SECTION_ORDER_KEY = 'rules-section-order';
 
 export function RulesTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () => void } = {}) {
   const { showToast } = useToast();
-  const { installedProviderIds } = useInstalledProviders();
   const [addAgentsForSection, setAddAgentsForSection] = useState<string | null>(null);
   const [projects, setProjects] = useState<ProjectDirectory[]>([]);
   const [rulesRefreshTrigger, setRulesRefreshTrigger] = useState(0);
-  const [openSectionId, setOpenSectionId] = useState<string | null>(() => {
-    try {
-      const v = localStorage.getItem(RULES_TAB_OPEN_KEY);
-      return v || null;
-    } catch {
-      return null;
-    }
-  });
-  const [ruleProviders, setRuleProviders] = useState<Array<{ id: string; name: string }>>([]);
+  const [openSectionId, setOpenSectionId] = useState<string | null>(null);
   const [agentRules, setAgentRules] = useState<AgentRuleItem[]>([]);
   const [editorAgent, setEditorAgent] = useState<AgentRuleItem | null>(null);
   const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
@@ -58,18 +46,11 @@ export function RulesTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
       .catch(() => {});
   }, []);
 
-  const loadRuleProviders = useCallback(() => {
-    getRuleProviders()
-      .then(setRuleProviders)
-      .catch(() => setRuleProviders([]));
-  }, []);
-
   const loadAgentRules = useCallback(() => {
     getAgentRules().then(setAgentRules).catch(() => {});
   }, []);
 
   useEffect(() => loadProjects(), [loadProjects]);
-  useEffect(() => loadRuleProviders(), [loadRuleProviders]);
   useEffect(() => loadAgentRules(), [loadAgentRules]);
 
   // Auto-import rules for each project on load
@@ -100,13 +81,7 @@ export function RulesTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
 
   const toggleSection = (id: string) => {
     setOpenSectionId((prev) => {
-      const next = prev === id ? null : id;
-      try {
-        localStorage.setItem(RULES_TAB_OPEN_KEY, next || '');
-      } catch {
-        /* ignore */
-      }
-      return next;
+      return prev === id ? null : id;
     });
   };
 
@@ -153,20 +128,6 @@ export function RulesTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
         count !== undefined
           ? `Synced ${count} rule(s) to ${target}`
           : `Rules synced to ${target}`
-      );
-    } catch (err) {
-      showToast((err as Error).message, 'error');
-    }
-  };
-
-  const handleSyncToProject = (projectId: string) => async (providerId: string) => {
-    try {
-      const result = await syncRulesToProject(projectId, { providerId });
-      const count = result.syncedCount;
-      showToast(
-        count !== undefined
-          ? `Synced ${count} rule(s) to project`
-          : 'Rules synced to project'
       );
     } catch (err) {
       showToast((err as Error).message, 'error');
@@ -356,18 +317,39 @@ export function RulesTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
                   </div>
 
                   <section className="rules-section rules-section-providers">
-                    {ruleProviders
-                      .filter((p) => !p.id.startsWith('custom-') &&
-                        (installedProviderIds.size === 0 || installedProviderIds.has(p.id)))
-                      .map((p) => (
-                        <ProviderRulesSection
-                          key={p.id}
-                          providerId={p.id}
-                          providerName={p.name}
-                          onSync={handleSyncToProvider}
-                          refreshTrigger={rulesRefreshTrigger}
-                        />
-                      ))}
+                    <ProviderRulesSection
+                      providerId="claude"
+                      providerName="CLAUDE.md"
+                      description="User-level instructions loaded in every Claude Code session (~/.claude/CLAUDE.md)"
+                      singleFile
+                      refreshTrigger={rulesRefreshTrigger}
+                    />
+                    <ProviderRulesSection
+                      providerId="claude-local"
+                      providerName="CLAUDE.local.md"
+                      description="User-local instructions — gitignored, never committed (~/.claude/CLAUDE.local.md)"
+                      singleFile
+                      refreshTrigger={rulesRefreshTrigger}
+                    />
+                    <ProviderRulesSection
+                      providerId="claude-rules"
+                      providerName="Claude Path-Scoped Rules"
+                      description="Rules in ~/.claude/rules/*.md — loaded by Claude Code based on file path patterns"
+                      refreshTrigger={rulesRefreshTrigger}
+                    />
+                    <ProviderRulesSection
+                      providerId="cursor"
+                      providerName="Cursor Rules"
+                      description="Rules authored in the central store, synced to ~/.cursor/rules/ on demand"
+                      onSync={handleSyncToProvider}
+                      refreshTrigger={rulesRefreshTrigger}
+                    />
+                    <ProviderRulesSection
+                      providerId="opencode-commands"
+                      providerName="OpenCode Commands"
+                      description="Slash commands at ~/.config/opencode/commands/*.md"
+                      refreshTrigger={rulesRefreshTrigger}
+                    />
                   </section>
                 </div>
               </details>
@@ -492,17 +474,38 @@ export function RulesTab({ onHelp, onSync }: { onHelp?: () => void; onSync?: () 
                 </div>
 
                 <section className="rules-section rules-section-providers">
-                  {ruleProviders
-                    .filter((p) => !p.id.startsWith('custom-'))
-                    .map((p) => (
-                      <ProviderRulesSection
-                        key={p.id}
-                        providerId={p.id}
-                        providerName={p.name}
-                        onSync={handleSyncToProject(project.id)}
-                        refreshTrigger={rulesRefreshTrigger}
-                      />
-                    ))}
+                  <ProviderRulesSection
+                    providerId={`claude-proj-${project.id}`}
+                    providerName="CLAUDE.md"
+                    description={`Project instructions — committed to git (${project.path}/CLAUDE.md)`}
+                    singleFile
+                    refreshTrigger={rulesRefreshTrigger}
+                  />
+                  <ProviderRulesSection
+                    providerId={`claude-proj-local-${project.id}`}
+                    providerName="CLAUDE.local.md"
+                    description="Project-local instructions — gitignored, personal overrides only"
+                    singleFile
+                    refreshTrigger={rulesRefreshTrigger}
+                  />
+                  <ProviderRulesSection
+                    providerId={`claude-proj-rules-${project.id}`}
+                    providerName=".claude/rules/"
+                    description="Path-scoped rules for this project (.claude/rules/*.md)"
+                    refreshTrigger={rulesRefreshTrigger}
+                  />
+                  <ProviderRulesSection
+                    providerId={`cursor-proj-${project.id}`}
+                    providerName=".cursor/rules/"
+                    description="Cursor rules for this project only (.cursor/rules/*.mdc)"
+                    refreshTrigger={rulesRefreshTrigger}
+                  />
+                  <ProviderRulesSection
+                    providerId={`opencode-cmds-proj-${project.id}`}
+                    providerName=".opencode/commands/"
+                    description="OpenCode slash commands for this project (.opencode/commands/*.md)"
+                    refreshTrigger={rulesRefreshTrigger}
+                  />
                 </section>
               </div>
             </details>
