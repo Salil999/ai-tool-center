@@ -54,3 +54,61 @@ export async function getClaudeStatus(): Promise<ClaudeStatus> {
   return fetchJSON<ClaudeStatus>(apiUrl('/providers/claude/status'));
 }
 
+// ── Cursor ────────────────────────────────────────────────────────────────────
+
+export interface RuleFileSummary { name: string }
+export interface AgentFileSummary { name: string }
+
+export interface CursorProjectStatus {
+  id: string;
+  name: string;
+  path: string;
+  mcpServers: McpServerSummary[];
+  rules: RuleFileSummary[];
+  agents: AgentFileSummary[];
+  skills: SkillSummary[];
+}
+
+export interface CursorStatus {
+  user: {
+    mcpServers: McpServerSummary[];
+    rules: RuleFileSummary[];
+    agents: AgentFileSummary[];
+    skills: SkillSummary[];
+  };
+  projects: CursorProjectStatus[];
+}
+
+export async function getCursorStatus(): Promise<CursorStatus> {
+  return fetchJSON<CursorStatus>(apiUrl('/providers/cursor/status'));
+}
+
+// ── OpenCode ──────────────────────────────────────────────────────────────────
+
+export interface CommandFileSummary { name: string }
+export interface AgentsMdSummary { exists: boolean; path: string; preview: string }
+
+export interface OpenCodeProjectStatus {
+  id: string;
+  name: string;
+  path: string;
+  mcpServers: McpServerSummary[];
+  commands: CommandFileSummary[];
+  agents: AgentFileSummary[];
+  agentsMd: AgentsMdSummary;
+}
+
+export interface OpenCodeStatus {
+  user: {
+    mcpServers: McpServerSummary[];
+    commands: CommandFileSummary[];
+    agents: AgentFileSummary[];
+    agentsMd: AgentsMdSummary;
+  };
+  projects: OpenCodeProjectStatus[];
+}
+
+export async function getOpenCodeStatus(): Promise<OpenCodeStatus> {
+  return fetchJSON<OpenCodeStatus>(apiUrl('/providers/opencode/status'));
+}
+

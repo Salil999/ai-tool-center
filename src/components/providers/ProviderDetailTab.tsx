@@ -1,7 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
-import { getProviders } from '@/api-client/providers';
-import { getClaudeStatus } from '@/api-client/providers';
-import type { BuiltinProvider, ClaudeStatus, ClaudeProjectStatus } from '@/api-client/providers';
+import { getProviders, getClaudeStatus, getCursorStatus, getOpenCodeStatus } from '@/api-client/providers';
+import type {
+  BuiltinProvider, ClaudeStatus, ClaudeProjectStatus,
+  CursorStatus, CursorProjectStatus,
+  OpenCodeStatus, OpenCodeProjectStatus,
+} from '@/api-client/providers';
 import { getImportSources, importFromSource } from '@/api-client/import';
 import { getServers } from '@/api-client/servers';
 import { getSkills, importSkillsFromSource } from '@/api-client/skills';
@@ -310,12 +313,284 @@ function ProjectSectionContent({ project, onNavigate }: { project: ClaudeProject
   );
 }
 
-// ── Generic provider detail view ──────────────────────────────────────────────
+// ── Cursor detail view ────────────────────────────────────────────────────────
+
+function CursorDetailTab({ onNavigate }: { onNavigate: (tab: TabId) => void }) {
+  const [status, setStatus] = useState<CursorStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setStatus(await getCursorStatus()); } catch { /* silently fail */ }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) return <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading…</div>;
+
+  const user = status?.user;
+  const isInstalled = !!(user?.mcpServers.length || user?.rules.length || user?.skills.length);
+
+  return (
+    <div>
+      <div className="mb-6 flex items-start">
+        <div className="flex items-center gap-3">
+          <span className="shrink-0">
+            <img src={PROVIDER_LOGOS['cursor']} alt="Cursor" width={36} height={36} className="rounded-lg"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold" style={{ color: 'var(--text)' }}>Cursor</h1>
+              <Badge variant={isInstalled ? 'active' : 'inactive'}>{isInstalled ? 'Installed' : 'Not Installed'}</Badge>
+            </div>
+            <p className="mt-0.5 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>~/.cursor/mcp.json · ~/.cursor/</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <CollapsibleSection title="User Level" subtitle="~/.cursor/" defaultOpen={false}>
+          <div className="space-y-4 px-4 py-4">
+            <ToolSection title="MCP Servers" count={user?.mcpServers.length ?? 0} onManage={() => onNavigate('mcp')}>
+              {!user?.mcpServers.length ? <EmptyState text="No MCP servers in ~/.cursor/mcp.json" /> : (
+                user.mcpServers.map((s) => (
+                  <div key={s.name} className="flex items-center gap-2 py-1.5 min-w-0">
+                    <span className="text-sm truncate" style={{ color: 'var(--text)' }}>{s.name}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>{s.type}</span>
+                  </div>
+                ))
+              )}
+            </ToolSection>
+            <ToolSection title="Rules" count={user?.rules.length ?? 0} onManage={() => onNavigate('rules')}>
+              {!user?.rules.length ? <EmptyState text="No rules in ~/.cursor/rules/" /> : (
+                user.rules.map((r) => (
+                  <div key={r.name} className="py-1.5">
+                    <span className="text-sm" style={{ color: 'var(--text)' }}>{r.name}</span>
+                  </div>
+                ))
+              )}
+            </ToolSection>
+            <ToolSection title="Skills" count={user?.skills.length ?? 0} onManage={() => onNavigate('skills')}>
+              {!user?.skills.length ? <EmptyState text="No skills in ~/.cursor/skills/" /> : (
+                user.skills.map((s) => (
+                  <div key={s.name} className="py-1.5">
+                    <span className="text-sm" style={{ color: 'var(--text)' }}>{s.name}</span>
+                  </div>
+                ))
+              )}
+            </ToolSection>
+            <ToolSection title="Subagents" count={user?.agents.length ?? 0} onManage={() => onNavigate('subagents')}>
+              {!user?.agents.length ? <EmptyState text="No agents in ~/.cursor/agents/" /> : (
+                user.agents.map((a) => (
+                  <div key={a.name} className="py-1.5">
+                    <span className="text-sm" style={{ color: 'var(--text)' }}>{a.name}</span>
+                  </div>
+                ))
+              )}
+            </ToolSection>
+          </div>
+        </CollapsibleSection>
+      </div>
+
+      {(status?.projects.length ?? 0) > 0 && (
+        <div className="space-y-4">
+          {status!.projects.map((proj) => (
+            <CollapsibleSection key={proj.id} title={proj.name} subtitle={proj.path} defaultOpen={false}>
+              <div className="space-y-4 px-4 py-4">
+                <ToolSection title="MCP Servers" count={proj.mcpServers.length} onManage={() => onNavigate('mcp')}>
+                  {!proj.mcpServers.length ? <EmptyState text="No .cursor/mcp.json found" /> : (
+                    proj.mcpServers.map((s) => (
+                      <div key={s.name} className="flex items-center gap-2 py-1.5 min-w-0">
+                        <span className="text-sm truncate" style={{ color: 'var(--text)' }}>{s.name}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>{s.type}</span>
+                      </div>
+                    ))
+                  )}
+                </ToolSection>
+                <ToolSection title="Rules" count={proj.rules.length} onManage={() => onNavigate('rules')}>
+                  {!proj.rules.length ? <EmptyState text="No .cursor/rules/ found" /> : (
+                    proj.rules.map((r) => (
+                      <div key={r.name} className="py-1.5">
+                        <span className="text-sm" style={{ color: 'var(--text)' }}>{r.name}</span>
+                      </div>
+                    ))
+                  )}
+                </ToolSection>
+                <ToolSection title="Skills" count={proj.skills.length} onManage={() => onNavigate('skills')}>
+                  {!proj.skills.length ? <EmptyState text="No .cursor/skills/ found" /> : (
+                    proj.skills.map((s) => (
+                      <div key={s.name} className="py-1.5">
+                        <span className="text-sm" style={{ color: 'var(--text)' }}>{s.name}</span>
+                      </div>
+                    ))
+                  )}
+                </ToolSection>
+                <ToolSection title="Subagents" count={proj.agents.length} onManage={() => onNavigate('subagents')}>
+                  {!proj.agents.length ? <EmptyState text="No .cursor/agents/ found" /> : (
+                    proj.agents.map((a) => (
+                      <div key={a.name} className="py-1.5">
+                        <span className="text-sm" style={{ color: 'var(--text)' }}>{a.name}</span>
+                      </div>
+                    ))
+                  )}
+                </ToolSection>
+              </div>
+            </CollapsibleSection>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── OpenCode detail view ──────────────────────────────────────────────────────
+
+function OpenCodeDetailTab({ onNavigate }: { onNavigate: (tab: TabId) => void }) {
+  const [status, setStatus] = useState<OpenCodeStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setStatus(await getOpenCodeStatus()); } catch { /* silently fail */ }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) return <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading…</div>;
+
+  const user = status?.user;
+  const isInstalled = !!(user?.mcpServers.length || user?.commands.length || user?.agentsMd.exists);
+
+  return (
+    <div>
+      <div className="mb-6 flex items-start">
+        <div className="flex items-center gap-3">
+          <span className="shrink-0">
+            <img src={PROVIDER_LOGOS['opencode']} alt="OpenCode" width={36} height={36} className="rounded-lg"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold" style={{ color: 'var(--text)' }}>OpenCode</h1>
+              <Badge variant={isInstalled ? 'active' : 'inactive'}>{isInstalled ? 'Installed' : 'Not Installed'}</Badge>
+            </div>
+            <p className="mt-0.5 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>~/.config/opencode/opencode.json · ~/.config/opencode/</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <CollapsibleSection title="User Level" subtitle="~/.config/opencode/" defaultOpen={false}>
+          <div className="space-y-4 px-4 py-4">
+            <ToolSection title="MCP Servers" count={user?.mcpServers.length ?? 0} onManage={() => onNavigate('mcp')}>
+              {!user?.mcpServers.length ? <EmptyState text="No MCP servers in opencode.json" /> : (
+                user.mcpServers.map((s) => (
+                  <div key={s.name} className="flex items-center gap-2 py-1.5 min-w-0">
+                    <span className="text-sm truncate" style={{ color: 'var(--text)' }}>{s.name}</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>{s.type}</span>
+                  </div>
+                ))
+              )}
+            </ToolSection>
+            <ToolSection title="Commands" count={user?.commands.length ?? 0} onManage={() => onNavigate('rules')}>
+              {!user?.commands.length ? <EmptyState text="No commands in ~/.config/opencode/commands/" /> : (
+                user.commands.map((c) => (
+                  <div key={c.name} className="py-1.5">
+                    <span className="text-sm" style={{ color: 'var(--text)' }}>/{c.name}</span>
+                  </div>
+                ))
+              )}
+            </ToolSection>
+            <ToolSection title="Subagents" count={user?.agents.length ?? 0} onManage={() => onNavigate('subagents')}>
+              {!user?.agents.length ? <EmptyState text="No agents in ~/.config/opencode/agents/" /> : (
+                user.agents.map((a) => (
+                  <div key={a.name} className="py-1.5">
+                    <span className="text-sm" style={{ color: 'var(--text)' }}>{a.name}</span>
+                  </div>
+                ))
+              )}
+            </ToolSection>
+            <ToolSection title="AGENTS.md" count={user?.agentsMd.exists ? 1 : 0} onManage={() => onNavigate('rules')}>
+              {!user?.agentsMd.exists ? <EmptyState text="No AGENTS.md found" /> : (
+                <div className="py-1.5">
+                  <p className="text-xs font-mono mb-2" style={{ color: 'var(--text-muted)' }}>{user.agentsMd.path}</p>
+                  {user.agentsMd.preview && (
+                    <pre className="text-xs whitespace-pre-wrap break-words overflow-auto rounded p-2"
+                      style={{ color: 'var(--text)', background: 'var(--bg)', border: '1px solid var(--border)', maxHeight: '12rem', fontFamily: 'monospace' }}>
+                      {user.agentsMd.preview}
+                    </pre>
+                  )}
+                </div>
+              )}
+            </ToolSection>
+          </div>
+        </CollapsibleSection>
+      </div>
+
+      {(status?.projects.length ?? 0) > 0 && (
+        <div className="space-y-4">
+          {status!.projects.map((proj) => (
+            <CollapsibleSection key={proj.id} title={proj.name} subtitle={proj.path} defaultOpen={false}>
+              <div className="space-y-4 px-4 py-4">
+                <ToolSection title="MCP Servers" count={proj.mcpServers.length} onManage={() => onNavigate('mcp')}>
+                  {!proj.mcpServers.length ? <EmptyState text="No opencode.json mcp config found" /> : (
+                    proj.mcpServers.map((s) => (
+                      <div key={s.name} className="flex items-center gap-2 py-1.5 min-w-0">
+                        <span className="text-sm truncate" style={{ color: 'var(--text)' }}>{s.name}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'var(--bg)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>{s.type}</span>
+                      </div>
+                    ))
+                  )}
+                </ToolSection>
+                <ToolSection title="Commands" count={proj.commands.length} onManage={() => onNavigate('rules')}>
+                  {!proj.commands.length ? <EmptyState text="No .opencode/commands/ found" /> : (
+                    proj.commands.map((c) => (
+                      <div key={c.name} className="py-1.5">
+                        <span className="text-sm" style={{ color: 'var(--text)' }}>/{c.name}</span>
+                      </div>
+                    ))
+                  )}
+                </ToolSection>
+                <ToolSection title="Subagents" count={proj.agents.length} onManage={() => onNavigate('subagents')}>
+                  {!proj.agents.length ? <EmptyState text="No .opencode/agents/ found" /> : (
+                    proj.agents.map((a) => (
+                      <div key={a.name} className="py-1.5">
+                        <span className="text-sm" style={{ color: 'var(--text)' }}>{a.name}</span>
+                      </div>
+                    ))
+                  )}
+                </ToolSection>
+                <ToolSection title="AGENTS.md" count={proj.agentsMd.exists ? 1 : 0} onManage={() => onNavigate('rules')}>
+                  {!proj.agentsMd.exists ? <EmptyState text="No AGENTS.md found in project root" /> : (
+                    <div className="py-1.5">
+                      <p className="text-xs font-mono mb-2" style={{ color: 'var(--text-muted)' }}>{proj.agentsMd.path}</p>
+                      {proj.agentsMd.preview && (
+                        <pre className="text-xs whitespace-pre-wrap break-words overflow-auto rounded p-2"
+                          style={{ color: 'var(--text)', background: 'var(--bg)', border: '1px solid var(--border)', maxHeight: '12rem', fontFamily: 'monospace' }}>
+                          {proj.agentsMd.preview}
+                        </pre>
+                      )}
+                    </div>
+                  )}
+                </ToolSection>
+              </div>
+            </CollapsibleSection>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Top-level router ──────────────────────────────────────────────────────────
 
 export function ProviderDetailTab({ providerId, onNavigate }: ProviderDetailTabProps) {
-  if (providerId === 'claude') {
-    return <ClaudeDetailTab onNavigate={onNavigate} />;
-  }
+  if (providerId === 'claude') return <ClaudeDetailTab onNavigate={onNavigate} />;
+  if (providerId === 'cursor') return <CursorDetailTab onNavigate={onNavigate} />;
+  if (providerId === 'opencode') return <OpenCodeDetailTab onNavigate={onNavigate} />;
   return <GenericProviderDetailTab providerId={providerId} onNavigate={onNavigate} />;
 }
 

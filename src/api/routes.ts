@@ -20,6 +20,8 @@ import { createCustomRuleConfigsRouter } from './custom-rule-configs.js';
 import { createProjectDirectoriesRouter } from './project-directories.js';
 import { createProvidersRouter } from './providers.js';
 import { createClaudeStatusRouter } from './claude-status.js';
+import { createCursorStatusRouter } from './cursor-status.js';
+import { createOpenCodeStatusRouter } from './opencode-status.js';
 import { createCredentialsRouter } from './credentials.js';
 import { createSettingsRouter } from './settings.js';
 import { createHooksRouter } from './hooks.js';
@@ -54,6 +56,8 @@ export function createAllRoutes(options: CreateRoutesOptions): MountedRoute[] {
     { prefix: '/api/rules', router: createRulesRouter(getConfig, saveConfig) },
     { prefix: '/api/project-directories', router: createProjectDirectoriesRouter(getConfig, saveConfig) },
     { prefix: '/api/providers/claude', router: createClaudeStatusRouter(getConfig) },
+    { prefix: '/api/providers/cursor', router: createCursorStatusRouter(getConfig) },
+    { prefix: '/api/providers/opencode', router: createOpenCodeStatusRouter(getConfig) },
     { prefix: '/api/providers', router: createProvidersRouter(getConfig, saveConfig) },
     { prefix: '/api/credentials', router: createCredentialsRouter(getConfig) },
     { prefix: '/api/hooks', router: createHooksRouter(getConfig) },
